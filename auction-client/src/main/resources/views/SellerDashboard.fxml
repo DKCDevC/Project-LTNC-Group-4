@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+
+<AnchorPane prefHeight="550.0" prefWidth="500.0" style="-fx-background-color: #F5F5F7; -fx-font-family: '-apple-system', sans-serif;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.SellerDashboardController">
+    <children>
+        <VBox layoutX="30.0" layoutY="30.0" prefHeight="490.0" prefWidth="440.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-background-radius: 15; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 20, 0, 0, 5);">
+            <children>
+                <Label text="Thêm Sản Phẩm Mới">
+                    <font><Font name="System Bold" size="24.0" /></font>
+                </Label>
+                <Label text="Dành riêng cho Seller" textFill="#8e8e93" />
+
+                <TextField fx:id="txtName" promptText="Tên sản phẩm" style="-fx-background-color: #F2F2F7; -fx-background-radius: 8; -fx-padding: 10;" />
+                <TextField fx:id="txtDesc" promptText="Mô tả ngắn" style="-fx-background-color: #F2F2F7; -fx-background-radius: 8; -fx-padding: 10;" />
+                <TextField fx:id="txtPrice" promptText="Giá khởi điểm (VNĐ)" style="-fx-background-color: #F2F2F7; -fx-background-radius: 8; -fx-padding: 10;" />
+
+                <HBox spacing="15.0">
+                    <children>
+                        <ComboBox fx:id="cbType" prefWidth="200.0" promptText="Phân loại" style="-fx-background-color: #F2F2F7; -fx-background-radius: 8;">
+                            <items>
+                                <FXCollections fx:factory="observableArrayList">
+                                    <String fx:value="ELECTRONICS" />
+                                    <String fx:value="ART" />
+                                    <String fx:value="VEHICLE" />
+                                </FXCollections>
+                            </items>
+                        </ComboBox>
+                        <TextField fx:id="txtExtra" promptText="T/tin thêm (Hãng, Tác giả...)" style="-fx-background-color: #F2F2F7; -fx-background-radius: 8; -fx-padding: 10;" HBox.hgrow="ALWAYS" />
+                    </children>
+                </HBox>
+
+                <Label fx:id="lblMessage" textFill="#34c759" />
+
+                <Region VBox.vgrow="ALWAYS" />
+                <Button onAction="#handleAddItem" prefHeight="45.0" prefWidth="Infinity" style="-fx-background-color: #007AFF; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-weight: bold; -fx-cursor: hand;" text="Thêm Vào Kho (Database)" />
+            </children>
+        </VBox>
+    </children>
+</AnchorPane>
