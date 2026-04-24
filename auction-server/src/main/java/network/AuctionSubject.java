@@ -1,0 +1,7 @@
+package network;
+
+public interface AuctionSubject {
+    void registerObserver(AuctionObserver observer);
+    void removeObserver(AuctionObserver observer);
+    void notifyAllObservers(String message);
+}

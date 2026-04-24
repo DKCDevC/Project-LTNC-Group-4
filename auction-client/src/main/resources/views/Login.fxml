@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane style="-fx-background-color: #FFFFFF; -fx-font-family: '-apple-system', 'Segoe UI', sans-serif;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.LoginController">
+    <children>
+
+        <HBox layoutX="40.0" layoutY="30.0" spacing="1.0">
+            <Label text="e" textFill="#e53238"><font><Font name="System Bold" size="40.0"/></font></Label>
+            <Label text="b" textFill="#0064d2"><font><Font name="System Bold" size="40.0"/></font></Label>
+            <Label text="i" textFill="#f5af02"><font><Font name="System Bold" size="40.0"/></font></Label>
+            <Label text="d" textFill="#86b817"><font><Font name="System Bold" size="40.0"/></font></Label>
+        </HBox>
+
+        <ScrollPane fitToWidth="true" fitToHeight="true" style="-fx-background-color: transparent; -fx-background: white;" AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
+            <content>
+                <StackPane>
+                    <children>
+                        <VBox alignment="CENTER" maxWidth="400.0" spacing="25.0" style="-fx-padding: 40 0;">
+                            <children>
+                                <Label text="Đăng nhập tài khoản">
+                                    <font><Font name="System Bold" size="32.0" /></font>
+                                </Label>
+                                <HBox alignment="CENTER_LEFT" prefHeight="50.0" spacing="10.0" style="-fx-background-color: #F8F8F8; -fx-background-radius: 25; -fx-padding: 0 20;">
+                                    <Label text="Mới sử dụng?" textFill="#191919"><font><Font size="15.0" /></font></Label>
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Button mnemonicParsing="false" onAction="#handleGoToSignUp" style="-fx-background-color: transparent; -fx-border-color: #333333; -fx-border-radius: 20; -fx-border-width: 1; -fx-padding: 8 18; -fx-cursor: hand;" text="Tạo tài khoản" textFill="#191919"><font><Font size="14.0" /></font></Button>
+                                </HBox>
+                                <VBox spacing="15.0">
+                                    <TextField fx:id="txtUsername" focusTraversable="false" onAction="#handleLogin" prefHeight="50.0" promptText="Email hoặc Tên đăng nhập" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 15px;" />
+                                    <PasswordField fx:id="txtPassword" focusTraversable="false" onAction="#handleLogin" prefHeight="50.0" promptText="Mật khẩu" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 15px;" />
+                                </VBox>
+                                <Label fx:id="lblError" textFill="#e53238" wrapText="true" />
+                                <Button fx:id="btnLogin" defaultButton="true" mnemonicParsing="false" onAction="#handleLogin" prefHeight="50.0" maxWidth="Infinity" style="-fx-background-color: #3665f3; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-size: 16px; -fx-font-weight: bold; -fx-cursor: hand;" text="Tiếp tục" />
+                                <HBox alignment="CENTER" spacing="5.0">
+                                    <CheckBox fx:id="chkRemember" mnemonicParsing="false" text="Duy trì đăng nhập" textFill="#191919" style="-fx-cursor: hand;"><font><Font size="14.0"/></font></CheckBox>
+                                    <Label text=" ⓘ" textFill="#707070" style="-fx-cursor: hand;"><font><Font size="14.0"/></font></Label>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </StackPane>
+            </content>
+        </ScrollPane>
+
+    </children>
+</AnchorPane>

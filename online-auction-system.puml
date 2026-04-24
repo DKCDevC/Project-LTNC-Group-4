@@ -1,0 +1,350 @@
+@startuml
+class network.ClientHandler {
+- {static} List<AuctionObserver> observers
+- Socket clientSocket
+- PrintWriter out
+- Gson gson
++ void run()
++ {static} void registerObserver(AuctionObserver)
++ {static} void removeObserver(AuctionObserver)
++ {static} void notifyAllObservers(String)
++ void updateClient(String)
+}
+
+
+abstract class models.User {
+# String username
+# String password
+# String email
++ String getUsername()
++ void setUsername(String)
++ String getEmail()
++ void setEmail(String)
++ {abstract}String getRole()
++ String getPassword()
+}
+
+
+abstract class models.Entity {
+# String id
++ String getId()
++ void setId()
+}
+
+
+class controllers.SignUpController {
+- TextField txtUsername
+- PasswordField txtPassword
+- ComboBox<String> cbRole
+- Label lblMessage
++ void handleRegister(ActionEvent)
++ void handleBackToLogin(ActionEvent)
+}
+
+
+class services.ItemFactory {
++ {static} Item createItem(String,String,String,double,LocalDateTime,LocalDateTime,String)
+}
+
+class models.Bidder {
++ String getRole()
+}
+
+class network.MainUI {
++ void start(Stage)
++ {static} void main(String[])
+}
+
+class MainServer {
++ {static} void main(String[])
+}
+
+class network.AuctionChartGUI {
+- XYChart.Series<String,Number> priceSeries
+- DateTimeFormatter timeFormatter
++ void start(Stage)
+- void startNetworkListener()
++ {static} void main(String[])
+}
+
+
+class models.AuctionRequest {
+- String command
+- Object data
++ String getCommand()
++ Object getData()
+}
+
+
+class network.UILauncher {
++ {static} void main(String[])
+}
+
+class services.ItemManager {
+- {static} ItemManager instance
+- ItemDAO itemDAO
++ {static} ItemManager getInstance()
++ boolean addItem(String,Item,Seller)
++ boolean updateItem(String,String,String,double)
++ boolean deleteItem(String)
++ List<Item> getAllItems()
+}
+
+
+class network.AuctionSocketServer {
+- int port
++ void startServer()
+}
+
+
+enum models.AuctionStatus {
++  OPEN
++  RUNNING
++  FINISHED
++  PAID
++  CANCELED
+}
+
+class network.AuctionClient {
++ {static} void main(String[])
+}
+
+class models.Electronics {
+- int warrantyMonths
++ void printInfo()
++ int getWarrantyMonths()
+}
+
+
+class models.AutoBid {
+- Bidder bidder
+- double maxBid
+- double increment
+- LocalDateTime registerTime
++ Bidder getBidder()
++ double getMaxBid()
++ double getIncrement()
++ LocalDateTime getRegisterTime()
+}
+
+
+class services.AuctionManagerTest {
+- AuctionManager manager
+- Auction auction
+- Bidder bidder1
+- Bidder bidder2
+~ void setUp()
+~ void testValidBid()
+~ void testInvalidLowerBid()
+~ void testAntiSnipingExtension()
+}
+
+
+abstract class models.Item {
+- String name
+- String description
+- double startingPrice
+- double currentHighestPrice
+- LocalDateTime startTime
+- LocalDateTime endTime
++ {abstract}void printInfo()
++ String getName()
++ void setName(String)
++ String getDescription()
++ void setDescription(String)
++ double getStartingPrice()
++ void setStartingPrice(double)
++ double getCurrentHighestPrice()
++ void setCurrentHighestPrice(double)
++ LocalDateTime getStartTime()
++ void setStartTime(LocalDateTime)
++ LocalDateTime getEndTime()
++ void setEndTime(LocalDateTime)
+}
+
+
+class controllers.DashboardController {
+- TableView<Item> tableItems
+- TableColumn<Item,String> colName
+- TableColumn<Item,String> colDesc
+- TableColumn<Item,Double> colPrice
+- TableColumn<Item,String> colStatus
+- TextField txtBidAmount
+- Button btnBid
+- Socket socket
+- PrintWriter out
+- BufferedReader in
+- String currentUsername
+- String userRole
+- ObservableList<Item> masterData
+- Gson gson
++ void setUserInfo(String,String)
++ void initialize()
+- void startBackgroundListener()
++ void handlePlaceBid(ActionEvent)
++ void handleShowChart(ActionEvent)
+- void showDetailPopup(Item)
+- void showAlert(Alert.AlertType,String,String)
+}
+
+
+class services.AuctionManager {
+- {static} AuctionManager instance
+- Map<String,Auction> activeAuctions
++ {static} AuctionManager getInstance()
++ void addAuction(Auction)
++ boolean placeBid(String,Bidder,double)
+- void handleAntiSniping(Auction)
+- void triggerAutoBids(Auction)
++ void startAuctionTimer()
++ String getFirstRunningAuctionId()
+}
+
+
+class models.Vehicle {
+- String brand
++ void printInfo()
++ String getBrand()
++ void setBrand(String)
+}
+
+
+class services.UserManager {
+- {static} UserManager instance
+- UserDAO userDAO
++ {static} UserManager getInstance()
++ boolean register(User)
++ User login(String,String)
++ boolean registerUser(String,String,String)
+}
+
+
+class models.BidTransaction {
+- Bidder bidder
+- double amount
+- LocalDateTime timestamp
++ Bidder getBidder()
++ double getAmount()
++ LocalDateTime getTimestamp()
+}
+
+
+class models.Seller {
++ String getRole()
+}
+
+class utils.DBConnection {
+- {static} String URL
++ {static} Connection getConnection()
+- {static} void createTablesAndDefaultUsers(Connection)
+}
+
+
+interface network.AuctionObserver {
+~ void updateClient(String)
+}
+
+class controllers.LoginController {
+- TextField txtUsername
+- PasswordField txtPassword
+- Button btnLogin
+- Label lblError
++ void handleLogin(ActionEvent)
++ void handleGoToSignUp(ActionEvent)
+}
+
+
+class models.Art {
+- String artistName
++ void printInfo()
++ String getArtistName()
+}
+
+
+class dao.UserDAO {
++ User loginUser(String,String)
++ boolean insertUser(String,String,String)
+}
+
+class utils.GsonConfig {
+- {static} DateTimeFormatter formatter
++ {static} Gson createGson()
+}
+
+
+class controllers.SellerDashboardController {
+- TextField txtName
+- TextField txtDesc
+- TextField txtPrice
+- ComboBox<String> cbType
+- TextField txtExtra
+- Label lblMessage
+- String currentUsername
+- PrintWriter out
++ void setUserInfo(String)
++ void initialize()
++ void handleAddItem(ActionEvent)
+}
+
+
+class models.Admin {
++ String getRole()
+}
+
+interface network.AuctionSubject {
+~ void registerObserver(AuctionObserver)
+~ void removeObserver(AuctionObserver)
+~ void notifyAllObservers(String)
+}
+
+class models.Auction {
+- Item item
+- Seller seller
+- AuctionStatus status
+- List<BidTransaction> bidHistory
+- Bidder winner
+- String auctionId
+- List<AutoBid> autoBids
++ String getAuctionId()
++ void setAuctionId(String)
++ void addBid(BidTransaction)
++ void registerAutoBid(AutoBid)
++ Item getItem()
++ Seller getSeller()
++ AuctionStatus getStatus()
++ void setStatus(AuctionStatus)
++ List<BidTransaction> getBidHistory()
++ Bidder getWinner()
++ void setWinner(Bidder)
++ List<AutoBid> getAutoBids()
+}
+
+
+class network.ChartLauncher {
++ {static} void main(String[])
+}
+
+class dao.ItemDAO {
++ List<Item> getAllItems()
++ boolean insertItem(String,Item)
++ boolean updateItem(String,String,String,double)
++ boolean deleteItem(String)
+}
+
+
+
+network.Runnable <|.. network.ClientHandler
+network.AuctionObserver <|.. network.ClientHandler
+models.Entity <|-- models.User
+models.User <|-- models.Bidder
+javafx.application.Application <|-- network.MainUI
+javafx.application.Application <|-- network.AuctionChartGUI
+models.Item <|-- models.Electronics
+models.Entity <|-- models.Item
+models.Item <|-- models.Vehicle
+models.Entity <|-- models.BidTransaction
+models.User <|-- models.Seller
+models.Item <|-- models.Art
+models.User <|-- models.Admin
+models.Entity <|-- models.Auction
+@enduml
