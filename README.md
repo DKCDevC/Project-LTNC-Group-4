@@ -16,7 +16,7 @@ Hệ thống được xây dựng phục vụ môn học **Lập Trình Nâng Ca
 
 ---
 
-## ⚙️ Chức năng chính (gợi ý hệ thống)
+## ⚙️ Chức năng chính
 
 - Đăng ký / đăng nhập người dùng
 - Đăng sản phẩm đấu giá
@@ -28,7 +28,7 @@ Hệ thống được xây dựng phục vụ môn học **Lập Trình Nâng Ca
 
 ---
 
-## 🛠️ Công nghệ sử dụng (có thể chỉnh theo project)
+## 🛠️ Công nghệ sử dụng 
 
 - Java (Backend / Core system)
 - Socket / WebSocket (real-time bidding)
@@ -43,3 +43,16 @@ Hệ thống được xây dựng phục vụ môn học **Lập Trình Nâng Ca
 ### 1. Clone repository
 ```bash
 git clone https://github.com/DKCDevC/Project-LTNC-Group-4.git
+```
+
+### 2. Run Main Server
+```bash
+MainServer.java
+```
+
+### 3. Run UI:
+```bash
+UILauncher.java
+```
+
+
