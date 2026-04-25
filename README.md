@@ -1,22 +1,22 @@
-# 🏷️ Hệ Thống Đấu Giá Trực Tuyến
+#  Hệ Thống Đấu Giá Trực Tuyến
 
-## 📌 Giới thiệu
+##  Giới thiệu
 Dự án **Hệ Thống Đấu Giá Trực Tuyến** là một ứng dụng mô phỏng nền tảng đấu giá, nơi người dùng có thể đăng sản phẩm, tham gia đấu giá và theo dõi các phiên đấu giá theo thời gian thực.
 
 Hệ thống được xây dựng phục vụ môn học **Lập Trình Nâng Cao (LTNC)**.
 
 ---
 
-## 👥 Phân chia công việc
+##  Phân chia công việc
 
-- 🎨 **Giao Diện (UI/UX):** Lê Quốc Giang  
-- ⚙️ **Hệ Thống (Business Logic):** Nguyễn Duy Anh  
-- 🌐 **Mạng và Server:** Nguyễn Bá Dũng  
-- 🗄️ **Database:** Đinh Đức Hiếu  
+-  **Giao Diện (UI/UX):** Lê Quốc Giang  
+-  **Hệ Thống (Business Logic):** Nguyễn Duy Anh  
+-  **Mạng và Server:** Nguyễn Bá Dũng  
+-  **Database:** Đinh Đức Hiếu  
 
 ---
 
-## ⚙️ Chức năng chính
+##  Chức năng chính
 
 - Đăng ký / đăng nhập người dùng
 - Đăng sản phẩm đấu giá
@@ -38,7 +38,7 @@ Hệ thống được xây dựng phục vụ môn học **Lập Trình Nâng Ca
 
 ---
 
-## 🚀 Cách chạy dự án
+##  Cách chạy dự án
 
 ### 1. Clone repository
 ```bash
