@@ -28,7 +28,7 @@ Hệ thống được xây dựng phục vụ môn học **Lập Trình Nâng Ca
 
 ---
 
-## 🛠️ Công nghệ sử dụng 
+##  Công nghệ sử dụng 
 
 - Java (Backend / Core system)
 - Socket / WebSocket (real-time bidding)
