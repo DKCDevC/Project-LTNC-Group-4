@@ -24,7 +24,7 @@ public class UserManager {
     }
 
     // Hàm Register
-    public boolean registerUser(String username, String password, String role) {
-        return userDAO.insertUser(username, password, role);
+    public boolean registerUser(String username, String password, String email, String role) {
+        return userDAO.insertUser(username, password, email, role);
     }
 }

@@ -18,6 +18,7 @@ import java.net.Socket;
 
 public class SignUpController {
     @FXML private TextField txtUsername;
+    @FXML private TextField txtEmail;
     @FXML private PasswordField txtPassword;
     @FXML private ComboBox<String> cbRole;
     @FXML private Label lblMessage;
@@ -25,10 +26,11 @@ public class SignUpController {
     @FXML
     public void handleRegister(ActionEvent event) {
         String username = txtUsername.getText().trim();
+        String email = txtEmail.getText().trim();
         String password = txtPassword.getText().trim();
         String role = cbRole.getValue();
 
-        if (username.isEmpty() || password.isEmpty() || role == null) {
+        if (username.isEmpty() || email.isEmpty() || password.isEmpty() || role == null) {
             lblMessage.setTextFill(javafx.scene.paint.Color.RED);
             lblMessage.setText("Vui lòng nhập đầy đủ thông tin!");
             return;
@@ -39,13 +41,15 @@ public class SignUpController {
 
         new Thread(() -> {
             try {
-                Socket socket = new Socket("127.0.0.1", 9999);
+                // Sử dụng port 1234 cho MainServer
+                Socket socket = new Socket("127.0.0.1", 1234);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                 JsonObject regData = new JsonObject();
                 regData.addProperty("command", "REGISTER");
                 regData.addProperty("username", username);
+                regData.addProperty("email", email);
                 regData.addProperty("password", password);
                 regData.addProperty("role", role);
 
@@ -60,8 +64,9 @@ public class SignUpController {
                         lblMessage.setTextFill(javafx.scene.paint.Color.web("#34c759"));
                         lblMessage.setText("Đăng ký thành công! Hãy quay lại đăng nhập.");
                     } else {
+                        String msg = jsonResponse.has("message") ? jsonResponse.get("message").getAsString() : "Tài khoản hoặc Email đã tồn tại.";
                         lblMessage.setTextFill(javafx.scene.paint.Color.RED);
-                        lblMessage.setText("Tài khoản đã tồn tại.");
+                        lblMessage.setText(msg);
                     }
                 });
             } catch (Exception e) {
@@ -73,16 +78,12 @@ public class SignUpController {
         }).start();
     }
 
-    // Đã sửa lại hàm này để chuyển cảnh mượt mà và giữ nguyên toàn màn hình
     @FXML
     public void handleBackToLogin(ActionEvent event) {
         try {
             Stage stage = (Stage) txtUsername.getScene().getWindow();
             Parent root = FXMLLoader.load(getClass().getResource("/views/Login.fxml"));
-
-            // Dòng lệnh quan trọng vừa được bổ sung
             stage.setScene(new Scene(root));
-
             stage.setMaximized(true);
         } catch (Exception e) {
             e.printStackTrace();

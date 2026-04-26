@@ -3,6 +3,8 @@ package services;
 import dao.ItemDAO;
 import models.Item;
 import models.Seller;
+import models.Auction;
+import models.AuctionStatus;
 import java.util.List;
 
 public class ItemManager {
@@ -21,21 +23,54 @@ public class ItemManager {
     }
 
     public void addItem(String id, Item item, Seller seller) {
-        // 1. Gắn seller vào item
         item.setSeller(seller);
-
-        // 2. ĐÃ SỬA: Gọi DAO để lưu sản phẩm vào Database thay vì dùng biến 'items'
-        // Bạn cần đảm bảo trong ItemDAO đã có hàm addItem(String id, Item item)
         itemDAO.addItem(id, item);
-
         System.out.println(">>> Đã lưu sản phẩm " + item.getName() + " vào Database.");
     }
 
-    public boolean updateItem(String productId, String newName, String newDesc, double newStartPrice) {
+    /**
+     * Cập nhật sản phẩm có kiểm tra quyền sở hữu và trạng thái đấu giá.
+     */
+    public boolean updateItem(String productId, String requesterUsername, String newName, String newDesc, double newStartPrice) {
+        Item item = itemDAO.getItemById(productId);
+        if (item == null) return false;
+
+        // 1. Kiểm tra quyền sở hữu (Security)
+        if (!item.getSeller().getUsername().equals(requesterUsername)) {
+            System.out.println("!!! CẢNH BÁO: User " + requesterUsername + " thử cập nhật sản phẩm không thuộc quyền sở hữu!");
+            return false;
+        }
+
+        // 2. Kiểm tra trạng thái đấu giá (Data Integrity)
+        Auction auction = AuctionManager.getInstance().getAuction(productId);
+        if (auction != null && auction.getStatus() != AuctionStatus.OPEN) {
+            System.out.println("!!! LỖI: Không thể cập nhật sản phẩm khi đấu giá đang diễn ra hoặc đã kết thúc!");
+            return false;
+        }
+
         return itemDAO.updateItem(productId, newName, newDesc, newStartPrice);
     }
 
-    public boolean deleteItem(String productId) {
+    /**
+     * Xóa sản phẩm có kiểm tra quyền sở hữu và trạng thái đấu giá.
+     */
+    public boolean deleteItem(String productId, String requesterUsername) {
+        Item item = itemDAO.getItemById(productId);
+        if (item == null) return false;
+
+        // 1. Kiểm tra quyền sở hữu
+        if (!item.getSeller().getUsername().equals(requesterUsername)) {
+            System.out.println("!!! CẢNH BÁO: User " + requesterUsername + " thử xóa sản phẩm không thuộc quyền sở hữu!");
+            return false;
+        }
+
+        // 2. Kiểm tra trạng thái đấu giá
+        Auction auction = AuctionManager.getInstance().getAuction(productId);
+        if (auction != null && auction.getStatus() != AuctionStatus.OPEN) {
+            System.out.println("!!! LỖI: Không thể xóa sản phẩm khi đấu giá đang diễn ra hoặc đã kết thúc!");
+            return false;
+        }
+
         return itemDAO.deleteItem(productId);
     }
 

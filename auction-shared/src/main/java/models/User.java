@@ -4,6 +4,8 @@ public abstract class User extends Entity {
     protected String username;
     protected String password;
     protected String email;
+    protected boolean isLocked = false;
+    protected boolean isVerified = false;
 
     public User(String username, String password, String email) {
         super();
@@ -33,4 +35,9 @@ public abstract class User extends Entity {
     public String getPassword(){
         return password;
     }
+
+    public boolean isLocked() { return isLocked; }
+    public void setLocked(boolean locked) { isLocked = locked; }
+    public boolean isVerified() { return isVerified; }
+    public void setVerified(boolean verified) { isVerified = verified; }
 }

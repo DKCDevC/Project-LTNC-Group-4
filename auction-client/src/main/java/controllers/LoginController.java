@@ -6,11 +6,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.control.Button;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -25,17 +21,16 @@ public class LoginController {
 
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
+    @FXML private TextField txtPasswordVisible;
+    @FXML private ToggleButton btnShowPassword;
     @FXML private Button btnLogin;
     @FXML private Label lblError;
     @FXML private CheckBox chkRemember;
 
-    // Khai báo Preferences để lưu thông tin vào hệ thống máy tính
     private Preferences prefs = Preferences.userNodeForPackage(LoginController.class);
 
-    // Hàm initialize tự động chạy khi mở màn hình
     @FXML
     public void initialize() {
-        // Lấy thông tin đã lưu (nếu có)
         String savedUser = prefs.get("username", "");
         String savedPass = prefs.get("password", "");
         boolean isRemembered = prefs.getBoolean("remember", false);
@@ -43,35 +38,52 @@ public class LoginController {
         if (isRemembered) {
             txtUsername.setText(savedUser);
             txtPassword.setText(savedPass);
+            txtPasswordVisible.setText(savedPass);
             if (chkRemember != null) {
                 chkRemember.setSelected(true);
             }
         }
+
+        // Đồng bộ dữ liệu giữa PasswordField và TextField
+        txtPassword.textProperty().bindBidirectional(txtPasswordVisible.textProperty());
     }
 
-    // Bắt sự kiện khi bấm nút Đăng nhập
+    @FXML
+    public void togglePasswordVisibility() {
+        if (btnShowPassword.isSelected()) {
+            txtPasswordVisible.setVisible(true);
+            txtPassword.setVisible(false);
+            btnShowPassword.setText("🙈");
+        } else {
+            txtPasswordVisible.setVisible(false);
+            txtPassword.setVisible(true);
+            btnShowPassword.setText("👁");
+        }
+    }
+
     @FXML
     public void handleLogin(ActionEvent event) {
-        String username = txtUsername.getText().trim();
+        String identifier = txtUsername.getText().trim();
         String password = txtPassword.getText().trim();
 
-        if (username.isEmpty() || password.isEmpty()) {
+        if (identifier.isEmpty() || password.isEmpty()) {
             lblError.setText("Vui lòng nhập đầy đủ thông tin!");
             return;
         }
 
         lblError.setText("Đang kết nối...");
-        lblError.setTextFill(javafx.scene.paint.Color.web("#8e8e93")); // Màu xám
+        lblError.setTextFill(javafx.scene.paint.Color.web("#8e8e93"));
 
         new Thread(() -> {
             try {
-                Socket socket = new Socket("127.0.0.1", 9999);
+                // Sử dụng port 1234 cho MainServer
+                Socket socket = new Socket("127.0.0.1", 1234);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
                 JsonObject loginData = new JsonObject();
                 loginData.addProperty("command", "LOGIN");
-                loginData.addProperty("username", username);
+                loginData.addProperty("username", identifier); // identifier có thể là username hoặc email
                 loginData.addProperty("password", password);
 
                 out.println(new Gson().toJson(loginData));
@@ -82,10 +94,8 @@ public class LoginController {
 
                 Platform.runLater(() -> {
                     if ("SUCCESS".equals(status)) {
-
-                        // --- LƯU THÔNG TIN NẾU CHỌN DUY TRÌ ĐĂNG NHẬP ---
                         if (chkRemember != null && chkRemember.isSelected()) {
-                            prefs.put("username", username);
+                            prefs.put("username", identifier);
                             prefs.put("password", password);
                             prefs.putBoolean("remember", true);
                         } else {
@@ -93,52 +103,40 @@ public class LoginController {
                             prefs.remove("password");
                             prefs.putBoolean("remember", false);
                         }
-                        // ---------------------------------------------------------
 
-                        // 1. Lấy role từ JSON do Server trả về
                         String role = jsonResponse.get("role").getAsString();
-
-                        lblError.setTextFill(javafx.scene.paint.Color.web("#34c759")); // Xanh lá
+                        lblError.setTextFill(javafx.scene.paint.Color.web("#34c759"));
                         lblError.setText("Đăng nhập thành công!");
 
-                        // 2. PHÂN LUỒNG CHUYỂN CẢNH DỰA VÀO ROLE
                         try {
                             Stage stage = (Stage) btnLogin.getScene().getWindow();
                             FXMLLoader loader;
                             Parent root;
 
                             if ("SELLER".equalsIgnoreCase(role)) {
-                                // Mở giao diện Quản lý sản phẩm dành riêng cho Seller
                                 loader = new FXMLLoader(getClass().getResource("/views/SellerDashboard.fxml"));
                                 root = loader.load();
-
                                 SellerDashboardController sellerCtrl = loader.getController();
-                                sellerCtrl.setUserInfo(username);
-
+                                sellerCtrl.setUserInfo(identifier);
                                 stage.setScene(new Scene(root));
-                                stage.setMaximized(true); // Đã chỉnh để bung toàn màn hình
                             } else {
-                                // Mở giao diện Đấu giá (Dành cho Bidder / Admin)
                                 loader = new FXMLLoader(getClass().getResource("/views/Dashboard.fxml"));
                                 root = loader.load();
-
                                 DashboardController dashboard = loader.getController();
-                                dashboard.setUserInfo(username, role);
-
+                                dashboard.setUserInfo(identifier, role);
                                 stage.setScene(new Scene(root));
-                                stage.setMaximized(true); // Đã chỉnh để bung toàn màn hình
                             }
+                            stage.setMaximized(true);
                         } catch (Exception e) {
                             e.printStackTrace();
-                            lblError.setTextFill(javafx.scene.paint.Color.web("#ff3b30"));
                             lblError.setText("Lỗi khi tải màn hình chính.");
                         }
                     } else {
-                        lblError.setTextFill(javafx.scene.paint.Color.web("#ff3b30")); // Đỏ
-                        lblError.setText("Tài khoản hoặc mật khẩu không đúng.");
+                        String msg = jsonResponse.has("message") ? jsonResponse.get("message").getAsString() : "Tài khoản hoặc mật khẩu không đúng.";
+                        lblError.setTextFill(javafx.scene.paint.Color.web("#ff3b30"));
+                        lblError.setText(msg);
                     }
                 });
-
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     lblError.setTextFill(javafx.scene.paint.Color.web("#ff3b30"));
@@ -148,14 +146,13 @@ public class LoginController {
         }).start();
     }
 
-    // Bắt sự kiện khi bấm nút "Đăng ký ngay"
     @FXML
     public void handleGoToSignUp(ActionEvent event) {
         try {
             Stage stage = (Stage) btnLogin.getScene().getWindow();
             Parent root = FXMLLoader.load(getClass().getResource("/views/SignUp.fxml"));
             stage.setScene(new Scene(root));
-            stage.setMaximized(true); // Đã chỉnh để bung toàn màn hình
+            stage.setMaximized(true);
         } catch (Exception e) {
             e.printStackTrace();
         }

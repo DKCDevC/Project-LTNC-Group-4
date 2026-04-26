@@ -15,6 +15,7 @@ public class AuctionManager {
 
     private static AuctionManager instance;
     private Map<String, Auction> activeAuctions;
+    private AuctionNotificationService notificationService;
 
     private AuctionManager() {
         activeAuctions = new ConcurrentHashMap<>();
@@ -25,6 +26,16 @@ public class AuctionManager {
             instance = new AuctionManager();
         }
         return instance;
+    }
+
+    public void setNotificationService(AuctionNotificationService service) {
+        this.notificationService = service;
+    }
+
+    private void notifyObservers(String message) {
+        if (notificationService != null) {
+            notificationService.notifyAll(message);
+        }
     }
 
     public void addAuction(Auction auction) {
@@ -64,7 +75,7 @@ public class AuctionManager {
             auction.getItem().setEndTime(newEndTime);
 
             String snipeMsg = "{\"command\":\"UPDATE_TIME\", \"message\":\"[🔥 HOT] Phiên đấu giá được gia hạn thêm 1 phút do có thầu mới!\"}";
-            network.ClientHandler.notifyAllObservers(snipeMsg);
+            notifyObservers(snipeMsg);
         }
     }
 
@@ -95,7 +106,7 @@ public class AuctionManager {
                 autoBidTriggered = true;
 
                 String autoMsg = "{\"command\":\"UPDATE_PRICE\", \"message\":\"[AUTO-BID] Bot của " + nextBot.getBidder().getUsername() + " nâng giá lên " + newPrice + "\"}";
-                network.ClientHandler.notifyAllObservers(autoMsg);
+                notifyObservers(autoMsg);
             }
         }
     }
@@ -117,7 +128,7 @@ public class AuctionManager {
                                     : "Không có người thắng.";
 
                             String msg = "{\"command\":\"AUCTION_FINISHED\", \"message\":\"[HẾT GIỜ] " + auction.getItem().getName() + " đã kết thúc. " + winnerInfo + "\"}";
-                            network.ClientHandler.notifyAllObservers(msg);
+                            notifyObservers(msg);
                             System.out.println(">>> Đóng phiên: " + auction.getAuctionId());
                         }
                     }
@@ -132,5 +143,9 @@ public class AuctionManager {
 
     public String getFirstRunningAuctionId() {
         return activeAuctions.isEmpty() ? null : activeAuctions.keySet().iterator().next();
+    }
+
+    public Auction getAuction(String auctionId) {
+        return activeAuctions.get(auctionId);
     }
 }

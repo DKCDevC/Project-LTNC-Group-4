@@ -42,17 +42,14 @@
 
                         <StackPane prefWidth="600.0" prefHeight="700.0" style="-fx-background-color: #F8F8F8; -fx-background-radius: 20; -fx-border-radius: 20; -fx-border-color: #E0E0E0; -fx-border-width: 1;">
                             <children>
-
-                                <Label text="Chưa tìm thấy ảnh Mixi Food" textFill="#AAAAAA">
+                                <Label text="Mixi Food Bag" textFill="#AAAAAA">
                                     <font><Font name="System Bold" size="18.0"/></font>
                                 </Label>
-
                                 <ImageView fx:id="imgMixiBag" fitWidth="580.0" fitHeight="680.0" preserveRatio="true">
                                     <image>
                                         <Image url="@../unnamed.jpg" />
                                     </image>
                                 </ImageView>
-
                             </children>
                         </StackPane>
 
@@ -67,6 +64,7 @@
 
                                 <VBox spacing="20.0">
                                     <TextField fx:id="txtUsername" prefHeight="55.0" promptText="Tên đăng nhập" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 16px;" />
+                                    <TextField fx:id="txtEmail" prefHeight="55.0" promptText="Email" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 16px;" />
                                     <PasswordField fx:id="txtPassword" prefHeight="55.0" promptText="Mật khẩu" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 16px;" />
                                     <ComboBox fx:id="cbRole" prefHeight="55.0" maxWidth="Infinity" promptText="Chọn vai trò tham gia" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-font-size: 16px;">
                                         <items>

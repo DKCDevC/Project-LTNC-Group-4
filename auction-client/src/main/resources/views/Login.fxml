@@ -10,8 +10,8 @@
         <HBox layoutX="40.0" layoutY="30.0" spacing="1.0">
             <Label text="e" textFill="#e53238"><font><Font name="System Bold" size="40.0"/></font></Label>
             <Label text="b" textFill="#0064d2"><font><Font name="System Bold" size="40.0"/></font></Label>
-            <Label text="i" textFill="#f5af02"><font><Font name="System Bold" size="40.0"/></font></Label>
-            <Label text="d" textFill="#86b817"><font><Font name="System Bold" size="40.0"/></font></Label>
+            <Label text="a" textFill="#f5af02"><font><Font name="System Bold" size="40.0"/></font></Label>
+            <Label text="y" textFill="#86b817"><font><Font name="System Bold" size="40.0"/></font></Label>
         </HBox>
 
         <StackPane AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
@@ -38,7 +38,16 @@
 
                         <VBox spacing="15.0">
                             <TextField fx:id="txtUsername" focusTraversable="false" prefHeight="50.0" promptText="Email hoặc Tên đăng nhập" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 15px;" />
-                            <PasswordField fx:id="txtPassword" focusTraversable="false" prefHeight="50.0" promptText="Mật khẩu" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 15; -fx-font-size: 15px;" />
+                            
+                            <StackPane>
+                                <PasswordField fx:id="txtPassword" focusTraversable="false" prefHeight="50.0" promptText="Mật khẩu" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 40 10 15; -fx-font-size: 15px;" />
+                                <TextField fx:id="txtPasswordVisible" visible="false" focusTraversable="false" prefHeight="50.0" promptText="Mật khẩu" style="-fx-background-color: transparent; -fx-border-color: #8f8f8f; -fx-border-radius: 8; -fx-padding: 10 40 10 15; -fx-font-size: 15px;" />
+                                <ToggleButton fx:id="btnShowPassword" onAction="#togglePasswordVisibility" style="-fx-background-color: transparent; -fx-cursor: hand;" text="👁" StackPane.alignment="CENTER_RIGHT">
+                                    <padding>
+                                        <javafx.geometry.Insets right="10.0" />
+                                    </padding>
+                                </ToggleButton>
+                            </StackPane>
                         </VBox>
 
                         <Label fx:id="lblError" textFill="#e53238" wrapText="true" />

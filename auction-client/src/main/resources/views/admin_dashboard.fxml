@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox prefHeight="600.0" prefWidth="900.0" spacing="0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.AdminDashboardController" style="-fx-background-color: #f7f7f7;">
+    
+    <!-- Top Nav (eBay Style) -->
+    <HBox alignment="CENTER_LEFT" prefHeight="60.0" spacing="20.0" style="-fx-background-color: white; -fx-border-color: #dddddd; -fx-border-width: 0 0 1 0;">
+        <padding><Insets left="20" right="20"/></padding>
+        <Text text="eBay" fill="#e53238" style="-fx-font-size: 24; -fx-font-weight: bold;"/>
+        <Text text="Admin Console" fill="#555555" style="-fx-font-size: 18;"/>
+        <Region HBox.hgrow="ALWAYS" />
+        <Button text="Logout" onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: #0654ba; -fx-cursor: hand;"/>
+    </HBox>
+
+    <HBox VBox.vgrow="ALWAYS">
+        <!-- Sidebar -->
+        <VBox prefWidth="200.0" spacing="10.0" style="-fx-background-color: #ffffff; -fx-border-color: #dddddd; -fx-border-width: 0 1 0 0;">
+            <padding><Insets top="20" left="10" right="10"/></padding>
+            <Button text="User Management" maxWidth="Infinity" style="-fx-background-color: #f7f7f7; -fx-text-fill: #333333; -fx-alignment: center-left;"/>
+            <Button text="Auctions" maxWidth="Infinity" style="-fx-background-color: transparent; -fx-text-fill: #666666; -fx-alignment: center-left;"/>
+            <Button text="Transactions" maxWidth="Infinity" style="-fx-background-color: transparent; -fx-text-fill: #666666; -fx-alignment: center-left;"/>
+            <Button text="Reports" maxWidth="Infinity" style="-fx-background-color: transparent; -fx-text-fill: #666666; -fx-alignment: center-left;"/>
+        </VBox>
+
+        <!-- Main Content -->
+        <VBox HBox.hgrow="ALWAYS" spacing="20.0">
+            <padding><Insets top="20" left="20" right="20" bottom="20"/></padding>
+            
+            <Text text="User Management" style="-fx-font-size: 22; -fx-font-weight: bold;"/>
+
+            <!-- Action Bar -->
+            <HBox spacing="10.0" alignment="CENTER_LEFT">
+                <TextField fx:id="searchField" promptText="Search users..." prefWidth="300.0" style="-fx-background-radius: 20; -fx-border-radius: 20;"/>
+                <Button text="Search" style="-fx-background-color: #0654ba; -fx-text-fill: white; -fx-background-radius: 20;"/>
+            </HBox>
+
+            <!-- User Table -->
+            <TableView fx:id="userTable" VBox.vgrow="ALWAYS" style="-fx-background-radius: 5; -fx-border-radius: 5;">
+                <columns>
+                    <TableColumn fx:id="usernameCol" text="Username" prefWidth="150"/>
+                    <TableColumn fx:id="emailCol" text="Email" prefWidth="200"/>
+                    <TableColumn fx:id="roleCol" text="Role" prefWidth="100"/>
+                    <TableColumn fx:id="statusCol" text="Status" prefWidth="120"/>
+                    <TableColumn fx:id="actionCol" text="Actions" prefWidth="200"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </HBox>
+</VBox>
