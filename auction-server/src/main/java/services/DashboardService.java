@@ -4,6 +4,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import dao.OrderDAO;
 import models.Item;
+import models.Auction;
+import services.AuctionManager;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -46,6 +48,11 @@ public class DashboardService {
                 pObj.addProperty("type", itemType);
 
                 double currentVal = item.getStartingPrice();
+                Auction activeAuction = AuctionManager.getInstance().getAuction(item.getId());
+                if (activeAuction != null) {
+                    currentVal = activeAuction.getItem().getCurrentHighestPrice();
+                }
+
                 pObj.addProperty("price", String.format("%,.0f", currentVal));
 
                 if (item.getEndTime() != null) {
@@ -57,7 +64,6 @@ public class DashboardService {
 
                 if (now.isAfter(item.getEndTime())) {
                     pObj.addProperty("status", "Đã kết thúc");
-                    totalRevenue += currentVal;
                 } else {
                     pObj.addProperty("status", "Đang đấu giá");
                     activeAuctionsCount++;
@@ -66,11 +72,13 @@ public class DashboardService {
             }
         }
 
+        OrderDAO orderDao = new OrderDAO();
+        totalRevenue = orderDao.getTotalRevenue(sellerName);
+
         response.addProperty("totalRevenue", String.format("%,.0f", totalRevenue));
         response.addProperty("activeAuctions", String.valueOf(activeAuctionsCount));
 
         JsonArray ordersArray = new JsonArray();
-        OrderDAO orderDao = new OrderDAO();
         List<Map<String, String>> orderList = orderDao.getOrdersBySeller(sellerName);
         for (Map<String, String> order : orderList) {
             JsonObject oObj = new JsonObject();

@@ -11,6 +11,38 @@ import java.time.LocalDate;
 
 public class OrderDAO {
 
+    public boolean insertOrder(String itemId, String sellerName, String bidderName, double finalPrice) {
+        String query = "INSERT INTO orders (item_id, seller_name, bidder_name, final_price) VALUES (?, ?, ?, ?)";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            
+            stmt.setString(1, itemId);
+            stmt.setString(2, sellerName);
+            stmt.setString(3, bidderName);
+            stmt.setDouble(4, finalPrice);
+            
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Lỗi lưu đơn hàng: " + e.getMessage());
+            return false;
+        }
+    }
+
+    public double getTotalRevenue(String sellerName) {
+        String query = "SELECT SUM(final_price) as total FROM orders WHERE seller_name = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, sellerName);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getDouble("total");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0.0;
+    }
+
     public Map<String, Double> getRevenueLast7Days(String sellerName) {
         // Sử dụng LinkedHashMap để giữ đúng thứ tự từ cũ đến mới
         Map<String, Double> revenueData = new LinkedHashMap<>();

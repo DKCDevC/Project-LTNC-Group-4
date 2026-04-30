@@ -43,8 +43,8 @@ public class ItemManager {
 
         // 2. Kiểm tra trạng thái đấu giá (Data Integrity)
         Auction auction = AuctionManager.getInstance().getAuction(productId);
-        if (auction != null && auction.getStatus() != AuctionStatus.OPEN) {
-            System.out.println("!!! LỖI: Không thể cập nhật sản phẩm khi đấu giá đang diễn ra hoặc đã kết thúc!");
+        if (auction != null && auction.getStatus() == AuctionStatus.RUNNING) {
+            System.out.println("!!! LỖI: Không thể cập nhật sản phẩm khi đấu giá đang diễn ra!");
             return false;
         }
 
@@ -66,8 +66,8 @@ public class ItemManager {
 
         // 2. Kiểm tra trạng thái đấu giá
         Auction auction = AuctionManager.getInstance().getAuction(productId);
-        if (auction != null && auction.getStatus() != AuctionStatus.OPEN) {
-            System.out.println("!!! LỖI: Không thể xóa sản phẩm khi đấu giá đang diễn ra hoặc đã kết thúc!");
+        if (auction != null && auction.getStatus() == AuctionStatus.RUNNING) {
+            System.out.println("!!! LỖI: Không thể xóa sản phẩm khi đấu giá đang diễn ra!");
             return false;
         }
 

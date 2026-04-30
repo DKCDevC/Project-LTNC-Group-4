@@ -10,15 +10,18 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import dao.OrderDAO;
 
 public class AuctionManager {
 
     private static AuctionManager instance;
     private Map<String, Auction> activeAuctions;
     private AuctionNotificationService notificationService;
+    private OrderDAO orderDAO;
 
     private AuctionManager() {
         activeAuctions = new ConcurrentHashMap<>();
+        orderDAO = new OrderDAO();
     }
 
     public static synchronized AuctionManager getInstance() {
@@ -43,27 +46,33 @@ public class AuctionManager {
         activeAuctions.put(auction.getAuctionId(), auction);
     }
 
-    public synchronized boolean placeBid(String auctionId, Bidder bidder, double bidAmount) {
+    public boolean placeBid(String auctionId, Bidder bidder, double bidAmount) {
         Auction auction = activeAuctions.get(auctionId);
 
-        if (auction == null || auction.getStatus() != AuctionStatus.RUNNING) {
+        if (auction == null) {
             return false;
         }
 
-        if (bidAmount <= auction.getItem().getCurrentHighestPrice()) {
-            return false;
+        synchronized (auction) {
+            if (auction.getStatus() != AuctionStatus.RUNNING) {
+                return false;
+            }
+
+            if (bidAmount <= auction.getItem().getCurrentHighestPrice()) {
+                return false;
+            }
+
+            BidTransaction newBid = new BidTransaction(bidder, bidAmount);
+            auction.addBid(newBid);
+            auction.setWinner(bidder);
+
+            System.out.println("Thành công: " + bidder.getUsername() + " đã đặt giá " + bidAmount);
+
+            handleAntiSniping(auction);
+            triggerAutoBids(auction);
+
+            return true;
         }
-
-        BidTransaction newBid = new BidTransaction(bidder, bidAmount);
-        auction.addBid(newBid);
-        auction.setWinner(bidder);
-
-        System.out.println("Thành công: " + bidder.getUsername() + " đã đặt giá " + bidAmount);
-
-        handleAntiSniping(auction);
-        triggerAutoBids(auction);
-
-        return true;
     }
 
     private void handleAntiSniping(Auction auction) {
@@ -119,17 +128,29 @@ public class AuctionManager {
                     java.time.LocalDateTime now = java.time.LocalDateTime.now();
 
                     for (Auction auction : activeAuctions.values()) {
-                        if (auction.getStatus() == AuctionStatus.RUNNING && now.isAfter(auction.getItem().getEndTime())) {
+                        synchronized (auction) {
+                            if (auction.getStatus() == AuctionStatus.RUNNING && now.isAfter(auction.getItem().getEndTime())) {
 
-                            auction.setStatus(AuctionStatus.FINISHED);
+                                auction.setStatus(AuctionStatus.FINISHED);
 
-                            String winnerInfo = (auction.getWinner() != null)
-                                    ? "Người thắng: " + auction.getWinner().getUsername()
-                                    : "Không có người thắng.";
+                                String winnerInfo = (auction.getWinner() != null)
+                                        ? "Người thắng: " + auction.getWinner().getUsername()
+                                        : "Không có người thắng.";
 
-                            String msg = "{\"command\":\"AUCTION_FINISHED\", \"message\":\"[HẾT GIỜ] " + auction.getItem().getName() + " đã kết thúc. " + winnerInfo + "\"}";
-                            notifyObservers(msg);
-                            System.out.println(">>> Đóng phiên: " + auction.getAuctionId());
+                                String msg = "{\"command\":\"AUCTION_FINISHED\", \"message\":\"[HẾT GIỜ] " + auction.getItem().getName() + " đã kết thúc. " + winnerInfo + "\"}";
+                                notifyObservers(msg);
+                                System.out.println(">>> Đóng phiên: " + auction.getAuctionId());
+                                
+                                // Lưu kết quả vào database
+                                if (auction.getWinner() != null) {
+                                    orderDAO.insertOrder(
+                                        auction.getItem().getId(),
+                                        auction.getSeller().getUsername(),
+                                        auction.getWinner().getUsername(),
+                                        auction.getItem().getCurrentHighestPrice()
+                                    );
+                                }
+                            }
                         }
                     }
                 } catch (Exception e) {
