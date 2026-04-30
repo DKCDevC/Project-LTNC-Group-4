@@ -26,7 +26,7 @@ public class AuctionClient {
 
     private void connect() {
         try {
-            socket = new Socket("127.0.0.1", 1234); // Port updated to 1234 for MainServer
+            socket = new Socket("127.0.0.1", 9999); // Port updated to 9999 for MainServer
             out = new PrintWriter(socket.getOutputStream(), true);
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             connected = true;

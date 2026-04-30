@@ -41,8 +41,8 @@ public class SignUpController {
 
         new Thread(() -> {
             try {
-                // Sử dụng port 1234 cho MainServer
-                Socket socket = new Socket("127.0.0.1", 1234);
+                // Sử dụng port 9999 cho MainServer
+                Socket socket = new Socket("127.0.0.1", 9999);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 

@@ -17,8 +17,10 @@ public class UserDAO implements UserRepository {
         // Hỗ trợ đăng nhập bằng cả username hoặc email
         String query = "SELECT * FROM users WHERE (username = ? OR email = ?) AND password = ?";
 
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+        Connection conn = DBConnection.getConnection();
+        if (conn == null) return null;
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, identifier);
             stmt.setString(2, identifier);
@@ -29,8 +31,11 @@ public class UserDAO implements UserRepository {
                 String username = rs.getString("username");
                 String email = rs.getString("email");
                 String role = rs.getString("role");
-                boolean isLocked = rs.getBoolean("isLocked");
-                boolean isVerified = rs.getBoolean("isVerified");
+                
+                boolean isLocked = false;
+                boolean isVerified = false;
+                try { isLocked = rs.getBoolean("isLocked"); } catch (SQLException ignore) {}
+                try { isVerified = rs.getBoolean("isVerified"); } catch (SQLException ignore) {}
 
                 User user;
                 if ("ADMIN".equalsIgnoreCase(role)) {
@@ -47,14 +52,18 @@ public class UserDAO implements UserRepository {
             }
         } catch (SQLException e) {
             e.printStackTrace();
+        } finally {
+            try { conn.close(); } catch (SQLException ignore) {}
         }
         return null;
     }
 
     public boolean insertUser(String username, String password, String email, String role) {
         String query = "INSERT INTO users (username, password, email, role) VALUES (?, ?, ?, ?)";
-        try (Connection conn = DBConnection.getConnection();
-             PreparedStatement stmt = conn.prepareStatement(query)) {
+        Connection conn = DBConnection.getConnection();
+        if (conn == null) return false;
+
+        try (PreparedStatement stmt = conn.prepareStatement(query)) {
 
             stmt.setString(1, username);
             stmt.setString(2, password);
@@ -67,6 +76,8 @@ public class UserDAO implements UserRepository {
             System.out.println("--- LỖI TẠI DATABASE ---");
             System.out.println(e.getMessage());
             return false;
+        } finally {
+            try { conn.close(); } catch (SQLException ignore) {}
         }
     }
 }
