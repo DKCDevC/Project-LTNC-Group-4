@@ -119,6 +119,12 @@ public class LoginController {
                                 SellerDashboardController sellerCtrl = loader.getController();
                                 sellerCtrl.setUserInfo(identifier);
                                 stage.setScene(new Scene(root));
+                            } else if ("ADMIN".equalsIgnoreCase(role)) {
+                                loader = new FXMLLoader(getClass().getResource("/views/admin_dashboard.fxml"));
+                                root = loader.load();
+                                // AdminDashboardController doesn't have setUserInfo in its current version, 
+                                // but we load the view anyway.
+                                stage.setScene(new Scene(root));
                             } else {
                                 loader = new FXMLLoader(getClass().getResource("/views/Dashboard.fxml"));
                                 root = loader.load();
