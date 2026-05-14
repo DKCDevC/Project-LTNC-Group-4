@@ -59,7 +59,7 @@ java -jar auction-client/target/auction-client-1.0-SNAPSHOT.jar
 - [x] **Infinite Scroll**: Cuộn trang vô hạn cho danh sách sản phẩm.
 
 ## 7. Tài liệu và Video
-- **Báo cáo PDF**: [Link báo cáo tại đây (Vui lòng cập nhật link)]
+- **Báo cáo PDF**: https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing
 - **Video Demo**: [Link video tại đây (Vui lòng cập nhật link)]
 
 ---
