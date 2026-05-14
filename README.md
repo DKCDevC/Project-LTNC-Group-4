@@ -69,4 +69,3 @@ java -jar auction-client/target/auction-client-1.0-SNAPSHOT.jar
 3. **Đinh Đức Hiếu**
 4. **Nguyễn Duy Anh**
 
-**Hạn nộp:** 31/05/2026
