@@ -1,0 +1,165 @@
+/* seller_style.css - eBid Modern Design System */
+
+.root {
+    -fx-font-family: 'Segoe UI', 'Roboto', sans-serif;
+}
+
+/* Sidebar Styling */
+.sidebar {
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: transparent #e0e0e0 transparent transparent;
+}
+
+.sidebar-item {
+    -fx-padding: 12 20;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+    -fx-margin: 2 10;
+}
+
+.sidebar-item:hover {
+    -fx-background-color: #f0f0f0;
+}
+
+.sidebar-item-active {
+    -fx-background-color: #3665f315;
+}
+
+.sidebar-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #444444;
+}
+
+.sidebar-label-active {
+    -fx-text-fill: #3665f3;
+    -fx-font-weight: bold;
+}
+
+/* Modern TableView Styling */
+.table-view {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+    -fx-border-color: #f0f0f0;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 0;
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #fafafa;
+    -fx-background-insets: 0;
+}
+
+/* Hide the filler column header */
+.table-view .filler {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-size: 55;
+    -fx-border-color: transparent transparent #f0f0f0 transparent;
+    -fx-alignment: center-left; /* Align header text to left */
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #444444;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-padding: 0 0 0 15; /* Left padding for header label */
+    -fx-alignment: center-left;
+}
+
+.table-cell {
+    -fx-padding: 0 0 0 15; /* Match header padding */
+    -fx-alignment: center-left;
+}
+
+.table-row-cell {
+    -fx-background-color: white;
+    -fx-cell-size: 60; /* Increased for better touch/click targets */
+    -fx-border-color: transparent transparent #f9f9f9 transparent;
+}
+
+.table-row-cell:hover {
+    -fx-background-color: #fcfcfc;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #3665f3;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: white;
+}
+
+.table-row-cell:selected .label {
+    -fx-text-fill: white;
+}
+
+/* Subtle vertical grid lines for better column separation */
+.table-view .table-column {
+    -fx-border-color: transparent #f0f0f0 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+}
+
+.table-view .placeholder .label {
+    -fx-text-fill: #aaaaaa;
+    -fx-font-style: italic;
+    -fx-font-size: 14px;
+}
+
+/* Nút bấm Premium */
+.btn-primary {
+    -fx-background-color: #3665f3;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 20;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #254bdb;
+}
+
+.btn-danger {
+    -fx-background-color: #ff3b3015;
+    -fx-text-fill: #ff3b30;
+    -fx-background-radius: 20;
+    -fx-padding: 6 15;
+    -fx-cursor: hand;
+    -fx-border-color: #ff3b3030;
+    -fx-border-radius: 20;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #ff3b3025;
+}
+
+/* Modern Logout Button */
+.btn-logout {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e62117;
+    -fx-border-color: #e62117;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-logout:hover {
+    -fx-background-color: #e62117;
+    -fx-text-fill: white;
+}
+
+/* Stat Cards */
+.stat-card {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 15;
+}

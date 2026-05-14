@@ -25,7 +25,8 @@ import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Region;
 import javafx.stage.Stage;
 import models.Item;
-import network.AuctionChartGUI;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.animation.KeyValue;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -58,6 +59,27 @@ public class DashboardController {
     // --- Layout ---
     @FXML private StackPane contentArea;
     @FXML private VBox pageBrowse;
+    @FXML private ScrollPane scrollPaneBrowse;
+    @FXML private Button btnBackToTop;
+    @FXML private VBox pageHistory;
+    @FXML private VBox pageWonItems;
+
+    @FXML private Label sideHistory;
+    @FXML private Label sideWonItems;
+
+    // --- Table: History ---
+    @FXML private TableView<ItemUI> tableHistory;
+    @FXML private TableColumn<ItemUI, String> colHistName;
+    @FXML private TableColumn<ItemUI, String> colHistPrice;
+    @FXML private TableColumn<ItemUI, Integer> colHistBids;
+    @FXML private TableColumn<ItemUI, String> colHistStatus;
+
+    // --- Table: Won ---
+    @FXML private TableView<ItemUI> tableWon;
+    @FXML private TableColumn<ItemUI, String> colWonName;
+    @FXML private TableColumn<ItemUI, String> colWonPrice;
+    @FXML private TableColumn<ItemUI, String> colWonSeller;
+    @FXML private TableColumn<ItemUI, String> colWonDate;
 
     // --- Page: Browse ---
     @FXML private Label lblCategoryTitle;
@@ -70,6 +92,11 @@ public class DashboardController {
 
     // --- Page: Product Detail ---
     @FXML private ScrollPane pageProductDetail;
+    @FXML private VBox pageMiniCart;
+    @FXML private VBox vboxMiniCartItems;
+    @FXML private Label lblMiniCartTotal;
+    @FXML private Button btnQuickPay;
+    @FXML private Button btnPayAllWon;
     @FXML private Label lblDetailName;
     @FXML private Label lblDetailPrice;
     @FXML private Label lblDetailBidsCount;
@@ -114,6 +141,11 @@ public class DashboardController {
     private ObservableList<ItemUI> filteredItems = FXCollections.observableArrayList();
     private String currentCategoryFilter = "";
 
+    // --- Pagination & Infinite Scroll ---
+    private int itemsPerPage = 8;
+    private int currentlyLoadedCount = 0;
+    private boolean isLoadingMore = false;
+
     public void setUserInfo(String username, String role) {
         this.currentUsername = username;
         lblGreeting.setText("Xin chào, " + username + "!");
@@ -139,9 +171,20 @@ public class DashboardController {
         cboFilterPrice.setValue("Tất cả");
         cboFilterPrice.setOnAction(e -> applySearchFilter());
 
-        cboFilterRating.setItems(FXCollections.observableArrayList("Tất cả", "4 Sao trở lên", "5 Sao"));
         cboFilterRating.setValue("Tất cả");
         cboFilterRating.setOnAction(e -> applySearchFilter());
+
+        // Setup History Table
+        colHistName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colHistPrice.setCellValueFactory(new PropertyValueFactory<>("priceStr"));
+        colHistBids.setCellValueFactory(new PropertyValueFactory<>("bidsCount"));
+        colHistStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
+
+        // Setup Won Table
+        colWonName.setCellValueFactory(new PropertyValueFactory<>("name"));
+        colWonPrice.setCellValueFactory(new PropertyValueFactory<>("priceStr"));
+        colWonSeller.setCellValueFactory(new PropertyValueFactory<>("sellerName"));
+        colWonDate.setCellValueFactory(new PropertyValueFactory<>("endTime"));
 
 
 
@@ -149,6 +192,28 @@ public class DashboardController {
         txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             applySearchFilter();
         });
+
+        // Setup Infinite Scroll
+        if (scrollPaneBrowse != null) {
+            scrollPaneBrowse.vvalueProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal.doubleValue() > 0.4) { // Show button after 40% scroll
+                    btnBackToTop.setVisible(true);
+                } else {
+                    btnBackToTop.setVisible(false);
+                }
+                
+                if (newVal.doubleValue() > 0.9 && !isLoadingMore && currentlyLoadedCount < filteredItems.size()) {
+                    loadMoreProducts();
+                }
+            });
+        }
+
+        // Setup Responsive Grid
+        if (gridItems != null) {
+            gridItems.widthProperty().addListener((obs, oldVal, newVal) -> {
+                updateGridResponsive(newVal.doubleValue());
+            });
+        }
 
         startBackgroundListener();
     }
@@ -173,9 +238,50 @@ public class DashboardController {
     private void setActiveSidebar(Label label) {
         sideBrowse.setTextFill(javafx.scene.paint.Color.web("#707070"));
         sideBrowse.setStyle("-fx-cursor: hand;");
+        sideHistory.setTextFill(javafx.scene.paint.Color.web("#707070"));
+        sideHistory.setStyle("-fx-cursor: hand;");
+        sideWonItems.setTextFill(javafx.scene.paint.Color.web("#707070"));
+        sideWonItems.setStyle("-fx-cursor: hand;");
         
         label.setTextFill(javafx.scene.paint.Color.web("#0654ba"));
         label.setStyle("-fx-cursor: hand; -fx-font-weight: bold;");
+    }
+
+    @FXML public void handleSideHistory(MouseEvent event) {
+        showPage(pageHistory);
+        setActiveSidebar(sideHistory);
+        loadHistoryData();
+    }
+
+    @FXML public void handleSideWonItems(MouseEvent event) {
+        showPage(pageWonItems);
+        setActiveSidebar(sideWonItems);
+        loadWonData();
+    }
+
+    private void loadHistoryData() {
+        List<ItemUI> hist = new ArrayList<>();
+        for (ItemUI item : allItems) {
+            // Hiển thị sản phẩm mà user đang đấu giá hoặc đã thắng
+            if (currentUsername.equals(item.getWinnerUsername()) || activeAutoBids.containsKey(item.getAuctionId())) {
+                hist.add(item);
+            }
+        }
+        tableHistory.setItems(FXCollections.observableArrayList(hist));
+    }
+
+    private void loadWonData() {
+        List<ItemUI> won = new ArrayList<>();
+        for (ItemUI item : allItems) {
+            if ("Đã kết thúc".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
+                won.add(item);
+            }
+        }
+        tableWon.setItems(FXCollections.observableArrayList(won));
+        if (btnPayAllWon != null) {
+            btnPayAllWon.setDisable(won.isEmpty());
+            btnPayAllWon.setOpacity(won.isEmpty() ? 0.5 : 1.0);
+        }
     }
 
     private void showPage(Region page) {
@@ -183,6 +289,8 @@ public class DashboardController {
         pageBrowse.setManaged(false);
         pageProductDetail.setVisible(false);
         pageProductDetail.setManaged(false);
+        if (pageHistory != null) { pageHistory.setVisible(false); pageHistory.setManaged(false); }
+        if (pageWonItems != null) { pageWonItems.setVisible(false); pageWonItems.setManaged(false); }
 
         page.setVisible(true);
         page.setManaged(true);
@@ -288,9 +396,10 @@ public class DashboardController {
                                 else if ("OPEN".equals(serverStatus)) status = "Chờ mở";
                                 
                                 int bidsCount = obj.has("bidsCount") ? obj.get("bidsCount").getAsInt() : 0;
+                                String imageUrls = obj.has("imageUrls") ? obj.get("imageUrls").getAsString() : "";
 
                                 ItemUI itemUI = new ItemUI(
-                                    name, desc, currentPrice, status, startPrice, endTime, type, sellerName, bidsCount
+                                    name, desc, currentPrice, status, startPrice, endTime, type, sellerName, bidsCount, imageUrls
                                 );
                                 
                                 // Lấy auctionId từ server response (nếu có)
@@ -395,7 +504,62 @@ public class DashboardController {
         }
         
         filteredItems.setAll(result);
-        renderProductCards();
+        currentlyLoadedCount = 0; // Reset for new search
+        gridItems.getChildren().clear();
+        loadMoreProducts();
+    }
+
+    private void loadMoreProducts() {
+        if (isLoadingMore) return;
+        isLoadingMore = true;
+        
+        int nextBatch = Math.min(currentlyLoadedCount + itemsPerPage, filteredItems.size());
+        List<ItemUI> toAdd = filteredItems.subList(currentlyLoadedCount, nextBatch);
+        
+        Platform.runLater(() -> {
+            for (ItemUI item : toAdd) {
+                gridItems.getChildren().add(createProductCard(item));
+            }
+            currentlyLoadedCount = nextBatch;
+            isLoadingMore = false;
+            updateGridResponsive(gridItems.getWidth());
+        });
+    }
+
+    private void updateGridResponsive(double width) {
+        if (gridItems == null || width <= 0) return;
+        
+        // Calculate card width based on available space
+        // 4 cols if width > 1100, 3 if > 800, 2 if > 500, else 1
+        int cols = (width > 1100) ? 4 : (width > 850) ? 3 : (width > 550) ? 2 : 1;
+        double cardW = (width - (gridItems.getHgap() * (cols + 1))) / cols;
+        
+        for (javafx.scene.Node node : gridItems.getChildren()) {
+            if (node instanceof VBox) {
+                VBox card = (VBox) node;
+                card.setPrefWidth(cardW);
+                card.setMinWidth(cardW);
+                card.setMaxWidth(cardW);
+                
+                // Adjust image height proportionally
+                StackPane img = (StackPane) card.lookup("#imgContainer");
+                if (img != null) {
+                    img.setPrefHeight(cardW * 0.75);
+                }
+            }
+        }
+    }
+
+    @FXML
+    public void handleBackToTop() {
+        if (scrollPaneBrowse != null) {
+            // Smooth scroll to top
+            Timeline timeline = new Timeline();
+            KeyValue kv = new KeyValue(scrollPaneBrowse.vvalueProperty(), 0);
+            KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
+            timeline.getKeyFrames().add(kf);
+            timeline.play();
+        }
     }
 
     // ==========================================
@@ -403,81 +567,132 @@ public class DashboardController {
     // ==========================================
 
     private void renderProductCards() {
-        gridItems.getChildren().clear();
-        for (ItemUI item : filteredItems) {
-            VBox card = new VBox(8);
-            card.setStyle("-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 8; -fx-padding: 0 0 15 0; -fx-background-radius: 8; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 10, 0, 0, 2);");
-            card.setPrefWidth(260);
+        // This is now handled by loadMoreProducts and applySearchFilter
+    }
+
+    private VBox createProductCard(ItemUI item) {
+        VBox card = new VBox(8);
+        // Style mới: Bo góc 15px và Shadow mềm mại
+        String baseStyle = "-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 15; -fx-padding: 0 0 15 0; -fx-background-radius: 15; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 0, 5);";
+        card.setStyle(baseStyle);
+        card.setPrefWidth(260);
+        
+        card.setOnMouseEntered(e -> { 
+            card.setScaleX(1.03); 
+            card.setScaleY(1.03); 
+            // Đậm bóng đổ khi di chuột
+            card.setStyle(baseStyle + "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 20, 0, 0, 10);");
+        });
+        card.setOnMouseExited(e -> { 
+            card.setScaleX(1.0); 
+            card.setScaleY(1.0); 
+            card.setStyle(baseStyle);
+        });
+        card.setOnMouseClicked(e -> showProductDetail(item));
+
+        updateCardContent(card, item);
+        return card;
+    }
+
+
+    private void updateCardContent(VBox card, ItemUI item) {
+        // Nếu thẻ chưa có nội dung (mới tạo), thì khởi tạo các Label
+        if (card.getChildren().isEmpty()) {
+            // Image Container
+            StackPane imgContainer = new StackPane();
+            imgContainer.setPrefSize(260, 200);
+            imgContainer.setId("imgContainer");
             
-            // eBay Hover Effect: Scale up 5%
-            card.setOnMouseEntered(e -> {
-                card.setScaleX(1.05);
-                card.setScaleY(1.05);
-                card.toFront(); 
-            });
-            card.setOnMouseExited(e -> {
-                card.setScaleX(1.0);
-                card.setScaleY(1.0);
-            });
-
-            // Click to view details
-            card.setOnMouseClicked(e -> {
-                showProductDetail(item);
-            });
-
-            // Image Placeholder
-            Label lblImg = new Label("Image Not Available");
-            lblImg.setStyle("-fx-background-color: #eaeaea; -fx-text-fill: #999999; -fx-alignment: center; -fx-font-size: 14; -fx-background-radius: 8 8 0 0;");
-            lblImg.setPrefSize(260, 200);
-
             VBox infoBox = new VBox(5);
             infoBox.setStyle("-fx-padding: 10 15;");
 
-            // Tên sản phẩm
-            Label lblName = new Label(item.getName());
+            Label lblName = new Label(); lblName.setId("lblName");
             lblName.setFont(javafx.scene.text.Font.font("System", javafx.scene.text.FontWeight.BOLD, 16));
             lblName.setTextFill(javafx.scene.paint.Color.web("#0654ba"));
-            lblName.setWrapText(true);
-            lblName.setMaxHeight(40);
+            lblName.setWrapText(true); lblName.setMaxHeight(40);
             
-            // Giá
-            Label lblPrice = new Label(item.getPriceStr());
-            lblPrice.setTextFill(javafx.scene.paint.Color.web("#191919"));
+            Label lblPrice = new Label(); lblPrice.setId("lblPrice");
             lblPrice.setFont(javafx.scene.text.Font.font("System", javafx.scene.text.FontWeight.BOLD, 20));
 
-            Label lblBids = new Label(item.getBidsCount() + " lượt đặt giá");
-            lblBids.setTextFill(javafx.scene.paint.Color.web("#707070"));
-            lblBids.setFont(javafx.scene.text.Font.font("System", 12));
+            Label lblBids = new Label(); lblBids.setId("lblBids");
+            lblBids.setTextFill(javafx.scene.paint.Color.GRAY);
             
-            Label lblStatus = new Label("Trạng thái: " + item.getStatus());
-            lblStatus.setTextFill(item.getStatus().equals("Đã kết thúc") ? javafx.scene.paint.Color.RED : javafx.scene.paint.Color.web("#0654ba"));
-            lblStatus.setFont(javafx.scene.text.Font.font("System", 12));
+            Label lblStatus = new Label(); lblStatus.setId("lblStatus");
             
-            String displayTime = item.getEndTime();
-            try {
-                java.time.LocalDateTime dt = java.time.LocalDateTime.parse(displayTime);
-                java.time.Duration diff = java.time.Duration.between(java.time.LocalDateTime.now(), dt);
-                if (diff.isNegative() || diff.isZero() || item.getStatus().equals("Đã kết thúc")) {
-                    displayTime = "Đã kết thúc";
-                } else {
-                    long d = diff.toDays();
-                    long h = diff.toHoursPart();
-                    long m = diff.toMinutesPart();
-                    if (d > 0) displayTime = "Còn lại: " + d + " ngày " + h + " giờ";
-                    else if (h > 0) displayTime = "Còn lại: " + h + " giờ " + m + " phút";
-                    else displayTime = "Còn lại: " + m + " phút";
-                }
-            } catch(Exception e) {}
-            
-            Label lblTime = new Label(displayTime);
-            lblTime.setTextFill(displayTime.equals("Đã kết thúc") ? javafx.scene.paint.Color.RED : javafx.scene.paint.Color.web("#e62117"));
-            lblTime.setFont(javafx.scene.text.Font.font("System", 12));
+            Label lblTime = new Label(); lblTime.setId("lblTime");
+            lblTime.setTextFill(javafx.scene.paint.Color.web("#e62117"));
 
             infoBox.getChildren().addAll(lblName, lblPrice, lblBids, lblStatus, lblTime);
-            card.getChildren().addAll(lblImg, infoBox);
-            
-            gridItems.getChildren().add(card);
+            card.getChildren().addAll(imgContainer, infoBox);
         }
+
+        // Truy xuất các thành phần để cập nhật dữ liệu
+        StackPane imgContainer = (StackPane) card.lookup("#imgContainer");
+        VBox infoBox = (VBox) card.getChildren().get(1);
+        Label lblName = (Label) infoBox.lookup("#lblName");
+        Label lblPrice = (Label) infoBox.lookup("#lblPrice");
+        Label lblBids = (Label) infoBox.lookup("#lblBids");
+        Label lblStatus = (Label) infoBox.lookup("#lblStatus");
+        Label lblTime = (Label) infoBox.lookup("#lblTime");
+
+        // Cập nhật text (Chỉ cập nhật nếu giá trị thay đổi để tối ưu)
+        if (lblName != null) lblName.setText(item.getName());
+        if (lblPrice != null) lblPrice.setText(item.getPriceStr());
+        if (lblBids != null) lblBids.setText(item.getBidsCount() + " lượt đặt giá");
+        
+        if (lblStatus != null) {
+            lblStatus.setText("Trạng thái: " + item.getStatus());
+            lblStatus.setTextFill(item.getStatus().equals("Đã kết thúc") ? javafx.scene.paint.Color.RED : javafx.scene.paint.Color.web("#0654ba"));
+        }
+        
+        if (lblTime != null) lblTime.setText(calculateTimeRemaining(item));
+
+        // Cập nhật ảnh (Lazy loading with background loading)
+        if (imgContainer != null && imgContainer.getChildren().isEmpty()) {
+            if (item.getImageUrls() != null && !item.getImageUrls().isEmpty()) {
+                String firstImage = item.getImageUrls().split(",")[0];
+                try {
+                    // backgroundLoading = true ensures UI doesn't freeze
+                    javafx.scene.image.Image img = new javafx.scene.image.Image(firstImage, 400, 300, true, true, true);
+                    javafx.scene.image.ImageView imgView = new javafx.scene.image.ImageView(img);
+                    
+                    imgView.fitWidthProperty().bind(imgContainer.widthProperty());
+                    imgView.fitHeightProperty().bind(imgContainer.heightProperty());
+                    imgView.setPreserveRatio(true);
+                    
+                    javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
+                    clip.widthProperty().bind(imgContainer.widthProperty());
+                    clip.heightProperty().bind(imgContainer.heightProperty());
+                    clip.setArcWidth(30); clip.setArcHeight(30);
+                    imgView.setClip(clip);
+                    
+                    imgContainer.getChildren().add(imgView);
+                } catch (Exception e) { imgContainer.getChildren().add(createPlaceholderLabel("Lỗi ảnh")); }
+            } else {
+                imgContainer.getChildren().add(createPlaceholderLabel("Chưa có ảnh"));
+            }
+        }
+    }
+
+    private Label createPlaceholderLabel(String text) {
+        Label lbl = new Label(text);
+        lbl.setStyle("-fx-background-color: #eaeaea; -fx-text-fill: #999999; -fx-alignment: center; -fx-background-radius: 8 8 0 0;");
+        lbl.setPrefSize(260, 200);
+        return lbl;
+    }
+
+    private String calculateTimeRemaining(ItemUI item) {
+        try {
+            java.time.LocalDateTime dt = java.time.LocalDateTime.parse(item.getEndTime());
+            java.time.Duration diff = java.time.Duration.between(java.time.LocalDateTime.now(), dt);
+            if (diff.isNegative() || diff.isZero()) return "Đã kết thúc";
+            long d = diff.toDays();
+            long h = diff.toHoursPart();
+            long m = diff.toMinutesPart();
+            if (d > 0) return "Còn lại: " + d + " ngày " + h + " giờ";
+            if (h > 0) return "Còn lại: " + h + " giờ " + m + " phút";
+            return "Còn lại: " + m + " phút " + diff.toSecondsPart() + " giây";
+        } catch(Exception e) { return "N/A"; }
     }
 
     private void doPlaceBid(ItemUI item, String amountStr) {
@@ -758,9 +973,80 @@ public class DashboardController {
         }
     }
 
-    // ==========================================
     // UTILS
     // ==========================================
+
+    @FXML
+    private void handleShowNotifications() {
+        showAlert(Alert.AlertType.INFORMATION, "Thông báo", "Bạn không có thông báo mới nào.");
+    }
+
+    @FXML
+    private void handleShowMiniCart() {
+        if (pageMiniCart != null) {
+            pageMiniCart.setVisible(true);
+            pageMiniCart.setManaged(true);
+            populateMiniCart();
+        }
+    }
+
+    @FXML
+    private void handleHideMiniCart() {
+        if (pageMiniCart != null) {
+            pageMiniCart.setVisible(false);
+            pageMiniCart.setManaged(false);
+        }
+    }
+
+    private void populateMiniCart() {
+        vboxMiniCartItems.getChildren().clear();
+        double total = 0;
+        int count = 0;
+
+        for (ItemUI item : allItems) {
+            if ("Đã kết thúc".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
+                count++;
+                total += item.getRawPrice();
+                
+                // Tạo một dòng sản phẩm nhỏ gọn
+                HBox row = new HBox(10);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setStyle("-fx-padding: 5; -fx-background-color: #fcfcfc; -fx-background-radius: 5;");
+                
+                Label name = new Label(item.getName());
+                name.setPrefWidth(150);
+                name.setStyle("-fx-font-size: 12;");
+                
+                Label price = new Label(item.getPriceStr());
+                price.setStyle("-fx-font-weight: bold; -fx-text-fill: #e62117; -fx-font-size: 12;");
+                
+                row.getChildren().addAll(name, price);
+                vboxMiniCartItems.getChildren().add(row);
+                
+                if (count >= 5) { // Chỉ hiện tối đa 5 món để không quá dài
+                    Label more = new Label("... và " + (allItems.size() - count) + " sản phẩm khác");
+                    more.setStyle("-fx-font-size: 11; -fx-text-fill: gray;");
+                    vboxMiniCartItems.getChildren().add(more);
+                    break;
+                }
+            }
+        }
+        
+        if (count == 0) {
+            vboxMiniCartItems.getChildren().add(new Label("Chưa có sản phẩm nào."));
+        }
+        
+        lblMiniCartTotal.setText(String.format("%,.0f ₫", total));
+        if (btnQuickPay != null) {
+            btnQuickPay.setDisable(count == 0);
+            btnQuickPay.setOpacity(count == 0 ? 0.5 : 1.0);
+        }
+    }
+
+    @FXML
+    private void handleQuickPay() {
+        showAlert(Alert.AlertType.INFORMATION, "Thanh toán", "Đang chuyển hướng đến trang thanh toán an toàn...");
+    }
 
     @FXML
     public void handleLogout(ActionEvent event) {
@@ -806,8 +1092,9 @@ public class DashboardController {
         private String auctionId;
         private String winnerUsername = "";
         private int bidsCount;
+        private String imageUrls;
 
-        public ItemUI(String name, String description, double rawPrice, String status, double startingPrice, String endTime, String type, String sellerName, int bidsCount) {
+        public ItemUI(String name, String description, double rawPrice, String status, double startingPrice, String endTime, String type, String sellerName, int bidsCount, String imageUrls) {
             this.name = name;
             this.description = description;
             this.rawPrice = rawPrice;
@@ -818,6 +1105,7 @@ public class DashboardController {
             this.type = type;
             this.sellerName = sellerName;
             this.bidsCount = bidsCount;
+            this.imageUrls = imageUrls;
             this.auctionId = "";
         }
 
@@ -839,6 +1127,7 @@ public class DashboardController {
         
         public void setWinnerUsername(String winner) { this.winnerUsername = winner; }
         public String getWinnerUsername() { return winnerUsername; }
+        public String getImageUrls() { return imageUrls; }
         
         public void setCurrentPrice(double newPrice) {
             this.rawPrice = newPrice;

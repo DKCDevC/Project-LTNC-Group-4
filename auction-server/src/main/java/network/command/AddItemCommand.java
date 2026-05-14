@@ -28,13 +28,28 @@ public class AddItemCommand implements Command {
                                handler.getCurrentUsername() : 
                                (data.has("seller") ? data.get("seller").getAsString() : "Unknown");
                                
-            int durationDays = data.has("duration") ? data.get("duration").getAsInt() : 7;
+            int durationValue = data.has("durationValue") ? data.get("durationValue").getAsInt() : (data.has("duration") ? data.get("duration").getAsInt() : 7);
+            String durationUnit = data.has("durationUnit") ? data.get("durationUnit").getAsString() : "Ngày";
 
             LocalDateTime startTime = LocalDateTime.now();
-            LocalDateTime endTime = startTime.plusDays(durationDays);
+            LocalDateTime endTime = startTime;
+
+            switch (durationUnit) {
+                case "Phút":
+                    endTime = startTime.plusMinutes(durationValue);
+                    break;
+                case "Giờ":
+                    endTime = startTime.plusHours(durationValue);
+                    break;
+                case "Ngày":
+                default:
+                    endTime = startTime.plusDays(durationValue);
+                    break;
+            }
 
             // Tạo sản phẩm từ Factory
             Item item = ItemFactory.createItem(type, name, desc, price, startTime, endTime, extra);
+            item.setImageUrls(extra); // Gắn chuỗi ảnh từ client (trường extra chứa link ảnh từ AddProductController)
             String id = "ITEM-" + UUID.randomUUID().toString().substring(0, 5).toUpperCase();
             item.setId(id);
 

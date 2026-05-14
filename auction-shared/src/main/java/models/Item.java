@@ -10,6 +10,7 @@ public abstract class Item extends Entity {
     private LocalDateTime startTime;
     private LocalDateTime endTime;
     protected Seller seller;
+    private String imageUrls; // Thêm dòng này
 
     public Item(String name, String description, double startingPrice, LocalDateTime startTime, LocalDateTime endTime) {
         super();
@@ -74,5 +75,13 @@ public abstract class Item extends Entity {
 
     public void setSeller(Seller seller){
         this.seller=seller;
+    }
+
+    public String getImageUrls() {
+        return imageUrls;
+    }
+
+    public void setImageUrls(String imageUrls) {
+        this.imageUrls = imageUrls;
     }
 }

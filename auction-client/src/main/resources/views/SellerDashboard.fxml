@@ -5,41 +5,42 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
 
-<BorderPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: #F5F5F5; -fx-font-family: '-apple-system', 'Segoe UI', sans-serif;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.SellerDashboardController">
+<BorderPane prefHeight="768.0" prefWidth="1200.0" stylesheets="@../styles/seller_style.css" style="-fx-background-color: #F8F9FA;" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.SellerDashboardController">
 
     <top>
         <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: transparent transparent #E0E0E0 transparent; -fx-border-width: 1;">
             <children>
-                <HBox alignment="CENTER_LEFT" prefHeight="60.0" spacing="20.0" style="-fx-padding: 0 30;">
+                <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="20.0" style="-fx-padding: 0 40;">
                     <children>
-                        <HBox alignment="CENTER_LEFT" spacing="1.0">
-                            <Label text="e" textFill="#e53238"><font><Font name="System Bold" size="30.0"/></font></Label>
-                            <Label text="b" textFill="#0064d2"><font><Font name="System Bold" size="30.0"/></font></Label>
-                            <Label text="i" textFill="#f5af02"><font><Font name="System Bold" size="30.0"/></font></Label>
-                            <Label text="d" textFill="#86b817"><font><Font name="System Bold" size="30.0"/></font></Label>
+                        <HBox alignment="CENTER_LEFT" spacing="2.0">
+                            <Label text="e" textFill="#e53238"><font><Font name="System Bold" size="32.0"/></font></Label>
+                            <Label text="b" textFill="#0064d2"><font><Font name="System Bold" size="32.0"/></font></Label>
+                            <Label text="i" textFill="#f5af02"><font><Font name="System Bold" size="32.0"/></font></Label>
+                            <Label text="d" textFill="#86b817"><font><Font name="System Bold" size="32.0"/></font></Label>
                         </HBox>
-                        <Label text="Seller Hub" textFill="#707070"><font><Font size="13.0"/></font></Label>
-                        <HBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS" maxWidth="600.0" spacing="10.0">
-                            <children>
-                                <TextField fx:id="txtSearch" prefHeight="35.0" promptText="Tìm kiếm sản phẩm..." style="-fx-border-color: #8f8f8f; -fx-border-radius: 4; -fx-background-color: transparent;" HBox.hgrow="ALWAYS" onAction="#handleSearch"/>
-                                <Button style="-fx-background-color: #0654ba; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;" text="Tìm kiếm" prefWidth="90.0" prefHeight="35.0" onAction="#handleSearch"/>
-                            </children>
+                        <Separator orientation="VERTICAL" maxHeight="30" />
+                        <Label text="Seller Hub" textFill="#666666"><font><Font size="14.0"/></font></Label>
+                        
+                        <Region prefWidth="40" />
+                        <HBox alignment="CENTER" spacing="0" HBox.hgrow="ALWAYS" maxWidth="500">
+                            <TextField fx:id="txtSearch" prefHeight="38.0" promptText="Tìm kiếm sản phẩm, đơn hàng..." HBox.hgrow="ALWAYS" style="-fx-background-radius: 4 0 0 4; -fx-border-color: #E0E0E0; -fx-border-radius: 4 0 0 4; -fx-background-color: #FFFFFF; -fx-padding: 0 15;" />
+                            <Button onAction="#handleSearch" prefHeight="38.0" text="Tìm kiếm" style="-fx-background-color: #0064D2; -fx-text-fill: #FFFFFF; -fx-background-radius: 0 4 4 0; -fx-padding: 0 20; -fx-font-weight: bold; -fx-cursor: hand;" />
                         </HBox>
+                        
                         <Region HBox.hgrow="ALWAYS" />
-                        <Label fx:id="lblGreeting" text="Xin chào, Seller!" textFill="#191919"><font><Font name="System Bold" size="14.0"/></font></Label>
-                        <Button onAction="#handleLogout" style="-fx-background-color: transparent; -fx-text-fill: #0654ba; -fx-cursor: hand; -fx-underline: true;" text="Đăng xuất" />
+                        
+                        <HBox alignment="CENTER_LEFT" spacing="15.0">
+                            <Label fx:id="lblGreeting" text="Xin chào, Seller!" textFill="#191919"><font><Font name="System Bold" size="14.0"/></font></Label>
+                            <Button onAction="#handleLogout" styleClass="btn-logout" text="Đăng xuất" />
+                        </HBox>
                     </children>
                 </HBox>
 
-                <HBox alignment="CENTER_LEFT" prefHeight="50.0" spacing="30.0" style="-fx-padding: 0 30;">
+                <HBox alignment="BOTTOM_LEFT" prefHeight="50.0" spacing="40.0" style="-fx-padding: 0 40;">
                     <children>
-                        <Label text="Kênh Bán Hàng" textFill="#191919"><font><Font name="System Bold" size="24.0"/></font></Label>
-                        <Label fx:id="tabOverview" text="Tổng quan" textFill="#191919" style="-fx-border-color: transparent transparent #0654ba transparent; -fx-border-width: 3; -fx-padding: 10 0 5 0; -fx-cursor: hand;" onMouseClicked="#handleTabOverview"><font><Font name="System Bold" size="15.0"/></font></Label>
-                        <Label fx:id="tabOrders" text="Đơn hàng" textFill="#707070" style="-fx-cursor: hand; -fx-padding: 10 0 5 0;" onMouseClicked="#handleTabOrders"><font><Font size="15.0"/></font></Label>
-                        <Label fx:id="tabListings" text="Sản phẩm" textFill="#707070" style="-fx-cursor: hand; -fx-padding: 10 0 5 0;" onMouseClicked="#handleTabListings"><font><Font size="15.0"/></font></Label>
-
-                        <Region HBox.hgrow="ALWAYS" />
-                        <Button style="-fx-background-color: #3665f3; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 20; -fx-cursor: hand;" text="+ Thêm sản phẩm đấu giá" onAction="#handleAddProduct"/>
+                        <Label fx:id="tabOverview" text="Tổng quan" styleClass="sidebar-label, sidebar-label-active" style="-fx-padding: 0 0 10 0; -fx-border-color: transparent transparent #3665f3 transparent; -fx-border-width: 0 0 3 0; -fx-cursor: hand;" onMouseClicked="#handleTabOverview" />
+                        <Label fx:id="tabOrders" text="Đơn hàng" styleClass="sidebar-label" style="-fx-padding: 0 0 10 0; -fx-cursor: hand;" onMouseClicked="#handleTabOrders" />
+                        <Label fx:id="tabListings" text="Sản phẩm" styleClass="sidebar-label" style="-fx-padding: 0 0 10 0; -fx-cursor: hand;" onMouseClicked="#handleTabListings" />
                     </children>
                 </HBox>
             </children>
@@ -47,21 +48,41 @@
     </top>
 
     <left>
-        <VBox prefWidth="220.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-padding: 20; -fx-border-color: transparent #E0E0E0 transparent transparent;">
+        <VBox prefWidth="260.0" styleClass="sidebar">
             <children>
-                <Label text="Danh mục" textFill="#191919"><font><Font name="System Bold" size="14.0"/></font></Label>
-                <Label fx:id="catAll" text="Tất cả sản phẩm" textFill="#0654ba" style="-fx-cursor: hand; -fx-font-weight: bold;" onMouseClicked="#handleCategoryAll"><font><Font size="14.0"/></font></Label>
-                <Label fx:id="catElectronics" text="Đồ điện tử" textFill="#707070" style="-fx-cursor: hand;" onMouseClicked="#handleCategoryElectronics"><font><Font size="14.0"/></font></Label>
-                <Label fx:id="catArt" text="Nghệ thuật" textFill="#707070" style="-fx-cursor: hand;" onMouseClicked="#handleCategoryArt"><font><Font size="14.0"/></font></Label>
-                <Label fx:id="catVehicle" text="Xe cộ" textFill="#707070" style="-fx-cursor: hand;" onMouseClicked="#handleCategoryVehicle"><font><Font size="14.0"/></font></Label>
-                <Label fx:id="catGeneral" text="Khác" textFill="#707070" style="-fx-cursor: hand;" onMouseClicked="#handleCategoryGeneral"><font><Font size="14.0"/></font></Label>
-                
-                <Separator style="-fx-padding: 10 0;"/>
+                <VBox spacing="8.0" style="-fx-padding: 30 0;">
+                    <Label text="QUẢN LÝ CỬA HÀNG" textFill="#999999" style="-fx-padding: 0 25 10 25;"><font><Font name="System Bold" size="12.0"/></font></Label>
+                    
+                    <HBox fx:id="sideActive" alignment="CENTER_LEFT" onMouseClicked="#handleSideActive" styleClass="sidebar-item, sidebar-item-active">
+                        <Label text="Sản phẩm đang bán" styleClass="sidebar-label, sidebar-label-active" />
+                    </HBox>
+                    
+                    <HBox fx:id="sideSold" alignment="CENTER_LEFT" onMouseClicked="#handleSideSold" styleClass="sidebar-item">
+                        <Label text="Sản phẩm đã bán" styleClass="sidebar-label" />
+                    </HBox>
+                    
+                    <HBox fx:id="sideRevenue" alignment="CENTER_LEFT" onMouseClicked="#handleSideRevenue" styleClass="sidebar-item">
+                        <Label text="Báo cáo doanh thu" styleClass="sidebar-label" />
+                    </HBox>
+                </VBox>
 
-                <Label text="Tóm tắt" textFill="#191919"><font><Font name="System Bold" size="14.0"/></font></Label>
-                <Label fx:id="sideActive" text="Sản phẩm đang bán" textFill="#0654ba" style="-fx-cursor: hand; -fx-font-weight: bold;" onMouseClicked="#handleSideActive"><font><Font size="14.0"/></font></Label>
-                <Label fx:id="sideSold" text="Sản phẩm đã bán" textFill="#707070" style="-fx-cursor: hand;" onMouseClicked="#handleSideSold"><font><Font size="14.0"/></font></Label>
-                <Label fx:id="sideRevenue" text="Doanh thu" textFill="#707070" style="-fx-cursor: hand;" onMouseClicked="#handleSideRevenue"><font><Font size="14.0"/></font></Label>
+                <Separator style="-fx-padding: 10 20;" />
+
+                <VBox spacing="8.0" style="-fx-padding: 20 0;">
+                    <Label text="DANH MỤC" textFill="#999999" style="-fx-padding: 0 25 10 25;"><font><Font name="System Bold" size="12.0"/></font></Label>
+                    <HBox fx:id="catAll" alignment="CENTER_LEFT" onMouseClicked="#handleCategoryAll" styleClass="sidebar-item">
+                        <Label text="Tất cả sản phẩm" styleClass="sidebar-label" />
+                    </HBox>
+                    <HBox fx:id="catElectronics" alignment="CENTER_LEFT" onMouseClicked="#handleCategoryElectronics" styleClass="sidebar-item">
+                        <Label text="Đồ điện tử" styleClass="sidebar-label" />
+                    </HBox>
+                    <HBox fx:id="catArt" alignment="CENTER_LEFT" onMouseClicked="#handleCategoryArt" styleClass="sidebar-item">
+                        <Label text="Nghệ thuật" styleClass="sidebar-label" />
+                    </HBox>
+                    <HBox fx:id="catVehicle" alignment="CENTER_LEFT" onMouseClicked="#handleCategoryVehicle" styleClass="sidebar-item">
+                        <Label text="Xe cộ" styleClass="sidebar-label" />
+                    </HBox>
+                </VBox>
             </children>
         </VBox>
     </left>
@@ -69,111 +90,115 @@
     <center>
         <StackPane fx:id="contentArea">
             <!-- PAGE 1: Tổng quan (Overview) -->
-            <VBox fx:id="pageOverview" spacing="25.0" style="-fx-padding: 30;">
+            <VBox fx:id="pageOverview" spacing="30.0" style="-fx-padding: 40;">
                 <children>
-                    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;" VBox.vgrow="ALWAYS">
-                        <content>
-                            <VBox spacing="25.0">
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="5.0">
+                            <Label text="Hiệu suất kinh doanh" textFill="#191919"><font><Font name="System Bold" size="26.0"/></font></Label>
+                            <Label text="Cập nhật trạng thái mới nhất từ cửa hàng của bạn" textFill="#707070" />
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button styleClass="btn-primary" text="+ Thêm sản phẩm" onAction="#handleAddProduct"/>
+                    </HBox>
+
+                    <HBox spacing="25.0">
+                        <children>
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
                                 <children>
-                                    <Label text="Hiệu suất kinh doanh của bạn"><font><Font name="System Bold" size="22.0"/></font></Label>
-
-                                    <HBox spacing="20.0">
-                                        <children>
-                                            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" HBox.hgrow="ALWAYS">
-                                                <children>
-                                                    <Label text="Tổng doanh thu" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                                                    <Label fx:id="lblTotalRevenue" text="0 ₫" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
-                                                </children>
-                                            </VBox>
-                                            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" HBox.hgrow="ALWAYS">
-                                                <children>
-                                                    <Label text="Đang đấu giá" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                                                    <Label fx:id="lblActiveAuctions" text="0 Sản phẩm" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
-                                                </children>
-                                            </VBox>
-                                            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" HBox.hgrow="ALWAYS">
-                                                <children>
-                                                    <Label text="Đơn hàng chờ xử lý" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                                                    <Label fx:id="lblPendingOrders" text="0 Đơn" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
-                                                </children>
-                                            </VBox>
-                                        </children>
-                                    </HBox>
-
-                                    <HBox spacing="20.0" VBox.vgrow="ALWAYS">
-                                        <children>
-                                            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" prefWidth="400.0" HBox.hgrow="ALWAYS">
-                                                <children>
-                                                    <Label text="Doanh thu 7 ngày qua" textFill="#191919"><font><Font name="System Bold" size="16.0"/></font></Label>
-                                                    <BarChart fx:id="revenueChart" prefHeight="300.0" legendVisible="false">
-                                                        <xAxis><CategoryAxis side="BOTTOM" /></xAxis>
-                                                        <yAxis><NumberAxis side="LEFT" /></yAxis>
-                                                    </BarChart>
-                                                </children>
-                                            </VBox>
-
-                                            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" prefWidth="500.0" HBox.hgrow="ALWAYS">
-                                                <children>
-                                                    <Label text="Sản phẩm đang đấu giá" textFill="#191919"><font><Font name="System Bold" size="16.0"/></font></Label>
-                                                    <Region prefHeight="10.0" />
-                                                    <TableView fx:id="tableProducts" prefHeight="270.0" VBox.vgrow="ALWAYS" style="-fx-border-color: #E0E0E0;">
-                                                        <columns>
-                                                            <TableColumn fx:id="colId" text="Mã SP" prefWidth="60.0" />
-                                                            <TableColumn fx:id="colName" text="Tên sản phẩm" prefWidth="150.0" />
-                                                            <TableColumn fx:id="colPrice" text="Giá hiện tại" prefWidth="120.0" />
-                                                            <TableColumn fx:id="colStatus" text="Trạng thái" prefWidth="100.0" />
-                                                        </columns>
-                                                    </TableView>
-                                                </children>
-                                            </VBox>
-                                        </children>
-                                    </HBox>
+                                    <Label text="Tổng doanh thu" textFill="#707070"><font><Font size="13.0"/></font></Label>
+                                    <Label fx:id="lblTotalRevenue" text="0 ₫" textFill="#3665f3"><font><Font name="System Bold" size="28.0"/></font></Label>
                                 </children>
                             </VBox>
-                        </content>
-                    </ScrollPane>
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label text="Đang đấu giá" textFill="#707070"><font><Font size="13.0"/></font></Label>
+                                    <Label fx:id="lblActiveAuctions" text="0" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
+                                </children>
+                            </VBox>
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label text="Đơn hàng mới" textFill="#707070"><font><Font size="13.0"/></font></Label>
+                                    <Label fx:id="lblPendingOrders" text="0" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
+                                </children>
+                            </VBox>
+                        </children>
+                    </HBox>
+
+                    <HBox spacing="25.0" VBox.vgrow="ALWAYS">
+                        <children>
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS" maxWidth="500">
+                                <children>
+                                    <Label text="Doanh thu 7 ngày qua" textFill="#191919" style="-fx-padding: 0 0 15 0;"><font><Font name="System Bold" size="16.0"/></font></Label>
+                                    <BarChart fx:id="revenueChart" legendVisible="false" verticalGridLinesVisible="false">
+                                        <xAxis><CategoryAxis side="BOTTOM" /></xAxis>
+                                        <yAxis><NumberAxis side="LEFT" /></yAxis>
+                                    </BarChart>
+                                </children>
+                            </VBox>
+
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label text="Hoạt động gần đây" textFill="#191919" style="-fx-padding: 0 0 15 0;"><font><Font name="System Bold" size="16.0"/></font></Label>
+                                    <TableView fx:id="tableProducts" VBox.vgrow="ALWAYS">
+                                        <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                                        <columns>
+                                            <TableColumn fx:id="colId" text="Mã SP" prefWidth="70.0" />
+                                            <TableColumn fx:id="colName" text="Sản phẩm" prefWidth="180.0" />
+                                            <TableColumn fx:id="colPrice" text="Giá hiện tại" prefWidth="110.0" />
+                                            <TableColumn fx:id="colStatus" text="Trạng thái" prefWidth="100.0" />
+                                        </columns>
+                                    </TableView>
+                                </children>
+                            </VBox>
+                        </children>
+                    </HBox>
                 </children>
             </VBox>
 
             <!-- PAGE 2: Sản phẩm đang bán -->
-            <VBox fx:id="pageActiveProducts" spacing="20.0" style="-fx-padding: 30;" visible="false">
+            <VBox fx:id="pageActiveProducts" spacing="25.0" style="-fx-padding: 40;" visible="false">
                 <children>
-                    <Label text="Sản phẩm đang bán"><font><Font name="System Bold" size="22.0"/></font></Label>
-                    <Label text="Danh sách các sản phẩm hiện đang được đấu giá" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                    <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="5.0">
+                            <Label text="Sản phẩm đang bán"><font><Font name="System Bold" size="26.0"/></font></Label>
+                            <Label text="Quản lý và theo dõi các phiên đấu giá đang diễn ra" textFill="#707070" />
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <TextField fx:id="txtSearchActive" prefHeight="35.0" prefWidth="250.0" promptText="Tìm sản phẩm..." style="-fx-background-radius: 20; -fx-padding: 0 15;" />
+                    </HBox>
+                    
+                    <VBox styleClass="stat-card" VBox.vgrow="ALWAYS">
                         <children>
-                            <TableView fx:id="tableActiveProducts" prefHeight="500.0" VBox.vgrow="ALWAYS" style="-fx-border-color: #E0E0E0;">
+                            <TableView fx:id="tableActiveProducts" VBox.vgrow="ALWAYS">
+                                <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
                                 <columns>
                                     <TableColumn fx:id="colActiveId" text="Mã SP" prefWidth="80.0" />
-                                    <TableColumn fx:id="colActiveName" text="Tên sản phẩm" prefWidth="200.0" />
-                                    <TableColumn fx:id="colActivePrice" text="Giá khởi điểm" prefWidth="150.0" />
-                                    <TableColumn fx:id="colActiveEndTime" text="Thời gian kết thúc" prefWidth="200.0" />
-                                    <TableColumn fx:id="colActiveStatus" text="Trạng thái" prefWidth="120.0" />
+                                    <TableColumn fx:id="colActiveName" text="Sản phẩm" prefWidth="250.0" />
+                                    <TableColumn fx:id="colActivePrice" text="Giá hiện tại" prefWidth="130.0" />
+                                    <TableColumn fx:id="colActiveBids" text="Thầu" prefWidth="70.0" />
+                                    <TableColumn fx:id="colActiveTimeLeft" text="Thời gian" prefWidth="120.0" />
+                                    <TableColumn fx:id="colActiveStatus" text="Trạng thái" prefWidth="100.0" />
+                                    <TableColumn fx:id="colActiveAction" text="Hành động" prefWidth="120.0" />
                                 </columns>
                             </TableView>
-                            
-                            <HBox spacing="15.0" alignment="CENTER_RIGHT" style="-fx-padding: 15 0 0 0;">
-                                <Button text="Sửa sản phẩm" onAction="#handleEditProduct" style="-fx-background-color: #f2f2f7; -fx-text-fill: #191919; -fx-background-radius: 4; -fx-cursor: hand;" />
-                                <Button text="Xóa sản phẩm" onAction="#handleDeleteProduct" style="-fx-background-color: #ee4d2d; -fx-text-fill: white; -fx-background-radius: 4; -fx-cursor: hand;" />
-                            </HBox>
                         </children>
                     </VBox>
                 </children>
             </VBox>
 
             <!-- PAGE 3: Sản phẩm đã bán -->
-            <VBox fx:id="pageSoldProducts" spacing="20.0" style="-fx-padding: 30;" visible="false">
+            <VBox fx:id="pageSoldProducts" spacing="25.0" style="-fx-padding: 40;" visible="false">
                 <children>
-                    <Label text="Sản phẩm đã bán"><font><Font name="System Bold" size="22.0"/></font></Label>
-                    <Label text="Danh sách các sản phẩm đã kết thúc đấu giá" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                    <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" VBox.vgrow="ALWAYS">
+                    <Label text="Sản phẩm đã bán"><font><Font name="System Bold" size="26.0"/></font></Label>
+                    <VBox styleClass="stat-card" VBox.vgrow="ALWAYS">
                         <children>
-                            <TableView fx:id="tableSoldProducts" prefHeight="500.0" VBox.vgrow="ALWAYS" style="-fx-border-color: #E0E0E0;">
+                            <TableView fx:id="tableSoldProducts" VBox.vgrow="ALWAYS">
+                                <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
                                 <columns>
                                     <TableColumn fx:id="colSoldId" text="Mã SP" prefWidth="80.0" />
-                                    <TableColumn fx:id="colSoldName" text="Tên sản phẩm" prefWidth="200.0" />
-                                    <TableColumn fx:id="colSoldPrice" text="Giá bán" prefWidth="150.0" />
-                                    <TableColumn fx:id="colSoldEndTime" text="Ngày kết thúc" prefWidth="200.0" />
+                                    <TableColumn fx:id="colSoldName" text="Sản phẩm" prefWidth="250.0" />
+                                    <TableColumn fx:id="colSoldPrice" text="Giá chốt" prefWidth="150.0" />
+                                    <TableColumn fx:id="colSoldEndTime" text="Thời gian kết thúc" prefWidth="180.0" />
                                     <TableColumn fx:id="colSoldStatus" text="Trạng thái" prefWidth="120.0" />
                                 </columns>
                             </TableView>
@@ -182,54 +207,19 @@
                 </children>
             </VBox>
 
-            <!-- PAGE 4: Doanh thu -->
-            <VBox fx:id="pageRevenue" spacing="20.0" style="-fx-padding: 30;" visible="false">
-                <children>
-                    <Label text="Thống kê doanh thu"><font><Font name="System Bold" size="22.0"/></font></Label>
-                    <Label text="Biểu đồ và chi tiết doanh thu của bạn" textFill="#707070"><font><Font size="14.0"/></font></Label>
-
-                    <HBox spacing="20.0">
-                        <children>
-                            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" HBox.hgrow="ALWAYS">
-                                <children>
-                                    <Label text="Tổng doanh thu" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                                    <Label fx:id="lblRevenueTotalDetail" text="0 ₫" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
-                                </children>
-                            </VBox>
-                            <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" HBox.hgrow="ALWAYS">
-                                <children>
-                                    <Label text="Số sản phẩm đã bán" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                                    <Label fx:id="lblSoldCount" text="0" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
-                                </children>
-                            </VBox>
-                        </children>
-                    </HBox>
-
-                    <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" VBox.vgrow="ALWAYS">
-                        <children>
-                            <Label text="Biểu đồ doanh thu 7 ngày qua" textFill="#191919"><font><Font name="System Bold" size="16.0"/></font></Label>
-                            <BarChart fx:id="revenueChartDetail" prefHeight="350.0" legendVisible="false">
-                                <xAxis><CategoryAxis side="BOTTOM" /></xAxis>
-                                <yAxis><NumberAxis side="LEFT" /></yAxis>
-                            </BarChart>
-                        </children>
-                    </VBox>
-                </children>
-            </VBox>
-
             <!-- PAGE 5: Đơn hàng (Orders) -->
-            <VBox fx:id="pageOrders" spacing="20.0" style="-fx-padding: 30;" visible="false">
+            <VBox fx:id="pageOrders" spacing="25.0" style="-fx-padding: 40;" visible="false">
                 <children>
-                    <Label text="Quản lý đơn hàng"><font><Font name="System Bold" size="22.0"/></font></Label>
-                    <Label text="Danh sách các đơn hàng từ người mua" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                    <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" VBox.vgrow="ALWAYS">
+                    <Label text="Quản lý đơn hàng"><font><Font name="System Bold" size="26.0"/></font></Label>
+                    <VBox styleClass="stat-card" VBox.vgrow="ALWAYS">
                         <children>
-                            <TableView fx:id="tableOrders" prefHeight="500.0" VBox.vgrow="ALWAYS" style="-fx-border-color: #E0E0E0;">
+                            <TableView fx:id="tableOrders" VBox.vgrow="ALWAYS">
+                                <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
                                 <columns>
-                                    <TableColumn fx:id="colOrderId" text="Mã đơn" prefWidth="80.0" />
-                                    <TableColumn fx:id="colOrderItem" text="Sản phẩm" prefWidth="200.0" />
+                                    <TableColumn fx:id="colOrderId" text="Mã đơn" prefWidth="100.0" />
+                                    <TableColumn fx:id="colOrderItem" text="Sản phẩm" prefWidth="250.0" />
                                     <TableColumn fx:id="colOrderBuyer" text="Người mua" prefWidth="150.0" />
-                                    <TableColumn fx:id="colOrderPrice" text="Giá bán" prefWidth="150.0" />
+                                    <TableColumn fx:id="colOrderPrice" text="Giá trị" prefWidth="130.0" />
                                     <TableColumn fx:id="colOrderDate" text="Ngày đặt" prefWidth="150.0" />
                                 </columns>
                             </TableView>
@@ -238,22 +228,76 @@
                 </children>
             </VBox>
 
-            <!-- PAGE 6: Danh sách sản phẩm (Listings) -->
-            <VBox fx:id="pageListings" spacing="20.0" style="-fx-padding: 30;" visible="false">
+            <!-- PAGE 6: Danh mục sản phẩm (Listings) -->
+            <VBox fx:id="pageListings" spacing="30.0" style="-fx-padding: 40;" visible="false">
                 <children>
-                    <Label text="Tất cả sản phẩm"><font><Font name="System Bold" size="22.0"/></font></Label>
-                    <Label text="Toàn bộ sản phẩm bạn đã đăng bán" textFill="#707070"><font><Font size="14.0"/></font></Label>
-                    <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: #E0E0E0; -fx-padding: 20; -fx-background-radius: 5; -fx-border-radius: 5;" VBox.vgrow="ALWAYS">
+                    <HBox alignment="CENTER_LEFT" style="-fx-padding: 0 5 0 5;">
+                        <VBox spacing="8.0">
+                            <Label text="Tất cả sản phẩm" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
+                            <Label text="Quản lý toàn bộ danh mục hàng hóa của bạn trong hệ thống" textFill="#707070" />
+                        </VBox>
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Button styleClass="btn-primary" text="+ Đăng sản phẩm mới" onAction="#handleAddProduct" prefHeight="40" />
+                    </HBox>
+                    
+                    <VBox VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 4);">
                         <children>
-                            <TableView fx:id="tableListings" prefHeight="500.0" VBox.vgrow="ALWAYS" style="-fx-border-color: #E0E0E0;">
+                            <TableView fx:id="tableListings" VBox.vgrow="ALWAYS">
+                                <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
                                 <columns>
-                                    <TableColumn fx:id="colListId" text="Mã SP" prefWidth="80.0" />
-                                    <TableColumn fx:id="colListName" text="Tên sản phẩm" prefWidth="200.0" />
-                                    <TableColumn fx:id="colListDesc" text="Mô tả" prefWidth="200.0" />
-                                    <TableColumn fx:id="colListPrice" text="Giá khởi điểm" prefWidth="120.0" />
-                                    <TableColumn fx:id="colListStatus" text="Trạng thái" prefWidth="120.0" />
+                                    <TableColumn fx:id="colListId" text="Mã SP" prefWidth="90.0" />
+                                    <TableColumn fx:id="colListName" text="Tên sản phẩm" prefWidth="250.0" />
+                                    <TableColumn fx:id="colListDesc" text="Mô tả chi tiết" prefWidth="250.0" />
+                                    <TableColumn fx:id="colListPrice" text="Giá khởi điểm" prefWidth="140.0" />
+                                    <TableColumn fx:id="colListStatus" text="Trạng thái" prefWidth="130.0" />
+                                    <TableColumn fx:id="colListAction" text="Thao tác" prefWidth="150.0" />
                                 </columns>
                             </TableView>
+                        </children>
+                    </VBox>
+                </children>
+            </VBox>
+            <!-- PAGE 7: Báo cáo doanh thu (Revenue Report) -->
+            <VBox fx:id="pageRevenue" spacing="30.0" style="-fx-padding: 40;" visible="false">
+                <children>
+                    <VBox spacing="8.0">
+                        <Label text="Báo cáo doanh thu" textFill="#191919"><font><Font name="System Bold" size="28.0"/></font></Label>
+                        <Label text="Phân tích chi tiết hiệu quả kinh doanh của bạn" textFill="#707070" />
+                    </VBox>
+                    
+                    <HBox spacing="25.0">
+                        <children>
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label text="Tổng doanh thu (Tất cả)" textFill="#707070"><font><Font size="13.0"/></font></Label>
+                                    <Label fx:id="lblFullRevenue" text="0 ₫" textFill="#3665f3"><font><Font name="System Bold" size="30.0"/></font></Label>
+                                    <Label fx:id="lblRevenueChange" text="+0% so với tháng trước" textFill="#86b817" style="-fx-font-size: 11px; -fx-padding: 5 0 0 0;" />
+                                </children>
+                            </VBox>
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label text="Giá trị đơn hàng TB" textFill="#707070"><font><Font size="13.0"/></font></Label>
+                                    <Label fx:id="lblAvgOrderValue" text="0 ₫" textFill="#191919"><font><Font name="System Bold" size="30.0"/></font></Label>
+                                    <Label fx:id="lblOrderCountDetail" text="Dựa trên 0 đơn hàng" textFill="#999999" style="-fx-font-size: 11px; -fx-padding: 5 0 0 0;" />
+                                </children>
+                            </VBox>
+                            <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                                <children>
+                                    <Label text="Tỷ lệ chốt đơn" textFill="#707070"><font><Font size="13.0"/></font></Label>
+                                    <Label fx:id="lblConversionRate" text="0.0%" textFill="#191919"><font><Font name="System Bold" size="30.0"/></font></Label>
+                                    <Label fx:id="lblConversionDetail" text="Tính trên tổng sản phẩm" textFill="#999999" style="-fx-font-size: 11px; -fx-padding: 5 0 0 0;" />
+                                </children>
+                            </VBox>
+                        </children>
+                    </HBox>
+                    
+                    <VBox styleClass="stat-card" VBox.vgrow="ALWAYS">
+                        <children>
+                            <Label text="Biểu đồ doanh thu chi tiết" textFill="#191919" style="-fx-padding: 0 0 20 0;"><font><Font name="System Bold" size="18.0"/></font></Label>
+                            <AreaChart fx:id="revenueAreaChart" legendSide="BOTTOM" VBox.vgrow="ALWAYS">
+                                <xAxis><CategoryAxis side="BOTTOM" label="Thời gian" /></xAxis>
+                                <yAxis><NumberAxis side="LEFT" label="Doanh thu (₫)" /></yAxis>
+                            </AreaChart>
                         </children>
                     </VBox>
                 </children>

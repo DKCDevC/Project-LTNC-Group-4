@@ -73,3 +73,38 @@
     -fx-text-fill: #3665f3;
     -fx-font-weight: bold;
 }
+
+/* Sidebar label hover effect */
+.sidebar-label {
+    -fx-padding: 8 12;
+    -fx-background-radius: 8;
+    -fx-transition: all 0.3s ease;
+}
+
+.sidebar-label:hover {
+    -fx-text-fill: #0654ba;
+    -fx-background-color: #f0f7ff;
+    -fx-background-radius: 8;
+}
+
+/* Modern Logout Button */
+.btn-logout {
+    -fx-background-color: transparent;
+    -fx-text-fill: #e62117;
+    -fx-border-color: #e62117;
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+    -fx-font-weight: bold;
+}
+
+.btn-logout:hover {
+    -fx-background-color: #e62117;
+    -fx-text-fill: white;
+}
+
+/* Icon Button Hover Effect (Bell & Cart) */
+.icon-button:hover {
+    -fx-background-color: #f0f2f5;
+}

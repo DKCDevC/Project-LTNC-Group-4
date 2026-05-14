@@ -55,12 +55,14 @@ public class ItemDAO {
                 LocalDateTime endTime = parseDateTime(rs.getString("end_time"));
                 String extraInfo = rs.getString("extra_info");
                 String sellerName = rs.getString("seller_name");
+                String imageUrls = rs.getString("image_urls");
 
                 Item item = ItemFactory.createItem(type, name, description, startingPrice, startTime, endTime, extraInfo);
                 item.setId(id);
                 if (sellerName != null) {
                     item.setSeller(new Seller(sellerName, "", ""));
                 }
+                item.setImageUrls(imageUrls);
                 item.setCurrentHighestPrice(startingPrice);
                 itemList.add(item);
             }
@@ -91,6 +93,7 @@ public class ItemDAO {
                 if (sellerName != null) {
                     item.setSeller(new Seller(sellerName, "", ""));
                 }
+                item.setImageUrls(rs.getString("image_urls"));
                 item.setCurrentHighestPrice(startingPrice);
                 return item;
             }
@@ -101,8 +104,8 @@ public class ItemDAO {
     }
 
     public void addItem(String id, Item item) {
-        String sql = "INSERT INTO items(id, name, description, starting_price, start_time, end_time, type, extra_info, seller_name) " +
-                "VALUES(?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO items(id, name, description, starting_price, start_time, end_time, type, extra_info, seller_name, image_urls) " +
+                "VALUES(?,?,?,?,?,?,?,?,?,?)";
 
         try (Connection conn = DBConnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql)) {
@@ -135,6 +138,7 @@ public class ItemDAO {
             } else {
                 pstmt.setString(9, "Unknown");
             }
+            pstmt.setString(10, item.getImageUrls());
 
             pstmt.executeUpdate();
         } catch (SQLException e) {

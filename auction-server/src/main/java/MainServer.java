@@ -25,8 +25,13 @@ public class MainServer {
                 LocalDateTime.now().plusDays(2), 12);
         laptop.setId("laptop001");
 
-        // Lưu vào Database
-        services.ItemManager.getInstance().addItem(laptop.getId(), laptop, seller1);
+        // Lưu vào Database (Chỉ lưu nếu chưa tồn tại để tránh lỗi UNIQUE constraint)
+        if (services.ItemManager.getInstance().getAllItems().stream().noneMatch(i -> i.getId().equals(laptop.getId()))) {
+            services.ItemManager.getInstance().addItem(laptop.getId(), laptop, seller1);
+            System.out.println(">>> Đã lưu sản phẩm mẫu mới vào Database.");
+        } else {
+            System.out.println(">>> Sản phẩm mẫu đã tồn tại trong Database, bỏ qua bước lưu.");
+        }
 
         Auction laptopAuction = new Auction(laptop, seller1);
         laptopAuction.setAuctionId("laptop001");

@@ -41,7 +41,8 @@ public class DBConnection {
                 "end_time TEXT NOT NULL, " +
                 "type TEXT NOT NULL, " +
                 "extra_info TEXT, " +
-                "seller_name TEXT" +
+                "seller_name TEXT, " +
+                "image_urls TEXT" +
                 ");";
 
         String createOrdersTable = "CREATE TABLE IF NOT EXISTS orders (" +
@@ -55,8 +56,14 @@ public class DBConnection {
 
         try (Statement stmt = conn.createStatement()) {
             stmt.execute(createUsersTable);
-            stmt.execute(createItemsTable);
             stmt.execute(createOrdersTable);
+
+            // Kiểm tra và thêm cột image_urls nếu bảng đã tồn tại từ trước
+            try {
+                stmt.execute("ALTER TABLE items ADD COLUMN image_urls TEXT;");
+            } catch (SQLException ignore) {
+                // Cột đã tồn tại, không sao cả
+            }
 
             ResultSet rs = stmt.executeQuery("SELECT COUNT(*) AS total FROM users");
             if (rs.next() && rs.getInt("total") == 0) {

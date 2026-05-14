@@ -28,7 +28,8 @@ public class AddProductController {
     @FXML private TextField txtStartPrice;
     @FXML private TextArea txtDescription;
     @FXML private ComboBox<String> cboCategory;
-    @FXML private ComboBox<String> cboDuration;
+    @FXML private TextField txtDurationValue;
+    @FXML private ComboBox<String> cboDurationUnit;
     @FXML private Label lblStatus;
     @FXML private FlowPane photoContainer;
 
@@ -57,14 +58,37 @@ public class AddProductController {
         cboCategory.setValue("Khác (Chung)");
 
         // Khởi tạo thời gian
-        cboDuration.setItems(FXCollections.observableArrayList(
-                "1 Ngày",
-                "3 Ngày",
-                "5 Ngày",
-                "7 Ngày",
-                "14 Ngày"
+        cboDurationUnit.setItems(FXCollections.observableArrayList(
+                "Phút",
+                "Giờ",
+                "Ngày"
         ));
-        cboDuration.setValue("7 Ngày");
+        cboDurationUnit.setValue("Ngày");
+        cboDurationUnit.setValue("Ngày");
+        txtDurationValue.setText("7");
+
+        // --- Auto-format Price with commas ---
+        txtStartPrice.textProperty().addListener((observable, oldValue, newValue) -> {
+            if (newValue == null || newValue.isEmpty()) return;
+            
+            // Remove everything except numbers
+            String digits = newValue.replaceAll("[^\\d]", "");
+            if (digits.isEmpty()) {
+                txtStartPrice.setText("");
+                return;
+            }
+            
+            try {
+                long value = Long.parseLong(digits);
+                // Format with commas
+                String formatted = String.format("%,d", value).replace(',', ','); // Standard comma separator
+                if (!newValue.equals(formatted)) {
+                    txtStartPrice.setText(formatted);
+                    // Keep cursor at the end
+                    Platform.runLater(() -> txtStartPrice.positionCaret(formatted.length()));
+                }
+            } catch (Exception e) {}
+        });
     }
 
     public void setSellerName(String sellerName) {
@@ -76,7 +100,9 @@ public class AddProductController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Chọn ảnh sản phẩm");
         fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.webp")
+                new FileChooser.ExtensionFilter("Media Files", "*.png", "*.jpg", "*.jpeg", "*.webp", "*.mp4", "*.mov"),
+                new FileChooser.ExtensionFilter("Image Files", "*.png", "*.jpg", "*.jpeg", "*.webp"),
+                new FileChooser.ExtensionFilter("Video Files", "*.mp4", "*.mov")
         );
 
         Stage stage = (Stage) txtProductName.getScene().getWindow();
@@ -108,12 +134,14 @@ public class AddProductController {
         String desc = txtDescription.getText().trim();
 
         if (name.isEmpty() || priceStr.isEmpty()) {
-            lblStatus.setText("Vui lòng nhập tên và giá khởi điểm!");
+            lblStatus.setText("Vui lòng nhập các trường bắt buộc (*)");
             return;
         }
 
         try {
-            double price = Double.parseDouble(priceStr);
+            // Strip commas before parsing
+            String cleanPrice = priceStr.replaceAll("[^\\d]", "");
+            double price = Double.parseDouble(cleanPrice);
             lblStatus.setStyle("-fx-text-fill: gray;");
             lblStatus.setText("Đang đẩy lên Server...");
 
@@ -122,14 +150,16 @@ public class AddProductController {
             // Convert danh sách ảnh thành chuỗi cách nhau bởi dấu phẩy
             String extraImages = String.join(",", imagePaths);
 
-            // Lấy thời gian (số ngày)
-            int durationDays = 7;
+            // Lấy thời gian
+            int durationValue = 7;
             try {
-                String durStr = cboDuration.getValue().replace(" Ngày", "").trim();
-                durationDays = Integer.parseInt(durStr);
+                durationValue = Integer.parseInt(txtDurationValue.getText().trim());
             } catch (Exception ex) {}
             
-            final int finalDuration = durationDays;
+            String durationUnit = cboDurationUnit.getValue();
+            
+            final int finalDurationValue = durationValue;
+            final String finalDurationUnit = durationUnit;
 
             new Thread(() -> {
                 try {
@@ -143,7 +173,8 @@ public class AddProductController {
                     data.addProperty("price", price);
                     data.addProperty("extra", extraImages);
                     data.addProperty("seller", this.sellerName);
-                    data.addProperty("duration", finalDuration);
+                    data.addProperty("durationValue", finalDurationValue);
+                    data.addProperty("durationUnit", finalDurationUnit);
 
                     JsonObject request = new JsonObject();
                     request.addProperty("command", "ADD_ITEM");
