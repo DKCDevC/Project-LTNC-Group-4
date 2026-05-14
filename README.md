@@ -64,8 +64,8 @@ java -jar auction-client/target/auction-client-1.0-SNAPSHOT.jar
 
 ---
 **Nhóm phát triển (Group 4 - LTNC):**
-1. **Nguyễn Bá Dũng** (Trưởng Nhóm)
-2. **Lê Quốc Giang**
-3. **Đinh Đức Hiếu**
-4. **Nguyễn Duy Anh**
+1. **Nguyễn Bá Dũng** (Trưởng Nhóm) : BE, FE, Database, Socket.
+2. **Lê Quốc Giang**: BE
+3. **Đinh Đức Hiếu**: FE
+4. **Nguyễn Duy Anh**: Database
 
