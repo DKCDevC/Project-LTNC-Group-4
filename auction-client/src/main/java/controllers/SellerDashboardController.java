@@ -134,7 +134,7 @@ public class SellerDashboardController {
 
     public void setUserInfo(String username) {
         this.username = username;
-        lblGreeting.setText("Xin chào, " + username + "!");
+        lblGreeting.setText("Xin ch ào, " + username + "!");
         loadRealDataFromServer();
     }
 

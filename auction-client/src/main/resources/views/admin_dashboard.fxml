@@ -11,14 +11,14 @@
         <URL value="@/styles/style.css" />
     </stylesheets>
     
-    <!-- Top Nav (eBay Style) -->
+    <!-- Top Nav (eBid Style) -->
     <HBox alignment="CENTER_LEFT" prefHeight="65.0" spacing="20.0" style="-fx-background-color: white; -fx-border-color: #e5e5e5; -fx-border-width: 0 0 1 0;">
         <padding><Insets left="30" right="30"/></padding>
         <HBox alignment="CENTER_LEFT" spacing="0">
             <Label text="e" textFill="#e53238" style="-fx-font-size: 32; -fx-font-weight: bold;"/>
             <Label text="b" textFill="#0064d2" style="-fx-font-size: 32; -fx-font-weight: bold;"/>
-            <Label text="a" textFill="#f5af02" style="-fx-font-size: 32; -fx-font-weight: bold;"/>
-            <Label text="y" textFill="#86b817" style="-fx-font-size: 32; -fx-font-weight: bold;"/>
+            <Label text="i" textFill="#f5af02" style="-fx-font-size: 32; -fx-font-weight: bold;"/>
+            <Label text="d" textFill="#86b817" style="-fx-font-size: 32; -fx-font-weight: bold;"/>
             <Text text=" Bảng Quản Trị" fill="#555555" style="-fx-font-size: 18; -fx-font-weight: normal;">
                 <font><Font name="System" size="18.0"/></font>
             </Text>

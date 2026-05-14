@@ -111,7 +111,7 @@
 
 
             
-            <!-- PAGE 4: Chi tiết sản phẩm (eBay Item Page) -->
+            <!-- PAGE 4: Chi tiết sản phẩm (eBid Item Page) -->
             <ScrollPane fx:id="pageProductDetail" visible="false" managed="false" fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <content>
                     <VBox spacing="30" style="-fx-padding: 40; -fx-background-color: white;">

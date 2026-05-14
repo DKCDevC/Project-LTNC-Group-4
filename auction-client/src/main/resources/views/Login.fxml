@@ -10,8 +10,8 @@
         <HBox layoutX="40.0" layoutY="30.0" spacing="1.0">
             <Label text="e" textFill="#e53238"><font><Font name="System Bold" size="40.0"/></font></Label>
             <Label text="b" textFill="#0064d2"><font><Font name="System Bold" size="40.0"/></font></Label>
-            <Label text="a" textFill="#f5af02"><font><Font name="System Bold" size="40.0"/></font></Label>
-            <Label text="y" textFill="#86b817"><font><Font name="System Bold" size="40.0"/></font></Label>
+            <Label text="i" textFill="#f5af02"><font><Font name="System Bold" size="40.0"/></font></Label>
+            <Label text="d" textFill="#86b817"><font><Font name="System Bold" size="40.0"/></font></Label>
         </HBox>
 
         <StackPane AnchorPane.topAnchor="0.0" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0">
