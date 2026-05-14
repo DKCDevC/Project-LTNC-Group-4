@@ -1,9 +1,10 @@
 package models;
 
-public abstract class User extends Entity {
+public class User extends Entity {
     protected String username;
     protected String password;
     protected String email;
+    protected String role;
     protected boolean isLocked = false;
     protected boolean isVerified = false;
 
@@ -30,7 +31,13 @@ public abstract class User extends Entity {
         this.email = email;
     }
 
-    public abstract String getRole();
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
 
     public String getPassword(){
         return password;

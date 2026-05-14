@@ -17,18 +17,23 @@ public class MainServer {
         DBConnection.getConnection();
         // -------------------------------------------------------
 
-        Seller seller1 = new Seller("nguoiban_01", "pass123", "seller@gmail.com");
+        // --- SỬA LẠI: Dùng Seller_01 và lưu vào Database để hiện lên Dashboard ---
+        Seller seller1 = new Seller("Seller_01", "pass123", "s1@test.com");
 
-        Item laptop = new Electronics("Laptop Asus ROG", "Gaming", 10000000,
+        Item laptop = new Electronics("Laptop Asus ROG", "Gaming Laptop mạnh mẽ", 10000000,
                 LocalDateTime.now(),
-                LocalDateTime.now().plusMinutes(1), 12);
+                LocalDateTime.now().plusDays(2), 12);
+        laptop.setId("laptop001");
+
+        // Lưu vào Database
+        services.ItemManager.getInstance().addItem(laptop.getId(), laptop, seller1);
 
         Auction laptopAuction = new Auction(laptop, seller1);
         laptopAuction.setAuctionId("laptop001");
         AuctionManager.getInstance().addAuction(laptopAuction);
+        
         System.out.println(">>> ID CỦA PHIÊN ĐẤU GIÁ LÀ: " + laptopAuction.getAuctionId());
-
-        System.out.println("=== ĐÃ TẠO PHIÊN ĐẤU GIÁ MẪU: Laptop Asus ROG ===");
+        System.out.println("=== ĐÃ TẠO VÀ LƯU PHIÊN ĐẤU GIÁ MẪU: Laptop Asus ROG ===");
 
         AuctionManager.getInstance().startAuctionTimer();
 

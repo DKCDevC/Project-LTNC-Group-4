@@ -39,4 +39,12 @@ public class UserManagementUseCase {
     public boolean removeUser(String username) {
         return repository.deleteUser(username);
     }
+
+    public List<models.Auction> getAuctions() {
+        return repository.getAllAuctions();
+    }
+
+    public boolean removeAuction(String auctionId) {
+        return repository.cancelAuction(auctionId);
+    }
 }

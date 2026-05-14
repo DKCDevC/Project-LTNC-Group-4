@@ -114,33 +114,78 @@
                                             <Label fx:id="lblDetailPrice" style="-fx-font-weight: bold; -fx-font-size: 32;" />
                                             <Label text="VND" textFill="#707070" style="-fx-padding: 0 0 5 0;" />
                                         </HBox>
+                                        <Label fx:id="lblBidStatus" text="Bạn chưa đặt giá" style="-fx-font-size: 14; -fx-padding: 5 15; -fx-background-radius: 15;" />
+                                    </VBox>
+
+                                    <HBox spacing="40">
+                                        <VBox spacing="5">
+                                            <Label text="Lượt đặt giá:" textFill="#707070" style="-fx-font-size: 14;" />
+                                            <Label fx:id="lblDetailBidsCount" text="0 lượt" style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #191919;" />
+                                        </VBox>
+                                        <VBox spacing="5">
+                                            <Label text="Trạng thái:" textFill="#707070" style="-fx-font-size: 14;" />
+                                            <Label fx:id="lblDetailStatus" text="Đang đấu giá" style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #0654ba;" />
+                                        </VBox>
+                                    </HBox>
+
+                                    <VBox spacing="5">
+                                        <Label text="Thời gian còn lại:" textFill="#707070" style="-fx-font-size: 14;" />
+                                        <Label fx:id="lblCountdown" text="--:--:--" style="-fx-font-weight: bold; -fx-font-size: 24; -fx-text-fill: #e62117;" />
                                     </VBox>
                                     
                                     <VBox spacing="20" style="-fx-background-color: #f7f7f7; -fx-padding: 25; -fx-background-radius: 12;">
                                         <children>
                                             <VBox spacing="10">
                                                 <Label text="Đặt giá thủ công" style="-fx-font-weight: bold; -fx-font-size: 16;" />
-                                                <HBox spacing="10">
-                                                    <children>
-                                                        <TextField fx:id="txtBidAmount" prefHeight="50" promptText="Nhập mức giá..." style="-fx-background-radius: 25; -fx-padding: 0 20; -fx-font-size: 16;" HBox.hgrow="ALWAYS" />
-                                                        <Button text="Đặt giá" onAction="#handlePlaceBid" style="-fx-background-color: #0654ba; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-weight: bold; -fx-font-size: 16;" prefHeight="50" prefWidth="120" />
-                                                    </children>
-                                                </HBox>
-                                                <Label text="Vui lòng nhập mức giá cao hơn giá hiện tại." textFill="#707070" style="-fx-font-size: 12;" />
+                                                 <HBox spacing="10">
+                                                     <children>
+                                                         <TextField fx:id="txtBidAmount" prefHeight="50" promptText="Nhập mức giá..." style="-fx-background-radius: 25; -fx-padding: 0 20; -fx-font-size: 16;" HBox.hgrow="ALWAYS" />
+                                                         <Button text="Đặt giá" onAction="#handlePlaceBid" style="-fx-background-color: #0654ba; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-weight: bold; -fx-font-size: 16;" prefHeight="50" prefWidth="120" />
+                                                     </children>
+                                                 </HBox>
+                                                 
+                                                 <HBox spacing="10" alignment="CENTER_LEFT">
+                                                     <children>
+                                                         <Label text="Tăng nhanh:" textFill="#707070" style="-fx-font-size: 12;" />
+                                                         <Button text="+50k" onAction="#handleAdd50k" style="-fx-background-color: white; -fx-border-color: #ddd; -fx-border-radius: 15; -fx-background-radius: 15; -fx-font-size: 11;" />
+                                                         <Button text="+100k" onAction="#handleAdd100k" style="-fx-background-color: white; -fx-border-color: #ddd; -fx-border-radius: 15; -fx-background-radius: 15; -fx-font-size: 11;" />
+                                                         <Button text="+500k" onAction="#handleAdd500k" style="-fx-background-color: white; -fx-border-color: #ddd; -fx-border-radius: 15; -fx-background-radius: 15; -fx-font-size: 11;" />
+                                                     </children>
+                                                 </HBox>
+
+                                                 
                                             </VBox>
                                             
                                             <Separator />
                                             
-                                            <VBox spacing="10">
-                                                <Label text="Đấu giá tự động (Auto Bid)" style="-fx-font-weight: bold; -fx-font-size: 16;" />
-                                                <Label text="Hệ thống sẽ tự động đặt thay bạn. Vui lòng nhập mức giá tối đa (Max Bid)." textFill="#707070" style="-fx-font-size: 12;" />
-                                                <HBox spacing="10">
-                                                    <children>
-                                                        <TextField fx:id="txtAutoBidMax" prefHeight="50" promptText="Mức giá tối đa..." style="-fx-background-radius: 25; -fx-padding: 0 20; -fx-font-size: 16;" HBox.hgrow="ALWAYS" />
-                                                        <Button text="Thiết lập" onAction="#handleSetAutoBid" style="-fx-background-color: #86b817; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-weight: bold; -fx-font-size: 16;" prefHeight="50" prefWidth="120" />
-                                                    </children>
-                                                </HBox>
-                                            </VBox>
+                                             <VBox spacing="10">
+                                                 <Label text="Đấu giá tự động (Auto Bid)" style="-fx-font-weight: bold; -fx-font-size: 16;" />
+                                                 
+                                                 <!-- State 1: Setup Auto Bid -->
+                                                 <VBox fx:id="vboxAutoBidSetup" spacing="10">
+                                                     <Label text="Hệ thống sẽ tự động đặt thay bạn. Vui lòng nhập mức giá tối đa (Max Bid)." textFill="#707070" style="-fx-font-size: 12;" />
+                                                     <HBox spacing="10">
+                                                         <children>
+                                                             <TextField fx:id="txtAutoBidMax" prefHeight="50" promptText="Mức giá tối đa..." style="-fx-background-radius: 25; -fx-padding: 0 20; -fx-font-size: 16;" HBox.hgrow="ALWAYS" />
+                                                                                                                           <TextField fx:id="txtAutoBidIncrement" prefHeight="50" promptText="Bước giá (min 10k)..." style="-fx-background-radius: 25; -fx-padding: 0 20; -fx-font-size: 16;" prefWidth="150" />
+                                                              <Button text="Thiết lập" onAction="#handleSetAutoBid" style="-fx-background-color: #86b817; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-weight: bold; -fx-font-size: 16;" prefHeight="50" prefWidth="120" />
+                                                         </children>
+                                                     </HBox>
+                                                 </VBox>
+
+                                                 <!-- State 2: Auto Bid Active -->
+                                                 <VBox fx:id="vboxAutoBidActive" spacing="10" visible="false" managed="false" style="-fx-background-color: #e8f5e9; -fx-padding: 15; -fx-background-radius: 10; -fx-border-color: #86b817; -fx-border-radius: 10;">
+                                                     <HBox alignment="CENTER_LEFT" spacing="15">
+                                                         <children>
+                                                             <VBox HBox.hgrow="ALWAYS">
+                                                                 <Label text="ĐANG KÍCH HOẠT AUTO BID" style="-fx-text-fill: #2e7d32; -fx-font-weight: bold; -fx-font-size: 14;" />
+                                                                 <Label fx:id="lblActiveAutoBidMax" text="Tối đa: 0 ₫" style="-fx-font-size: 16;" />
+                                                             </VBox>
+                                                             <Button text="Hủy" onAction="#handleCancelAutoBid" style="-fx-background-color: #e62117; -fx-text-fill: white; -fx-background-radius: 20; -fx-font-weight: bold;" prefHeight="35" prefWidth="80" />
+                                                         </children>
+                                                     </HBox>
+                                                 </VBox>
+                                             </VBox>
                                         </children>
                                     </VBox>
                                 </children>
@@ -155,7 +200,7 @@
                                 <CategoryAxis label="Thời gian" />
                             </xAxis>
                             <yAxis>
-                                <NumberAxis label="Mức giá (VNĐ)" autoRanging="true" />
+                                <NumberAxis label="Mức giá (VNĐ)" autoRanging="true" forceZeroInRange="false" />
                             </yAxis>
                         </LineChart>
                     </VBox>

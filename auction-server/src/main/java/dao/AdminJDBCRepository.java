@@ -30,14 +30,17 @@ public class AdminJDBCRepository implements AdminRepository {
                 String username = rs.getString("username");
                 String email = rs.getString("email");
                 String role = rs.getString("role");
-                boolean isLocked = rs.getBoolean("isLocked");
-                boolean isVerified = rs.getBoolean("isVerified");
+                boolean isLocked = false;
+                boolean isVerified = false;
+                try { isLocked = rs.getBoolean("isLocked"); } catch (SQLException ignore) {}
+                try { isVerified = rs.getBoolean("isVerified"); } catch (SQLException ignore) {}
                 
                 User user;
                 if ("ADMIN".equalsIgnoreCase(role)) user = new Admin(username, "", email);
                 else if ("SELLER".equalsIgnoreCase(role)) user = new Seller(username, "", email);
                 else user = new Bidder(username, "", email);
                 
+                user.setRole(role); // Set role field for GSON serialization
                 user.setLocked(isLocked);
                 user.setVerified(isVerified);
                 users.add(user);
@@ -80,18 +83,28 @@ public class AdminJDBCRepository implements AdminRepository {
 
     @Override
     public List<Auction> getAllAuctions() {
-        // Mocking for now as Auction storage might be in-memory or DB
-        return new ArrayList<>(); 
+        ItemDAO itemDAO = new ItemDAO();
+        List<Item> items = itemDAO.getAllItems();
+        List<Auction> auctions = new ArrayList<>();
+        
+        for (Item item : items) {
+            Auction auction = new Auction(item, item.getSeller());
+            auction.setAuctionId(item.getId());
+            auctions.add(auction);
+        }
+        return auctions;
     }
 
     @Override
     public boolean updateAuctionStatus(String auctionId, String status) {
-        return true; // Simplified
+        // Implementation depends on where status is stored, for now returning true
+        return true; 
     }
 
     @Override
     public boolean cancelAuction(String auctionId) {
-        return true; // Simplified
+        ItemDAO itemDAO = new ItemDAO();
+        return itemDAO.deleteItem(auctionId);
     }
 
     @Override

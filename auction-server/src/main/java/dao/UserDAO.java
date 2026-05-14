@@ -46,6 +46,7 @@ public class UserDAO implements UserRepository {
                     user = new Bidder(username, password, email);
                 }
                 
+                user.setRole(role);
                 user.setLocked(isLocked);
                 user.setVerified(isVerified);
                 return user;

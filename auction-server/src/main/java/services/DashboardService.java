@@ -28,6 +28,7 @@ public class DashboardService {
         response.addProperty("status", "SUCCESS");
 
         List<Item> allItems = ItemManager.getInstance().getAllItems();
+        System.out.println(">>> [DEBUG] DashboardService: Tìm thấy tổng cộng " + allItems.size() + " sản phẩm trong DB.");
         JsonArray productsArray = new JsonArray();
 
         int activeAuctionsCount = 0;
@@ -35,7 +36,10 @@ public class DashboardService {
         LocalDateTime now = LocalDateTime.now();
 
         for (Item item : allItems) {
-            if (item.getSeller() != null && sellerName.equals(item.getSeller().getUsername())) {
+            String itemSeller = (item.getSeller() != null) ? item.getSeller().getUsername() : "Unknown";
+            System.out.println(">>> [DEBUG] Kiểm tra sản phẩm: " + item.getName() + " | Seller: " + itemSeller + " | Yêu cầu: " + sellerName);
+            
+            if (itemSeller.equalsIgnoreCase(sellerName) || "Unknown".equalsIgnoreCase(itemSeller)) {
                 JsonObject pObj = new JsonObject();
                 pObj.addProperty("id", item.getId());
                 pObj.addProperty("name", item.getName());

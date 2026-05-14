@@ -31,17 +31,8 @@ public class AuctionClient {
             in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             connected = true;
             
-            // Background thread to listen for broadcast messages
-            new Thread(() -> {
-                try {
-                    String msg;
-                    while ((msg = in.readLine()) != null) {
-                        System.out.println("[SERVER BROADCAST]: " + msg);
-                    }
-                } catch (Exception e) {
-                    connected = false;
-                }
-            }).start();
+            // Removed background thread that was competing with sendRequest for the input stream.
+            // In this simple synchronous protocol, we read the response directly in sendRequest.
             
         } catch (Exception e) {
             System.err.println("Could not connect to server: " + e.getMessage());

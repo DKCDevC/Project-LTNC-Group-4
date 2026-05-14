@@ -38,6 +38,16 @@ public class AdminCommand implements Command {
                 boolean verifySuccess = UserManagementUseCase.getInstance().verifySeller(sellerToVerify);
                 out.println(verifySuccess ? "SUCCESS" : "FAILED");
                 break;
+                
+            case "GET_AUCTIONS":
+                out.println(gson.toJson(UserManagementUseCase.getInstance().getAuctions()));
+                break;
+                
+            case "CANCEL_AUCTION":
+                String auctionToCancel = requestData.get("targetId").getAsString();
+                boolean cancelSuccess = UserManagementUseCase.getInstance().removeAuction(auctionToCancel);
+                out.println(cancelSuccess ? "SUCCESS" : "FAILED");
+                break;
 
             default:
                 out.println("ERROR: Unknown Admin sub-command");

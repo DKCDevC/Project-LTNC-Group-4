@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import models.Auction;
 import models.AuctionRequest;
 import models.BidTransaction;
 import models.Item;
@@ -20,14 +21,19 @@ import network.command.LoginCommand;
 import network.command.BidCommand;
 import network.command.GetSellerDashboardCommand;
 import network.command.AdminCommand;
+import network.command.AddItemCommand;
 import network.command.DeleteItemCommand;
+import network.command.AutoBidCommand;
+import network.command.CancelAutoBidCommand;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public class ClientHandler implements Runnable, AuctionObserver {
@@ -54,6 +60,9 @@ public class ClientHandler implements Runnable, AuctionObserver {
         router.registerCommand("GET_SELLER_DASHBOARD", new GetSellerDashboardCommand());
         router.registerCommand("ADMIN", new AdminCommand());
         router.registerCommand("DELETE_ITEM", new DeleteItemCommand());
+        router.registerCommand("ADD_ITEM", new AddItemCommand());
+        router.registerCommand("AUTO_BID", new AutoBidCommand());
+        router.registerCommand("CANCEL_AUTO_BID", new CancelAutoBidCommand());
         // Các command khác sẽ được đăng ký tương tự
     }
 
@@ -116,10 +125,64 @@ public class ClientHandler implements Runnable, AuctionObserver {
                     out.println("{\"status\":\"FAILED\", \"message\":\"Tài khoản đã tồn tại!\"}");
                 }
             } else if ("GET_ITEMS".equals(command)) {
-                List<Item> items = ItemManager.getInstance().getAllItems();
+                // Lấy items từ DB
+                List<Item> dbItems = ItemManager.getInstance().getAllItems();
+                
+                // Lấy items từ các auction đang active trong memory (demo items không có trong DB)
+                java.util.Map<String, models.Auction> activeAuctions = services.AuctionManager.getInstance().getAllActiveAuctionsMap();
+                
+                // Dùng Set để track id tránh trùng lặp
+                Set<String> processedIds = new HashSet<>();
+                com.google.gson.JsonArray itemsArray = new com.google.gson.JsonArray();
+                
+                // 1. Thêm items từ auction đang active (in-memory)
+                for (models.Auction auction : activeAuctions.values()) {
+                    models.Item item = auction.getItem();
+                    if (item != null && !processedIds.contains(item.getId())) {
+                        processedIds.add(item.getId());
+                        
+                        JsonObject itemJson = gson.toJsonTree(item).getAsJsonObject();
+                        itemJson.addProperty("auctionId", auction.getAuctionId());
+                        itemJson.addProperty("currentHighestPrice", auction.getItem().getCurrentHighestPrice());
+                        itemJson.addProperty("bidsCount", auction.getBidHistory().size());
+                        itemJson.addProperty("auctionStatus", auction.getStatus().name());
+                        
+                        // Thêm seller name
+                        if (item.getSeller() != null) {
+                            itemJson.addProperty("sellerName", item.getSeller().getUsername());
+                        }
+                        
+                        itemsArray.add(itemJson);
+                    }
+                }
+                
+                // 2. Thêm items từ DB (nếu chưa được thêm từ in-memory)
+                for (Item item : dbItems) {
+                    if (!processedIds.contains(item.getId())) {
+                        processedIds.add(item.getId());
+                        
+                        JsonObject itemJson = gson.toJsonTree(item).getAsJsonObject();
+                        
+                        // Tìm auction tương ứng với item này
+                        models.Auction auction = services.AuctionManager.getInstance().getAuctionByItemId(item.getId());
+                        if (auction != null) {
+                            itemJson.addProperty("auctionId", auction.getAuctionId());
+                            itemJson.addProperty("currentHighestPrice", auction.getItem().getCurrentHighestPrice());
+                            itemJson.addProperty("bidsCount", auction.getBidHistory().size());
+                            itemJson.addProperty("auctionStatus", auction.getStatus().name());
+                        } else {
+                            itemJson.addProperty("currentHighestPrice", item.getCurrentHighestPrice());
+                            itemJson.addProperty("bidsCount", 0);
+                            itemJson.addProperty("auctionStatus", "FINISHED");
+                        }
+                        
+                        itemsArray.add(itemJson);
+                    }
+                }
+                
                 JsonObject response = new JsonObject();
                 response.addProperty("command", "SET_ITEMS");
-                response.add("data", gson.toJsonTree(items));
+                response.add("data", itemsArray);
                 out.println(gson.toJson(response));
             }
             // ... các legacy command khác

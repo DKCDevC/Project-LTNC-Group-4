@@ -14,10 +14,28 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ItemDAO {
+    private static final DateTimeFormatter ISO_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final DateTimeFormatter SPACE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+
+    private LocalDateTime parseDateTime(String dateTimeStr) {
+        if (dateTimeStr == null) return LocalDateTime.now().plusDays(1);
+        try {
+            if (dateTimeStr.contains("T")) {
+                return LocalDateTime.parse(dateTimeStr, ISO_FORMAT);
+            } else {
+                return LocalDateTime.parse(dateTimeStr, SPACE_FORMAT);
+            }
+        } catch (DateTimeParseException e) {
+            System.out.println("!!! CẢNH BÁO: Không thể parse ngày tháng: " + dateTimeStr + ". Sử dụng mặc định.");
+            return LocalDateTime.now().plusDays(1);
+        }
+    }
 
     public List<Item> getAllItems() {
         List<Item> itemList = new ArrayList<>();
@@ -33,8 +51,8 @@ public class ItemDAO {
                 String name = rs.getString("name");
                 String description = rs.getString("description");
                 double startingPrice = rs.getDouble("starting_price");
-                LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
-                LocalDateTime endTime = LocalDateTime.parse(rs.getString("end_time"));
+                LocalDateTime startTime = parseDateTime(rs.getString("start_time"));
+                LocalDateTime endTime = parseDateTime(rs.getString("end_time"));
                 String extraInfo = rs.getString("extra_info");
                 String sellerName = rs.getString("seller_name");
 
@@ -63,8 +81,8 @@ public class ItemDAO {
                 String name = rs.getString("name");
                 String description = rs.getString("description");
                 double startingPrice = rs.getDouble("starting_price");
-                LocalDateTime startTime = LocalDateTime.parse(rs.getString("start_time"));
-                LocalDateTime endTime = LocalDateTime.parse(rs.getString("end_time"));
+                LocalDateTime startTime = parseDateTime(rs.getString("start_time"));
+                LocalDateTime endTime = parseDateTime(rs.getString("end_time"));
                 String extraInfo = rs.getString("extra_info");
                 String sellerName = rs.getString("seller_name");
 

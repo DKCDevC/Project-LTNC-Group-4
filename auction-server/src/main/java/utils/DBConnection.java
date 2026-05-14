@@ -26,7 +26,9 @@ public class DBConnection {
                 "username TEXT UNIQUE NOT NULL, " +
                 "password TEXT NOT NULL, " +
                 "email TEXT NOT NULL, " +
-                "role TEXT NOT NULL" +
+                "role TEXT NOT NULL, " +
+                "isLocked INTEGER DEFAULT 0, " +
+                "isVerified INTEGER DEFAULT 0" +
                 ");";
 
         // --- ĐÃ SỬA: Thêm cột seller_name vào cuối ---
