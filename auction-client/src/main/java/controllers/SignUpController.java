@@ -16,13 +16,24 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 
+/**
+ * Lớp SignUpController điều khiển logic giao diện Đăng ký tài khoản (SignUp.fxml).
+ * Hỗ trợ nhập liệu thông tin cá nhân, chọn vai trò (Người mua - BIDDER hoặc Người bán - SELLER)
+ * thông qua ComboBox, gửi yêu cầu đăng ký tài khoản bất đồng bộ tới Server eBid qua Socket TCP.
+ */
 public class SignUpController {
+    // Các trường UI liên kết từ FXML
     @FXML private TextField txtUsername;
     @FXML private TextField txtEmail;
     @FXML private PasswordField txtPassword;
-    @FXML private ComboBox<String> cbRole;
+    @FXML private ComboBox<String> cbRole; // Menu chọn vai trò
     @FXML private Label lblMessage;
 
+    /**
+     * Xử lý sự kiện khi người dùng click nút Đăng Ký.
+     * Thu thập thông tin, thực hiện kiểm duyệt thô tại chỗ và đẩy luồng Thread phụ xử lý đăng ký mạng.
+     * @param event Sự kiện ActionEvent kích hoạt từ nút bấm
+     */
     @FXML
     public void handleRegister(ActionEvent event) {
         String username = txtUsername.getText().trim();
@@ -30,6 +41,7 @@ public class SignUpController {
         String password = txtPassword.getText().trim();
         String role = cbRole.getValue();
 
+        // 1. Kiểm duyệt hợp lệ dữ liệu thô (Client-side validation)
         if (username.isEmpty() || email.isEmpty() || password.isEmpty() || role == null) {
             lblMessage.setTextFill(javafx.scene.paint.Color.RED);
             lblMessage.setText("Vui lòng nhập đầy đủ thông tin!");
@@ -39,13 +51,15 @@ public class SignUpController {
         lblMessage.setTextFill(javafx.scene.paint.Color.GRAY);
         lblMessage.setText("Đang xử lý...");
 
+        // 2. Chạy Thread bất đồng bộ giao tiếp Socket mạng
         new Thread(() -> {
             try {
-                // Sử dụng port 9999 cho MainServer
+                // Kết nối tới Socket Server cổng 9999
                 Socket socket = new Socket("127.0.0.1", 9999);
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                 BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
+                // Tạo đối tượng JSON chứa thông tin đăng ký gửi lên
                 JsonObject regData = new JsonObject();
                 regData.addProperty("command", "REGISTER");
                 regData.addProperty("username", username);
@@ -55,15 +69,18 @@ public class SignUpController {
 
                 out.println(new Gson().toJson(regData));
 
+                // Đọc phản hồi đăng ký từ Server
                 String response = in.readLine();
                 JsonObject jsonResponse = new Gson().fromJson(response, JsonObject.class);
                 String status = jsonResponse.get("status").getAsString();
 
+                // 3. Trả kết quả cập nhật về JavaFX UI Thread
                 Platform.runLater(() -> {
                     if ("SUCCESS".equals(status)) {
                         lblMessage.setTextFill(javafx.scene.paint.Color.web("#34c759"));
                         lblMessage.setText("Đăng ký thành công! Hãy quay lại đăng nhập.");
                     } else {
+                        // Hiển thị lý do thất bại (Ví dụ: Trùng tên đăng nhập hoặc email)
                         String msg = jsonResponse.has("message") ? jsonResponse.get("message").getAsString() : "Tài khoản hoặc Email đã tồn tại.";
                         lblMessage.setTextFill(javafx.scene.paint.Color.RED);
                         lblMessage.setText(msg);
@@ -78,6 +95,10 @@ public class SignUpController {
         }).start();
     }
 
+    /**
+     * Chuyển hướng người dùng quay trở lại giao diện màn hình Đăng nhập (Login.fxml).
+     * @param event Sự kiện ActionEvent kích hoạt từ nút bấm
+     */
     @FXML
     public void handleBackToLogin(ActionEvent event) {
         try {

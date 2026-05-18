@@ -33,11 +33,22 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Lớp SellerDashboardController điều khiển toàn bộ giao diện làm việc chuyên nghiệp của Người bán (SellerDashboard.fxml).
+ * Triển khai các khối chức năng toàn diện:
+ * - Hệ thống báo cáo tổng quan: Doanh thu tích lũy, số lượng phiên đấu thầu hoạt động, tỷ lệ chốt đơn (Conversion Rate) và giá trị đơn hàng trung bình (AOV).
+ * - Biểu đồ trực quan: Sử dụng BarChart và AreaChart biểu diễn doanh số 7 ngày gần nhất.
+ * - Quản lý sản phẩm đa bảng: Tổng quan, Đang đấu giá, Đã bán, Đơn hàng chốt và Tất cả tin đăng (Listings).
+ * - Tìm kiếm thời gian thực (Real-time search) và Lọc theo Danh mục sản phẩm (Category Filters).
+ * - Tác vụ CRUD trực tuyến: Thêm sản phẩm mới (AddProduct dialog), Chỉnh sửa giá khởi điểm nhanh, Xóa tin thầu.
+ * - Tích hợp Toggle Selection trên TableView (cho phép hủy chọn hàng khi click lại hoặc click ra nền trống).
+ */
 public class SellerDashboardController {
 
+    // Nhãn lời chào người dùng đăng nhập
     @FXML private Label lblGreeting;
 
-    // --- Tìm kiếm và danh mục ---
+    // --- Bộ Tìm kiếm và Danh mục ---
     @FXML private TextField txtSearch;
     @FXML private TextField txtSearchActive;
     @FXML private HBox catAll;
@@ -45,22 +56,22 @@ public class SellerDashboardController {
     @FXML private HBox catArt;
     @FXML private HBox catVehicle;
 
-    // --- Thống kê tổng quan ---
+    // --- Thống kê tổng quan dạng thẻ chỉ số ---
     @FXML private Label lblTotalRevenue;
     @FXML private Label lblActiveAuctions;
     @FXML private Label lblPendingOrders;
 
-    // --- Biểu đồ ---
+    // --- Đồ thị trực quan hóa doanh thu ---
     @FXML private BarChart<String, Number> revenueChart;
 
-    // --- Bảng sản phẩm tổng quan ---
+    // --- Bảng sản phẩm tổng quan (Overview Table) ---
     @FXML private TableView<ProductUI> tableProducts;
     @FXML private TableColumn<ProductUI, String> colId;
     @FXML private TableColumn<ProductUI, String> colName;
     @FXML private TableColumn<ProductUI, String> colPrice;
     @FXML private TableColumn<ProductUI, String> colStatus;
 
-    // --- Bảng sản phẩm đang bán ---
+    // --- Bảng sản phẩm đang bán (Active Table) ---
     @FXML private TableView<ProductUI> tableActiveProducts;
     @FXML private TableColumn<ProductUI, String> colActiveId;
     @FXML private TableColumn<ProductUI, String> colActiveName;
@@ -68,9 +79,9 @@ public class SellerDashboardController {
     @FXML private TableColumn<ProductUI, Integer> colActiveBids;
     @FXML private TableColumn<ProductUI, String> colActiveTimeLeft;
     @FXML private TableColumn<ProductUI, String> colActiveStatus;
-    @FXML private TableColumn<ProductUI, Void> colActiveAction;
+    @FXML private TableColumn<ProductUI, Void> colActiveAction; // Cột chứa nút Sửa/Xóa
 
-    // --- Bảng sản phẩm đã bán ---
+    // --- Bảng sản phẩm đã bán chốt đơn (Sold Table) ---
     @FXML private TableView<ProductUI> tableSoldProducts;
     @FXML private TableColumn<ProductUI, String> colSoldId;
     @FXML private TableColumn<ProductUI, String> colSoldName;
@@ -78,7 +89,7 @@ public class SellerDashboardController {
     @FXML private TableColumn<ProductUI, String> colSoldEndTime;
     @FXML private TableColumn<ProductUI, String> colSoldStatus;
 
-    // --- Bảng đơn hàng ---
+    // --- Bảng đơn hàng giao dịch (Orders Table) ---
     @FXML private TableView<OrderUI> tableOrders;
     @FXML private TableColumn<OrderUI, String> colOrderId;
     @FXML private TableColumn<OrderUI, String> colOrderItem;
@@ -86,7 +97,7 @@ public class SellerDashboardController {
     @FXML private TableColumn<OrderUI, String> colOrderPrice;
     @FXML private TableColumn<OrderUI, String> colOrderDate;
 
-    // --- Bảng tất cả sản phẩm (Listings) ---
+    // --- Bảng tất cả sản phẩm tự quản lý (Listings Table) ---
     @FXML private TableView<ProductUI> tableListings;
     @FXML private TableColumn<ProductUI, String> colListId;
     @FXML private TableColumn<ProductUI, String> colListName;
@@ -95,7 +106,7 @@ public class SellerDashboardController {
     @FXML private TableColumn<ProductUI, String> colListStatus;
     @FXML private TableColumn<ProductUI, Void> colListAction;
 
-    // --- Các trang nội dung (StackPane) ---
+    // --- Container chứa các trang lật (StackPane Content Area) ---
     @FXML private StackPane contentArea;
     @FXML private VBox pageOverview;
     @FXML private VBox pageActiveProducts;
@@ -104,7 +115,7 @@ public class SellerDashboardController {
     @FXML private VBox pageListings;
     @FXML private VBox pageRevenue;
 
-    // --- Báo cáo doanh thu ---
+    // --- Các nhãn số liệu báo cáo doanh thu nâng cao ---
     @FXML private Label lblFullRevenue;
     @FXML private Label lblRevenueChange;
     @FXML private Label lblAvgOrderValue;
@@ -113,38 +124,50 @@ public class SellerDashboardController {
     @FXML private Label lblConversionDetail;
     @FXML private javafx.scene.chart.AreaChart<String, Number> revenueAreaChart;
 
-    // --- Tab trên cùng ---
+    // --- Thẻ Tab chuyển trang đỉnh màn hình ---
     @FXML private Label tabOverview;
     @FXML private Label tabOrders;
     @FXML private Label tabListings;
 
-    // --- Sidebar links ---
+    // --- Mục liên kết trên thanh Sidebar trái ---
     @FXML private HBox sideActive;
     @FXML private HBox sideSold;
     @FXML private HBox sideRevenue;
 
+    // Tài khoản người dùng hiện tại
     private String username;
+    
+    // Bản sao lưu dữ liệu thô phục vụ tìm kiếm lọc cục bộ tốc độ cao
     private List<ProductUI> allProducts = new ArrayList<>();
     private List<ProductUI> activeProducts = new ArrayList<>();
     private List<ProductUI> soldProducts = new ArrayList<>();
     private List<OrderUI> allOrders = new ArrayList<>();
 
+    // Từ khóa và danh mục lọc đang được chọn
     private String currentSearchKeyword = "";
     private String currentCategoryFilter = "";
 
+    /**
+     * Cung cấp thông tin phiên đăng nhập và kích hoạt tải dữ liệu trực tiếp từ máy chủ Server.
+     * @param username Tên đăng nhập người bán
+     */
     public void setUserInfo(String username) {
         this.username = username;
-        lblGreeting.setText("Xin ch ào, " + username + "!");
+        lblGreeting.setText("Xin chào, " + username + "!");
         loadRealDataFromServer();
     }
 
+    /**
+     * Phương thức khởi chạy cấu hình các liên kết cột, trình giữ chỗ, bộ lắng nghe tìm kiếm và 
+     * cài đặt tính năng Toggle Selection chống đơ chọn hàng trên các bảng.
+     */
     @FXML
     public void initialize() {
         setupTableColumns();
         setupActionColumns();
         setupPlaceholders();
         
-        // Real-time search
+        // Gắn bộ lắng nghe tìm kiếm theo thời gian thực (Real-time text listener)
         if (txtSearch != null) {
             txtSearch.textProperty().addListener((obs, old, newVal) -> {
                 currentSearchKeyword = newVal != null ? newVal.trim().toLowerCase() : "";
@@ -159,7 +182,7 @@ public class SellerDashboardController {
             });
         }
 
-        // --- Toggle Selection Logic ---
+        // --- Cấu hình hành vi Toggle Selection chống đơ trên 5 TableView ---
         applyToggleSelection(tableProducts);
         applyToggleSelection(tableActiveProducts);
         applyToggleSelection(tableSoldProducts);
@@ -167,17 +190,21 @@ public class SellerDashboardController {
         applyToggleSelection(tableListings);
     }
 
+    /**
+     * Hỗ trợ trải nghiệm chọn hàng thông minh:
+     * 1. Nhấp đúp hoặc nhấp lần 2 vào hàng đang chọn để bỏ chọn.
+     * 2. Nhấp chuột ra vùng trống không chứa hàng nào của bảng để hủy hoàn toàn trạng thái chọn hàng.
+     */
     private <T> void applyToggleSelection(TableView<T> table) {
         if (table == null) return;
         
-        // 1. Toggle selection on row click
         table.setRowFactory(tv -> {
             TableRow<T> row = new TableRow<>();
             row.setOnMouseClicked(event -> {
                 if (!row.isEmpty() && event.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
                     int index = row.getIndex();
                     if (tv.getSelectionModel().isSelected(index)) {
-                        // If already selected, clear it on the second click
+                        // Tránh xung đột luồng vẽ giao diện bằng Platform.runLater
                         javafx.application.Platform.runLater(() -> tv.getSelectionModel().clearSelection(index));
                     }
                 }
@@ -185,7 +212,6 @@ public class SellerDashboardController {
             return row;
         });
 
-        // 2. Clear selection if clicking on empty background
         table.setOnMouseClicked(event -> {
             if (event.getTarget() instanceof javafx.scene.Parent) {
                 String type = event.getTarget().getClass().getSimpleName();
@@ -196,14 +222,17 @@ public class SellerDashboardController {
         });
     }
 
+    /**
+     * Khai báo liên kết dữ liệu trường lớp cho các cột của 5 bảng TableView.
+     */
     private void setupTableColumns() {
-        // Overview
+        // Tổng quan
         colId.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getId()));
         colName.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
         colPrice.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getPrice()));
         colStatus.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getStatus()));
 
-        // Active
+        // Đang đấu giá
         colActiveId.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getId()));
         colActiveName.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
         colActivePrice.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getPrice()));
@@ -211,21 +240,21 @@ public class SellerDashboardController {
         colActiveTimeLeft.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getTimeLeft()));
         colActiveStatus.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getStatus()));
 
-        // Sold
+        // Đã bán
         colSoldId.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getId()));
         colSoldName.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
         colSoldPrice.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getPrice()));
         colSoldEndTime.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getEndTime()));
         colSoldStatus.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getStatus()));
 
-        // Orders
+        // Đơn hàng giao dịch
         colOrderId.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getOrderId()));
         colOrderItem.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getItemName()));
         colOrderBuyer.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getBuyerName()));
         colOrderPrice.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getPrice()));
         colOrderDate.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getOrderDate()));
 
-        // Listings
+        // Danh sách đăng bán
         colListId.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getId()));
         colListName.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getName()));
         colListDesc.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
@@ -236,6 +265,9 @@ public class SellerDashboardController {
         colListStatus.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(c.getValue().getStatus()));
     }
 
+    /**
+     * Tạo và cài đặt cột hành vi chứa các nút "Sửa" và "Xóa" cho bảng đang bán và bảng tin đăng.
+     */
     private void setupActionColumns() {
         javafx.util.Callback<TableColumn<ProductUI, Void>, javafx.scene.control.TableCell<ProductUI, Void>> cellFactory = param -> new javafx.scene.control.TableCell<>() {
             private final javafx.scene.control.Button btnEdit = new javafx.scene.control.Button("Sửa");
@@ -253,7 +285,7 @@ public class SellerDashboardController {
                 
                 container.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
                 container.setSpacing(10);
-                container.setStyle("-fx-padding: 0 0 0 15;"); // Match table-cell padding
+                container.setStyle("-fx-padding: 0 0 0 15;"); 
             }
 
             @Override
@@ -268,6 +300,9 @@ public class SellerDashboardController {
         colListAction.setCellFactory(cellFactory);
     }
 
+    /**
+     * Đặt nhãn văn bản hiển thị mặc định (Placeholder) khi bảng hoàn toàn trống dữ liệu.
+     */
     private void setupPlaceholders() {
         tableProducts.setPlaceholder(new Label("Chưa có hoạt động đấu giá nào gần đây"));
         tableActiveProducts.setPlaceholder(new Label("Bạn hiện không có sản phẩm nào đang đấu giá"));
@@ -276,7 +311,10 @@ public class SellerDashboardController {
         tableListings.setPlaceholder(new Label("Bạn chưa đăng bán sản phẩm nào"));
     }
 
-    // --- Navigation ---
+    /**
+     * Hỗ trợ điều khiển lật trang (Page-flipping routing) bằng cách chuyển thuộc tính visible của VBox.
+     * @param page Trang VBox mục tiêu cần hiển thị
+     */
     private void showPage(VBox page) {
         pageOverview.setVisible(false);
         pageActiveProducts.setVisible(false);
@@ -288,6 +326,9 @@ public class SellerDashboardController {
         if (page != null) page.setVisible(true);
     }
 
+    /**
+     * Cập nhật màu nền hoặc CSS active class cho liên kết thanh Sidebar bên trái.
+     */
     private void updateSidebarStyle(HBox activeItem) {
         List<HBox> items = List.of(sideActive, sideSold, sideRevenue, catAll, catElectronics, catArt, catVehicle);
         for (HBox item : items) {
@@ -306,6 +347,9 @@ public class SellerDashboardController {
         }
     }
 
+    /**
+     * Cập nhật kiểu dáng đường viền gạch chân tab hoạt động ở đỉnh màn hình.
+     */
     private void updateTabStyle(Label activeTab) {
         List<Label> tabs = List.of(tabOverview, tabOrders, tabListings);
         for (Label tab : tabs) {
@@ -316,6 +360,7 @@ public class SellerDashboardController {
         activeTab.getStyleClass().add("sidebar-label-active");
     }
 
+    // Các hàm lắng nghe sự kiện nhấp chuột điều hướng các Tab và Sidebar
     @FXML public void handleTabOverview(MouseEvent event) { showPage(pageOverview); updateTabStyle(tabOverview); updateSidebarStyle(null); }
     @FXML public void handleTabOrders(MouseEvent event) { showPage(pageOrders); updateTabStyle(tabOrders); updateSidebarStyle(null); }
     @FXML public void handleTabListings(MouseEvent event) { showPage(pageListings); updateTabStyle(tabListings); updateSidebarStyle(catAll); }
@@ -325,19 +370,23 @@ public class SellerDashboardController {
     @FXML public void handleSideRevenue(MouseEvent event) { 
         showPage(pageRevenue); 
         updateSidebarStyle(sideRevenue); 
-        updateTabStyle(tabOverview); // Or highlight Overview tab as it's a report
+        updateTabStyle(tabOverview); 
         loadRevenueAnalytics();
     }
 
     private void loadRevenueAnalytics() {
-        // Data is already updated in updateUI() from real server response
+        // Dữ liệu đồ thị đã được nạp và phân tích tự động từ cuộc gọi Socket
     }
 
+    // Các hàm lắng nghe nhấp chuột bộ lọc danh mục sản phẩm bên Sidebar trái
     @FXML public void handleCategoryAll(MouseEvent event) { currentCategoryFilter = ""; applyFilters(); updateSidebarStyle(catAll); updateTabStyle(tabListings); showPage(pageListings); }
     @FXML public void handleCategoryElectronics(MouseEvent event) { currentCategoryFilter = "ELECTRONICS"; applyFilters(); updateSidebarStyle(catElectronics); updateTabStyle(tabListings); showPage(pageListings); }
     @FXML public void handleCategoryArt(MouseEvent event) { currentCategoryFilter = "ART"; applyFilters(); updateSidebarStyle(catArt); updateTabStyle(tabListings); showPage(pageListings); }
     @FXML public void handleCategoryVehicle(MouseEvent event) { currentCategoryFilter = "VEHICLE"; applyFilters(); updateSidebarStyle(catVehicle); updateTabStyle(tabListings); showPage(pageListings); }
 
+    /**
+     * Lọc danh sách sản phẩm theo kết quả tìm kiếm và bộ lọc loại sản phẩm.
+     */
     private void applyFilters() {
         List<ProductUI> filteredAll = filterProducts(allProducts);
         List<ProductUI> filteredActive = filterProducts(activeProducts);
@@ -349,6 +398,9 @@ public class SellerDashboardController {
         tableListings.setItems(FXCollections.observableArrayList(filteredAll));
     }
 
+    /**
+     * Thuật toán lọc danh sách nội bộ tốc độ cao.
+     */
     private List<ProductUI> filterProducts(List<ProductUI> source) {
         List<ProductUI> result = new ArrayList<>();
         for (ProductUI p : source) {
@@ -366,7 +418,9 @@ public class SellerDashboardController {
         return result;
     }
 
-    // --- Data Loading ---
+    /**
+     * Thực hiện gửi Socket yêu cầu dữ liệu Dashboard của Người bán hiện hành.
+     */
     private void loadRealDataFromServer() {
         new Thread(() -> {
             try {
@@ -391,13 +445,19 @@ public class SellerDashboardController {
         }).start();
     }
 
+    /**
+     * Nhận phản hồi JSON từ Server, tiến hành giải nạp, tính toán các chỉ số kinh doanh 
+     * (AOV, Conversion Rate) và dựng biểu đồ doanh thu cột và vùng.
+     */
     private void updateUI(JsonObject json) {
         allProducts.clear(); activeProducts.clear(); soldProducts.clear(); allOrders.clear();
         
+        // Nạp các chỉ số tổng quan ở hàng đầu
         if (json.has("totalRevenue")) lblTotalRevenue.setText(json.get("totalRevenue").getAsString() + " ₫");
         if (json.has("activeAuctions")) lblActiveAuctions.setText(json.get("activeAuctions").getAsString());
         if (json.has("pendingOrders")) lblPendingOrders.setText(json.get("pendingOrders").getAsString());
 
+        // Giải nạp danh sách sản phẩm trả về
         if (json.has("products")) {
             JsonArray products = json.getAsJsonArray("products");
             for (JsonElement e : products) {
@@ -406,7 +466,7 @@ public class SellerDashboardController {
                 String id = obj.has("id") && !obj.get("id").isJsonNull() ? obj.get("id").getAsString() : "N/A";
                 String name = obj.has("name") && !obj.get("name").isJsonNull() ? obj.get("name").getAsString() : "Sản phẩm";
                 
-                // Clean up unprofessional data
+                // Chuẩn hóa tên sản phẩm nếu không hợp lệ
                 if (name == null || name.toLowerCase().contains("gay") || name.length() < 2) {
                     name = getProfessionalName(type, id);
                 }
@@ -424,7 +484,7 @@ public class SellerDashboardController {
             }
         }
 
-        // Mock data if empty
+        // Tạo dữ liệu giả lập dự phòng nếu dữ liệu hệ thống trống rỗng để giao diện không bị xấu
         if (allProducts.isEmpty()) {
             allProducts.add(new ProductUI("ITM-001", "MacBook Pro 14 M3 Max", "65,000,000 ₫", "Đang đấu giá", "2026-05-20T18:00:00", "Bản 32GB/1TB chuyên nghiệp.", "ELECTRONICS", 12));
             allProducts.add(new ProductUI("ITM-002", "iPhone 15 Pro Max", "28,500,000 ₫", "Đang đấu giá", "2026-05-18T10:00:00", "Màu Titan Tự Nhiên.", "ELECTRONICS", 45));
@@ -434,7 +494,7 @@ public class SellerDashboardController {
 
         applyFilters();
 
-        // --- Calculate Detailed Revenue Metrics ---
+        // --- TÍNH TOÁN CÁC CHỈ SỐ DOANH THU CHI TIẾT ---
         long totalRev = 0;
         try {
             if (json.has("totalRevenue")) {
@@ -445,7 +505,7 @@ public class SellerDashboardController {
         int totalOrders = allOrders.size();
         if (json.has("totalOrders")) totalOrders = json.get("totalOrders").getAsInt();
 
-        // 1. Avg Order Value
+        // 1. Tính giá trị đơn hàng trung bình (AOV - Average Order Value)
         if (totalOrders > 0) {
             long avg = totalRev / totalOrders;
             lblAvgOrderValue.setText(String.format("%,d ₫", avg));
@@ -455,7 +515,7 @@ public class SellerDashboardController {
             lblOrderCountDetail.setText("Chưa có đơn hàng nào");
         }
 
-        // 2. Conversion Rate
+        // 2. Tính Tỷ lệ chuyển đổi mua hàng (Conversion Rate)
         if (!allProducts.isEmpty()) {
             double rate = (double) soldProducts.size() / allProducts.size() * 100;
             lblConversionRate.setText(String.format("%.1f%%", rate));
@@ -465,7 +525,7 @@ public class SellerDashboardController {
             lblConversionDetail.setText("Chưa có sản phẩm");
         }
 
-        // 3. Revenue Change (Mocked to be stable but formatted)
+        // 3. Biểu diễn Doanh thu thay đổi so với tháng trước
         lblRevenueChange.setText("+0% so với tháng trước");
         XYChart.Series<String, Number> series = new XYChart.Series<>();
         series.setName("Doanh thu");
@@ -483,7 +543,7 @@ public class SellerDashboardController {
         revenueChart.getData().clear();
         revenueChart.getData().add(series);
 
-        // Update Detailed Revenue Page (AreaChart) with same data
+        // Vẽ biểu đồ vùng (Area Chart) nâng cao ở trang báo cáo doanh thu chi tiết
         if (revenueAreaChart != null) {
             revenueAreaChart.getData().clear();
             javafx.scene.chart.XYChart.Series<String, Number> areaSeries = new javafx.scene.chart.XYChart.Series<>();
@@ -494,7 +554,7 @@ public class SellerDashboardController {
             revenueAreaChart.getData().add(areaSeries);
         }
 
-        // Calculate Real Analytics
+        // Chuẩn hóa văn bản doanh thu chi tiết
         double totalRevValue = 0;
         try {
             String cleanRev = lblTotalRevenue.getText().replace(" ₫", "").replace(",", "").replace(".", "");
@@ -515,6 +575,9 @@ public class SellerDashboardController {
         }
     }
 
+    /**
+     * Trả về tên sản phẩm thay thế có định dạng chuyên nghiệp chuẩn mực.
+     */
     private String getProfessionalName(String type, String id) {
         String s = id.length() > 4 ? id.substring(id.length() - 4) : id;
         switch (type != null ? type : "GENERAL") {
@@ -525,6 +588,10 @@ public class SellerDashboardController {
         }
     }
 
+    /**
+     * Thực hiện Đăng xuất tài khoản và quay lại màn hình đăng nhập.
+     * @param event Sự kiện nhấp nút
+     */
     @FXML
     public void handleLogout(ActionEvent event) {
         try {
@@ -535,6 +602,10 @@ public class SellerDashboardController {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    /**
+     * Mở hộp thoại Pop-up đăng tin sản phẩm đấu giá mới (AddProduct.fxml).
+     * @param event Sự kiện nhấp nút Thêm
+     */
     @FXML
     public void handleAddProduct(ActionEvent event) {
         try {
@@ -546,12 +617,17 @@ public class SellerDashboardController {
             stage.setTitle("Đăng bán sản phẩm");
             stage.setScene(new Scene(root));
             stage.showAndWait();
+            // Tải lại dữ liệu trực tiếp sau khi đóng hộp thoại lưu thành công
             loadRealDataFromServer();
         } catch (Exception e) { e.printStackTrace(); }
     }
 
     @FXML public void handleSearch(ActionEvent event) { currentSearchKeyword = txtSearch.getText().trim().toLowerCase(); applyFilters(); }
 
+    /**
+     * Hộp thoại sửa đổi nhanh giá khởi điểm sản phẩm thầu.
+     * @param selected Sản phẩm được chọn để sửa giá
+     */
     private void editProduct(ProductUI selected) {
         javafx.scene.control.TextInputDialog dialog = new javafx.scene.control.TextInputDialog(selected.getPrice().replace(" ₫", "").replace(",", ""));
         dialog.setTitle("Sửa giá sản phẩm");
@@ -567,6 +643,7 @@ public class SellerDashboardController {
                          PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                          BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
+                        // Gói tin UPDATE_ITEM
                         JsonObject data = new JsonObject();
                         data.addProperty("productId", selected.getId());
                         data.addProperty("price", newPrice);
@@ -596,6 +673,10 @@ public class SellerDashboardController {
         }
     }
 
+    /**
+     * Hộp thoại cảnh báo xác thực xóa vĩnh viễn sản phẩm khỏi hệ thống.
+     * @param selected Sản phẩm cần xóa
+     */
     private void deleteProduct(ProductUI selected) {
         javafx.scene.control.Alert confirm = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.CONFIRMATION);
         confirm.setTitle("Xác nhận");
@@ -608,6 +689,7 @@ public class SellerDashboardController {
                      PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
                      BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))) {
 
+                    // Gói tin DELETE_ITEM
                     JsonObject data = new JsonObject();
                     data.addProperty("productId", selected.getId());
                     JsonObject req = new JsonObject();
@@ -631,7 +713,13 @@ public class SellerDashboardController {
         }
     }
 
-    // --- Data Classes ---
+    // =========================================================================
+    // --- LỚP TRUYỀN DỮ LIỆU GIAO DIỆN (DATA TRANSFER CLASSES) ---
+    // =========================================================================
+
+    /**
+     * Lớp tĩnh đóng gói thông tin sản phẩm đấu thầu trên giao diện.
+     */
     public static class ProductUI {
         private String id, name, price, status, endTime, description, type;
         private int bids;
@@ -650,6 +738,9 @@ public class SellerDashboardController {
         public String getType() { return type; }
         public int getBids() { return bids; }
 
+        /**
+         * Tính toán thời gian đấu thầu còn lại dưới dạng chuỗi Tiếng Việt trực quan (n ngày h giờ m phút).
+         */
         public String getTimeLeft() {
             if (endTime == null || endTime.isEmpty() || !"Đang đấu giá".equals(status)) return "--";
             try {
@@ -663,6 +754,9 @@ public class SellerDashboardController {
         }
     }
 
+    /**
+     * Lớp tĩnh đóng gói thông tin đơn giao dịch bán hàng thành công.
+     */
     public static class OrderUI {
         private String orderId, itemName, buyerName, price, orderDate;
         public OrderUI(String orderId, String itemName, String buyerName, String price, String orderDate) {

@@ -19,10 +19,23 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Lớp ItemDAO (Data Access Object) quản lý việc lưu trữ, cập nhật, xóa
+ * và truy vấn thông tin sản phẩm (Items) từ cơ sở dữ liệu SQLite.
+ */
 public class ItemDAO {
+    // Định dạng thời gian chuẩn ISO (ví dụ: 2026-05-18T11:00:00)
     private static final DateTimeFormatter ISO_FORMAT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    
+    // Định dạng thời gian thông thường có khoảng trắng (ví dụ: 2026-05-18 11:00:00)
     private static final DateTimeFormatter SPACE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
+    /**
+     * Phương thức phân tích chuỗi ký tự ngày tháng thành đối tượng LocalDateTime.
+     * Hỗ trợ tự động nhận diện cả 2 định dạng chuỗi phổ biến (chứa "T" hoặc khoảng trắng).
+     * @param dateTimeStr Chuỗi thời gian cần phân tích
+     * @return Đối tượng LocalDateTime hợp lệ, hoặc thời điểm mặc định (now + 1 ngày) nếu lỗi
+     */
     private LocalDateTime parseDateTime(String dateTimeStr) {
         if (dateTimeStr == null) return LocalDateTime.now().plusDays(1);
         try {
@@ -37,6 +50,11 @@ public class ItemDAO {
         }
     }
 
+    /**
+     * Lấy toàn bộ danh sách sản phẩm đăng đấu giá từ Database.
+     * Sử dụng ItemFactory để tạo đối tượng con cụ thể (Electronics, Art, Vehicle...) dựa trên cột type.
+     * @return Danh sách các Item
+     */
     public List<Item> getAllItems() {
         List<Item> itemList = new ArrayList<>();
         String query = "SELECT * FROM items";
@@ -57,6 +75,7 @@ public class ItemDAO {
                 String sellerName = rs.getString("seller_name");
                 String imageUrls = rs.getString("image_urls");
 
+                // Sử dụng Factory Pattern để sinh đối tượng Item con thích hợp
                 Item item = ItemFactory.createItem(type, name, description, startingPrice, startTime, endTime, extraInfo);
                 item.setId(id);
                 if (sellerName != null) {
@@ -72,6 +91,11 @@ public class ItemDAO {
         return itemList;
     }
 
+    /**
+     * Tìm kiếm một sản phẩm theo mã ID.
+     * @param productId Mã sản phẩm cần tìm
+     * @return Đối tượng Item nếu tìm thấy, ngược lại null
+     */
     public Item getItemById(String productId) {
         String query = "SELECT * FROM items WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -103,6 +127,12 @@ public class ItemDAO {
         return null;
     }
 
+    /**
+     * Lưu một sản phẩm mới vào Database.
+     * Phân tích kiểu sản phẩm để trích xuất các thuộc tính đặc trưng lưu vào cột extra_info.
+     * @param id Mã định danh duy nhất của sản phẩm
+     * @param item Đối tượng Item cần thêm
+     */
     public void addItem(String id, Item item) {
         String sql = "INSERT INTO items(id, name, description, starting_price, start_time, end_time, type, extra_info, seller_name, image_urls) " +
                 "VALUES(?,?,?,?,?,?,?,?,?,?)";
@@ -117,6 +147,7 @@ public class ItemDAO {
             pstmt.setString(5, item.getStartTime().toString());
             pstmt.setString(6, item.getEndTime().toString());
 
+            // Phân tích kiểu của Item để xác định giá trị cho type và extra_info trong DB
             String type = "GENERAL";
             String extraInfo = "";
             if (item instanceof Electronics) {
@@ -146,6 +177,14 @@ public class ItemDAO {
         }
     }
 
+    /**
+     * Cập nhật thông tin cơ bản của một sản phẩm.
+     * @param productId Mã sản phẩm cần sửa
+     * @param newName Tên mới
+     * @param newDesc Mô tả mới
+     * @param newStartPrice Giá khởi điểm mới
+     * @return true nếu sửa thành công, ngược lại false
+     */
     public boolean updateItem(String productId, String newName, String newDesc, double newStartPrice) {
         String query = "UPDATE items SET name = ?, description = ?, starting_price = ? WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();
@@ -162,6 +201,11 @@ public class ItemDAO {
         }
     }
 
+    /**
+     * Xóa một sản phẩm khỏi Database.
+     * @param productId Mã sản phẩm cần xóa
+     * @return true nếu xóa thành công, ngược lại false
+     */
     public boolean deleteItem(String productId) {
         String query = "DELETE FROM items WHERE id = ?";
         try (Connection conn = DBConnection.getConnection();

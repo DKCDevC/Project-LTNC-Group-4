@@ -49,14 +49,25 @@ import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
 
+/**
+ * Lớp DashboardController điều khiển toàn bộ giao diện Mua hàng / Đấu giá chính của khách hàng (Dashboard.fxml).
+ * Thiết lập hệ thống tính năng tương tác thời gian thực cao cấp:
+ * - Hệ thống Tìm kiếm & Lọc Đa tiêu chí: Tình trạng sản phẩm, mức giá, từ khóa thời gian thực.
+ * - Infinite Scroll (Cuộn trang vô tận): Tự động nạp thêm sản phẩm khi cuộn tới cuối trang tối ưu hóa bộ nhớ JavaFX.
+ * - Grid Responsive Layout: Tự co giãn điều chỉnh số cột hiển thị (4, 3, 2, 1) theo bề rộng cửa sổ máy tính.
+ * - Background Socket Listener: Nhận cập nhật giá thầu mới (UPDATE_PRICE), gia hạn thời gian (UPDATE_TIME) bất đồng bộ.
+ * - Hệ thống Auto-Bid (Đấu giá tự động): Ràng buộc bước nhảy tối thiểu 10,000 đ, lưu cấu hình và hủy thầu tự động.
+ * - Màn hình Chi tiết Sản phẩm thời gian thực: Countdown đếm ngược, biểu đồ LineChart vẽ lịch sử biến động giá theo giây.
+ * - Tiện ích đặt thầu nhanh: Nút cộng nhanh (+50k, +100k, +500k) và Mini-Cart chứa các đơn hàng thắng cuộc chờ thanh toán.
+ */
 public class DashboardController {
 
-    // --- Header & Sidebar ---
+    // --- Khung Tiêu đề & Sidebar ---
     @FXML private Label lblGreeting;
     @FXML private TextField txtSearch;
     @FXML private Label sideBrowse;
 
-    // --- Layout ---
+    // --- Khung Layout chính (StackPane chuyển trang) ---
     @FXML private StackPane contentArea;
     @FXML private VBox pageBrowse;
     @FXML private ScrollPane scrollPaneBrowse;
@@ -67,30 +78,28 @@ public class DashboardController {
     @FXML private Label sideHistory;
     @FXML private Label sideWonItems;
 
-    // --- Table: History ---
+    // --- Bảng Lịch sử tham gia đấu thầu ---
     @FXML private TableView<ItemUI> tableHistory;
     @FXML private TableColumn<ItemUI, String> colHistName;
     @FXML private TableColumn<ItemUI, String> colHistPrice;
     @FXML private TableColumn<ItemUI, Integer> colHistBids;
     @FXML private TableColumn<ItemUI, String> colHistStatus;
 
-    // --- Table: Won ---
+    // --- Bảng danh sách sản phẩm thắng cuộc (Chờ thanh toán) ---
     @FXML private TableView<ItemUI> tableWon;
     @FXML private TableColumn<ItemUI, String> colWonName;
     @FXML private TableColumn<ItemUI, String> colWonPrice;
     @FXML private TableColumn<ItemUI, String> colWonSeller;
     @FXML private TableColumn<ItemUI, String> colWonDate;
 
-    // --- Page: Browse ---
+    // --- Khối lưới sản phẩm Trang mua sắm ---
     @FXML private Label lblCategoryTitle;
     @FXML private FlowPane gridItems;
     @FXML private ComboBox<String> cboFilterCondition;
     @FXML private ComboBox<String> cboFilterPrice;
     @FXML private ComboBox<String> cboFilterRating;
 
-
-
-    // --- Page: Product Detail ---
+    // --- Màn hình Chi tiết Sản phẩm & Đấu thầu thời gian thực ---
     @FXML private ScrollPane pageProductDetail;
     @FXML private VBox pageMiniCart;
     @FXML private VBox vboxMiniCartItems;
@@ -103,54 +112,67 @@ public class DashboardController {
     @FXML private Label lblDetailStatus;
     @FXML private TextField txtBidAmount;
     @FXML private TextField txtAutoBidMax;
+    
+    // Biểu đồ theo dõi giá biến động theo thời gian thực
     @FXML private LineChart<String, Number> priceChart;
     private XYChart.Series<String, Number> priceSeries;
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm:ss");
     
+    // Đồng hồ đếm ngược và luồng Timeline tương ứng
     @FXML private Label lblCountdown;
     private Timeline countdownTimeline;
     private Timeline chartUpdateTimeline;
     private ItemUI selectedProductForDetail;
 
+    // Khối điều khiển Auto Bid trên giao diện
     @FXML private VBox vboxAutoBidSetup;
     @FXML private VBox vboxAutoBidActive;
     @FXML private Label lblActiveAutoBidMax;
     @FXML private Label lblBidStatus;
     @FXML private TextField txtAutoBidIncrement;
     
-    // Lưu trữ các Auto Bid đang kích hoạt (auctionId -> maxAmount)
+    // Lưu trữ danh sách Auto Bid đang hoạt động của người dùng (auctionId -> Mức giá tối đa)
     private java.util.Map<String, Double> activeAutoBids = new java.util.HashMap<>();
-    private static final double MIN_INCREMENT = 10000.0; // Bước giá tối thiểu 10k
+    
+    // Quy định nghiệp vụ: Bước giá thầu tự động tối thiểu là 10,000đ
+    private static final double MIN_INCREMENT = 10000.0;
 
-
-
-    // --- Category Labels ---
+    // --- Nhãn bộ lọc danh mục sản phẩm ở thanh Sidebar ---
     @FXML private Label catAll;
     @FXML private Label catElectronics;
     @FXML private Label catArt;
     @FXML private Label catVehicle;
     @FXML private Label catGeneral;
 
+    // Các biến luồng kết nối Socket máy chủ
     private Socket socket;
     private PrintWriter out;
     private BufferedReader in;
 
     private String currentUsername;
 
+    // Danh sách gốc và danh sách đã lọc cục bộ phục vụ phân trang
     private List<ItemUI> allItems = new ArrayList<>();
     private ObservableList<ItemUI> filteredItems = FXCollections.observableArrayList();
     private String currentCategoryFilter = "";
 
-    // --- Pagination & Infinite Scroll ---
-    private int itemsPerPage = 8;
+    // --- Cấu hình Phân trang & Infinite Scroll ---
+    private int itemsPerPage = 8; // Nạp 8 sản phẩm mỗi đợt cuộn trang
     private int currentlyLoadedCount = 0;
     private boolean isLoadingMore = false;
 
+    /**
+     * Nhận thông tin người dùng từ màn hình Login thành công để cá nhân hóa lời chào.
+     */
     public void setUserInfo(String username, String role) {
         this.currentUsername = username;
         lblGreeting.setText("Xin chào, " + username + "!");
     }
 
+    /**
+     * Khởi tạo cài đặt: cấu hình biểu đồ biến động giá, combobox bộ lọc, liên kết các bảng,
+     * bộ lắng nghe nhập chữ tìm kiếm thời gian thực và kích hoạt lắng nghe luồng sự kiện Socket chạy nền.
+     */
     @FXML
     public void initialize() {
         priceSeries = new XYChart.Series<>();
@@ -158,11 +180,8 @@ public class DashboardController {
         if (priceChart != null) {
             priceChart.getData().add(priceSeries);
         }
-        // Cấu hình bảng Giỏ hàng
-        //colCartName.setCellValueFactory(new PropertyValueFactory<>("name"));
-        //colCartPrice.setCellValueFactory(new PropertyValueFactory<>("priceStr"));
 
-        // Setup filter comboboxes
+        // Đổ danh sách dữ liệu cho bộ lọc FXML ComboBox
         cboFilterCondition.setItems(FXCollections.observableArrayList("Tất cả", "Mới (New)", "Đã sử dụng (Used)"));
         cboFilterCondition.setValue("Tất cả");
         cboFilterCondition.setOnAction(e -> applySearchFilter());
@@ -174,53 +193,54 @@ public class DashboardController {
         cboFilterRating.setValue("Tất cả");
         cboFilterRating.setOnAction(e -> applySearchFilter());
 
-        // Setup History Table
+        // Định dạng cột cho Bảng Lịch sử đặt thầu
         colHistName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colHistPrice.setCellValueFactory(new PropertyValueFactory<>("priceStr"));
         colHistBids.setCellValueFactory(new PropertyValueFactory<>("bidsCount"));
         colHistStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
-        // Setup Won Table
+        // Định dạng cột cho Bảng Sản phẩm thắng cuộc chờ chốt hóa đơn
         colWonName.setCellValueFactory(new PropertyValueFactory<>("name"));
         colWonPrice.setCellValueFactory(new PropertyValueFactory<>("priceStr"));
         colWonSeller.setCellValueFactory(new PropertyValueFactory<>("sellerName"));
         colWonDate.setCellValueFactory(new PropertyValueFactory<>("endTime"));
 
-
-
-        // Xử lý tìm kiếm
+        // Gắn bộ lắng nghe từ khóa tìm kiếm (Real-time keyword listener)
         txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
             applySearchFilter();
         });
 
-        // Setup Infinite Scroll
+        // Thiết lập Infinite Scroll trên ScrollPane chính
         if (scrollPaneBrowse != null) {
             scrollPaneBrowse.vvalueProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal.doubleValue() > 0.4) { // Show button after 40% scroll
+                // 1. Hiển thị nút "Quay lại đầu trang" nếu cuộn quá 40%
+                if (newVal.doubleValue() > 0.4) {
                     btnBackToTop.setVisible(true);
                 } else {
                     btnBackToTop.setVisible(false);
                 }
                 
+                // 2. Kích hoạt tải thêm sản phẩm khi cuộn quá 90% (Infinite Scroll)
                 if (newVal.doubleValue() > 0.9 && !isLoadingMore && currentlyLoadedCount < filteredItems.size()) {
                     loadMoreProducts();
                 }
             });
         }
 
-        // Setup Responsive Grid
+        // Thiết lập lưới Responsive Grid: Tự động tính toán lại bề rộng khi co giãn cửa sổ
         if (gridItems != null) {
             gridItems.widthProperty().addListener((obs, oldVal, newVal) -> {
                 updateGridResponsive(newVal.doubleValue());
             });
         }
 
+        // Khởi động luồng Client Socket kết nối trực tiếp với Server để nhận các sự kiện thời gian thực
         startBackgroundListener();
     }
 
-    // ==========================================
-    // MENU NAVIGATION
-    // ==========================================
+    // =========================================================================
+    // --- CHUYỂN TRANG & SIDEBAR NAVIGATION ---
+    // =========================================================================
 
     @FXML
     public void handleSideBrowse(Event event) {
@@ -233,8 +253,9 @@ public class DashboardController {
         handleSideBrowse(event);
     }
 
-
-
+    /**
+     * Tô màu nổi bật Sidebar item đang được chọn và khôi phục các nhãn khác về màu xám trung tính.
+     */
     private void setActiveSidebar(Label label) {
         sideBrowse.setTextFill(javafx.scene.paint.Color.web("#707070"));
         sideBrowse.setStyle("-fx-cursor: hand;");
@@ -259,10 +280,12 @@ public class DashboardController {
         loadWonData();
     }
 
+    /**
+     * Lọc danh sách sản phẩm hiển thị trên bảng Lịch sử (User đã từng đặt thầu hoặc cài Auto Bid).
+     */
     private void loadHistoryData() {
         List<ItemUI> hist = new ArrayList<>();
         for (ItemUI item : allItems) {
-            // Hiển thị sản phẩm mà user đang đấu giá hoặc đã thắng
             if (currentUsername.equals(item.getWinnerUsername()) || activeAutoBids.containsKey(item.getAuctionId())) {
                 hist.add(item);
             }
@@ -270,6 +293,9 @@ public class DashboardController {
         tableHistory.setItems(FXCollections.observableArrayList(hist));
     }
 
+    /**
+     * Lọc các sản phẩm đấu giá đã kết thúc mà User là người thắng cuộc cuối cùng để chuẩn bị thanh toán.
+     */
     private void loadWonData() {
         List<ItemUI> won = new ArrayList<>();
         for (ItemUI item : allItems) {
@@ -284,6 +310,9 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Ẩn toàn bộ các trang con và chỉ hiển thị trang VBox được chỉ định để tiết kiệm tài nguyên vẽ.
+     */
     private void showPage(Region page) {
         pageBrowse.setVisible(false);
         pageBrowse.setManaged(false);
@@ -296,9 +325,9 @@ public class DashboardController {
         page.setManaged(true);
     }
 
-    // ==========================================
-    // CATEGORY FILTERS
-    // ==========================================
+    // =========================================================================
+    // --- BỘ LỌC DANH MỤC SẢN PHẨM (CATEGORY FILTERS) ---
+    // =========================================================================
 
     private void resetCategoryStyles() {
         Label[] cats = {catAll, catElectronics, catArt, catVehicle, catGeneral};
@@ -316,7 +345,7 @@ public class DashboardController {
         lblCategoryTitle.setText(title);
         applySearchFilter();
         
-        // Đảm bảo đang ở trang Browse
+        // Điều hướng quay lại trang duyệt chính
         handleSideBrowse(null);
     }
 
@@ -326,10 +355,14 @@ public class DashboardController {
     @FXML public void handleCategoryVehicle(MouseEvent event) { setActiveCategory(catVehicle, "VEHICLE", "Xe cộ"); }
     @FXML public void handleCategoryGeneral(MouseEvent event) { setActiveCategory(catGeneral, "GENERAL", "Sản phẩm khác"); }
 
-    // ==========================================
-    // NETWORK & DATA
-    // ==========================================
+    // =========================================================================
+    // --- KẾT NỐI MẠNG & NHẬN THÔNG TIN THỜI GIAN THỰC ---
+    // =========================================================================
 
+    /**
+     * Thiết lập Socket Client chạy trên Thread độc lập để lắng nghe bản tin cập nhật giá,
+     * lượt đặt thầu mới và sự thay đổi thời gian từ Server đấu giá.
+     */
     private void startBackgroundListener() {
         new Thread(() -> {
             try {
@@ -337,7 +370,7 @@ public class DashboardController {
                 out = new PrintWriter(socket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                // Xin list ban đầu
+                // Gửi bản tin đầu tiên xin danh sách sản phẩm
                 out.println("{\"command\":\"GET_ITEMS\"}");
 
                 String response;
@@ -346,6 +379,7 @@ public class DashboardController {
                         JsonObject json = JsonParser.parseString(response).getAsJsonObject();
                         String cmd = (json.has("command") && !json.get("command").isJsonNull()) ? json.get("command").getAsString() : "";
 
+                        // Bản tin trả về danh sách toàn bộ sản phẩm đấu giá
                         if ("SET_ITEMS".equals(cmd)) {
                             JsonArray dataArray = json.getAsJsonArray("data");
                             List<ItemUI> newItems = new ArrayList<>();
@@ -359,13 +393,14 @@ public class DashboardController {
                                 if (currentPrice <= 0) currentPrice = startPrice;
                                 
                                 String type = obj.has("type") ? obj.get("type").getAsString() : "GENERAL";
-                                // Fallback type checking if server doesn't provide type field
+                                // Kiểm tra gán danh mục mặc định dựa trên các trường đặc trưng
                                 if ("GENERAL".equals(type)) {
                                     if (obj.has("manufacturer") || obj.has("model")) type = "ELECTRONICS";
                                     else if (obj.has("artist") || obj.has("medium")) type = "ART";
                                     else if (obj.has("make") || obj.has("mileage")) type = "VEHICLE";
                                 }
                                 
+                                // Phân tích thời gian kết thúc đấu giá tương ứng
                                 String endTime = "N/A";
                                 if (obj.has("endTime")) {
                                     try {
@@ -402,7 +437,6 @@ public class DashboardController {
                                     name, desc, currentPrice, status, startPrice, endTime, type, sellerName, bidsCount, imageUrls
                                 );
                                 
-                                // Lấy auctionId từ server response (nếu có)
                                 if (obj.has("auctionId")) {
                                     itemUI.setAuctionId(obj.get("auctionId").getAsString());
                                 }
@@ -415,6 +449,7 @@ public class DashboardController {
                                 applySearchFilter();
                             });
                         }
+                        // Nhận sự kiện thời gian thực khi có người đặt thầu mới (Nâng giá thành công)
                         else if ("UPDATE_PRICE".equals(cmd)) {
                             String targetId = json.has("auctionId") ? json.get("auctionId").getAsString() : "";
                             double newP = json.has("price") ? json.get("price").getAsDouble() : -1;
@@ -425,6 +460,7 @@ public class DashboardController {
                                 String currentTime = LocalTime.now().format(timeFormatter);
                                 
                                 Platform.runLater(() -> {
+                                    // Nếu người dùng đang xem trang chi tiết sản phẩm này, lập tức nâng giá trên UI
                                     if (selectedProductForDetail != null && targetId.equals(selectedProductForDetail.getAuctionId())) {
                                         selectedProductForDetail.setCurrentPrice(finalPrice);
                                         selectedProductForDetail.setWinnerUsername(winner);
@@ -435,17 +471,20 @@ public class DashboardController {
                                         }
                                         updateBidStatusUI();
                                         
+                                        // Thêm một mốc điểm mới vào biểu đồ LineChart
                                         if (priceSeries != null) {
                                             priceSeries.getData().add(new XYChart.Data<>(currentTime, finalPrice));
                                             if (priceSeries.getData().size() > 15) {
-                                                priceSeries.getData().remove(0);
+                                                priceSeries.getData().remove(0); // Giữ tối đa 15 mốc điểm gần nhất tránh rối đồ thị
                                             }
                                         }
                                     }
                                 });
                             }
+                            // Xin lại danh sách mới nhất để đồng bộ giao diện lưới duyệt
                             out.println("{\"command\":\"GET_ITEMS\"}");
                         }
+                        // Nhận cập nhật gia hạn thời gian (Anti-Sniping gia hạn thầu ở phút cuối)
                         else if ("UPDATE_TIME".equals(cmd)) {
                             String newEndTime = json.has("newEndTime") ? json.get("newEndTime").getAsString() : "";
                             if (!newEndTime.isEmpty() && selectedProductForDetail != null) {
@@ -474,6 +513,9 @@ public class DashboardController {
         applySearchFilter();
     }
 
+    /**
+     * Áp dụng bộ lọc tổ hợp giữa ô nhập chữ tìm kiếm, bộ lọc mức giá ComboBox và danh mục.
+     */
     private void applySearchFilter() {
         String keyword = txtSearch.getText() != null ? txtSearch.getText().toLowerCase().trim() : "";
         String filterPrice = cboFilterPrice.getValue();
@@ -481,18 +523,18 @@ public class DashboardController {
         List<ItemUI> result = new ArrayList<>();
         
         for (ItemUI item : allItems) {
-            // Lọc theo category
+            // Lọc theo Danh mục
             if (!currentCategoryFilter.isEmpty() && !currentCategoryFilter.equalsIgnoreCase(item.getType())) {
                 continue;
             }
-            // Lọc theo từ khóa
+            // Lọc theo từ khóa (Tên / Mô tả sản phẩm)
             if (!keyword.isEmpty()) {
                 boolean match = (item.getName() != null && item.getName().toLowerCase().contains(keyword)) ||
                                 (item.getDescription() != null && item.getDescription().toLowerCase().contains(keyword));
                 if (!match) continue;
             }
             
-            // Lọc theo Giá (Price)
+            // Lọc theo Khoảng Giá (Price range)
             if (filterPrice != null && !filterPrice.equals("Tất cả")) {
                 double price = item.getRawPrice();
                 if (filterPrice.equals("Dưới 1,000,000 ₫") && price >= 1000000) continue;
@@ -504,11 +546,15 @@ public class DashboardController {
         }
         
         filteredItems.setAll(result);
-        currentlyLoadedCount = 0; // Reset for new search
-        gridItems.getChildren().clear();
-        loadMoreProducts();
+        currentlyLoadedCount = 0; // Đặt lại bộ đếm phân trang
+        gridItems.getChildren().clear(); // Dọn dẹp giao diện cũ
+        loadMoreProducts(); // Bắt đầu nạp đợt sản phẩm đầu tiên
     }
 
+    /**
+     * Kỹ thuật Phân trang trễ (Lazy-Loading): Chỉ vẽ các thẻ sản phẩm thuộc lô trang hiện hành 
+     * lên giao diện khi người dùng thực hiện cuộn sâu xuống dưới.
+     */
     private void loadMoreProducts() {
         if (isLoadingMore) return;
         isLoadingMore = true;
@@ -522,15 +568,20 @@ public class DashboardController {
             }
             currentlyLoadedCount = nextBatch;
             isLoadingMore = false;
-            updateGridResponsive(gridItems.getWidth());
+            updateGridResponsive(gridItems.getWidth()); // Căn chỉnh kích thước responsive
         });
     }
 
+    /**
+     * Dựng bố cục co giãn linh động (Responsive Grid Layout):
+     * - Bề rộng > 1100px: Chia làm 4 cột.
+     * - Bề rộng > 850px: Chia làm 3 cột.
+     * - Bề rộng > 550px: Chia làm 2 cột.
+     * - Nhỏ hơn: Hiển thị 1 cột duy nhất tràn màn hình.
+     */
     private void updateGridResponsive(double width) {
         if (gridItems == null || width <= 0) return;
         
-        // Calculate card width based on available space
-        // 4 cols if width > 1100, 3 if > 800, 2 if > 500, else 1
         int cols = (width > 1100) ? 4 : (width > 850) ? 3 : (width > 550) ? 2 : 1;
         double cardW = (width - (gridItems.getHgap() * (cols + 1))) / cols;
         
@@ -541,7 +592,7 @@ public class DashboardController {
                 card.setMinWidth(cardW);
                 card.setMaxWidth(cardW);
                 
-                // Adjust image height proportionally
+                // Đồng bộ chiều cao ảnh tỷ lệ 4:3 đẹp mắt
                 StackPane img = (StackPane) card.lookup("#imgContainer");
                 if (img != null) {
                     img.setPrefHeight(cardW * 0.75);
@@ -550,10 +601,12 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Thực hiện hoạt ảnh cuộn mượt mà (Smooth scrolling transition) lên đỉnh trang bằng Timeline.
+     */
     @FXML
     public void handleBackToTop() {
         if (scrollPaneBrowse != null) {
-            // Smooth scroll to top
             Timeline timeline = new Timeline();
             KeyValue kv = new KeyValue(scrollPaneBrowse.vvalueProperty(), 0);
             KeyFrame kf = new KeyFrame(Duration.millis(500), kv);
@@ -562,25 +615,28 @@ public class DashboardController {
         }
     }
 
-    // ==========================================
-    // RENDER PRODUCT CARDS
-    // ==========================================
+    // =========================================================================
+    // --- DỰNG CARD SẢN PHẨM HOVER DYNAMIC SYSTEM ---
+    // =========================================================================
 
     private void renderProductCards() {
-        // This is now handled by loadMoreProducts and applySearchFilter
+        // Trách nhiệm vẽ thẻ đã được phân cấp sang phân trang trễ loadMoreProducts
     }
 
+    /**
+     * Khởi tạo giao diện thẻ sản phẩm đấu giá cao cấp với các hiệu ứng phóng to micro-animation (Scale 1.03) 
+     * và đổ bóng sâu (Dropshadow) chân thực khi rê chuột.
+     */
     private VBox createProductCard(ItemUI item) {
         VBox card = new VBox(8);
-        // Style mới: Bo góc 15px và Shadow mềm mại
         String baseStyle = "-fx-background-color: white; -fx-border-color: #E0E0E0; -fx-border-radius: 15; -fx-padding: 0 0 15 0; -fx-background-radius: 15; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 0, 5);";
         card.setStyle(baseStyle);
         card.setPrefWidth(260);
         
+        // Vi hoạt ảnh Hover phóng to nhẹ
         card.setOnMouseEntered(e -> { 
             card.setScaleX(1.03); 
             card.setScaleY(1.03); 
-            // Đậm bóng đổ khi di chuột
             card.setStyle(baseStyle + "-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 20, 0, 0, 10);");
         });
         card.setOnMouseExited(e -> { 
@@ -594,11 +650,12 @@ public class DashboardController {
         return card;
     }
 
-
+    /**
+     * Điền và cập nhật dữ liệu (Tên, ảnh, giá, trạng thái, thời gian còn lại) cho thẻ sản phẩm chỉ định.
+     */
     private void updateCardContent(VBox card, ItemUI item) {
-        // Nếu thẻ chưa có nội dung (mới tạo), thì khởi tạo các Label
+        // Dựng khung lần đầu nếu thẻ đang rỗng
         if (card.getChildren().isEmpty()) {
-            // Image Container
             StackPane imgContainer = new StackPane();
             imgContainer.setPrefSize(260, 200);
             imgContainer.setId("imgContainer");
@@ -626,7 +683,7 @@ public class DashboardController {
             card.getChildren().addAll(imgContainer, infoBox);
         }
 
-        // Truy xuất các thành phần để cập nhật dữ liệu
+        // Lấy tham chiếu các nhãn
         StackPane imgContainer = (StackPane) card.lookup("#imgContainer");
         VBox infoBox = (VBox) card.getChildren().get(1);
         Label lblName = (Label) infoBox.lookup("#lblName");
@@ -635,7 +692,7 @@ public class DashboardController {
         Label lblStatus = (Label) infoBox.lookup("#lblStatus");
         Label lblTime = (Label) infoBox.lookup("#lblTime");
 
-        // Cập nhật text (Chỉ cập nhật nếu giá trị thay đổi để tối ưu)
+        // Ghi văn bản tương ứng
         if (lblName != null) lblName.setText(item.getName());
         if (lblPrice != null) lblPrice.setText(item.getPriceStr());
         if (lblBids != null) lblBids.setText(item.getBidsCount() + " lượt đặt giá");
@@ -647,12 +704,12 @@ public class DashboardController {
         
         if (lblTime != null) lblTime.setText(calculateTimeRemaining(item));
 
-        // Cập nhật ảnh (Lazy loading with background loading)
+        // Nạp ảnh nền bất đồng bộ (Lazy image loading) để tránh nghẽn luồng vẽ JavaFX Application Thread
         if (imgContainer != null && imgContainer.getChildren().isEmpty()) {
             if (item.getImageUrls() != null && !item.getImageUrls().isEmpty()) {
                 String firstImage = item.getImageUrls().split(",")[0];
                 try {
-                    // backgroundLoading = true ensures UI doesn't freeze
+                    // Cài đặt backgroundLoading = true để nạp ảnh ngầm
                     javafx.scene.image.Image img = new javafx.scene.image.Image(firstImage, 400, 300, true, true, true);
                     javafx.scene.image.ImageView imgView = new javafx.scene.image.ImageView(img);
                     
@@ -660,6 +717,7 @@ public class DashboardController {
                     imgView.fitHeightProperty().bind(imgContainer.heightProperty());
                     imgView.setPreserveRatio(true);
                     
+                    // Cắt các góc ảnh bo tròn 30px tinh tế trùng khớp với viền thẻ
                     javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
                     clip.widthProperty().bind(imgContainer.widthProperty());
                     clip.heightProperty().bind(imgContainer.heightProperty());
@@ -681,6 +739,9 @@ public class DashboardController {
         return lbl;
     }
 
+    /**
+     * Thuật toán tính toán hiệu chỉnh thời gian thầu còn lại theo giây thực tế.
+     */
     private String calculateTimeRemaining(ItemUI item) {
         try {
             java.time.LocalDateTime dt = java.time.LocalDateTime.parse(item.getEndTime());
@@ -695,6 +756,11 @@ public class DashboardController {
         } catch(Exception e) { return "N/A"; }
     }
 
+    /**
+     * Đóng gói lệnh BID gửi lên máy chủ Server bằng cấu trúc JSON đồng nhất qua Socket.
+     * @param item Sản phẩm đấu thầu
+     * @param amountStr Giá trị đặt thầu nhập vào
+     */
     private void doPlaceBid(ItemUI item, String amountStr) {
         if (amountStr.isEmpty()) {
             showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Vui lòng nhập mức giá!");
@@ -733,6 +799,11 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Mở màn hình Chi tiết sản phẩm, khởi chạy đồng hồ đếm ngược nguy cấp, khởi tạo 
+     * điểm biểu đồ giá ban đầu và làm mới khối thiết lập Auto-Bid.
+     * @param item Đối tượng sản phẩm thầu được chọn
+     */
     private void showProductDetail(ItemUI item) {
         selectedProductForDetail = item;
         lblDetailName.setText(item.getName());
@@ -760,6 +831,9 @@ public class DashboardController {
         showPage(pageProductDetail);
     }
 
+    /**
+     * Cập nhật chỉ báo trạng thái đấu thầu (Bạn đang dẫn đầu / Đã bị vượt mặt) với màu nền đỏ/xanh trực quan.
+     */
     private void updateBidStatusUI() {
         if (selectedProductForDetail == null) return;
         
@@ -776,6 +850,10 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Tự động bổ sung định kỳ mốc giá hiện tại vào biểu đồ sau mỗi 5 giây 
+     * giúp đồ thị dịch chuyển động sinh động.
+     */
     private void startChartAutoUpdate() {
         if (chartUpdateTimeline != null) {
             chartUpdateTimeline.stop();
@@ -798,12 +876,10 @@ public class DashboardController {
         chartUpdateTimeline.play();
     }
 
-    @FXML
-    private void handleAdd50k() { addQuickBid(50000); }
-    @FXML
-    private void handleAdd100k() { addQuickBid(100000); }
-    @FXML
-    private void handleAdd500k() { addQuickBid(500000); }
+    // Các hàm xử lý ba nút bấm đặt giá nhanh (+50k, +100k, +500k)
+    @FXML private void handleAdd50k() { addQuickBid(50000); }
+    @FXML private void handleAdd100k() { addQuickBid(100000); }
+    @FXML private void handleAdd500k() { addQuickBid(500000); }
 
     private void addQuickBid(double amount) {
         if (selectedProductForDetail == null) return;
@@ -820,6 +896,11 @@ public class DashboardController {
         txtBidAmount.setText(String.format("%.0f", currentVal + amount));
     }
 
+    /**
+     * Khởi chạy đồng hồ đếm ngược giật giây (1s).
+     * Khi thời gian còn dưới 60 giây, đổi chữ sang màu đỏ rực nhấp nháy 
+     * để thúc đẩy tâm lý người thầu đưa ra quyết định nhanh.
+     */
     private void startCountdown() {
         if (countdownTimeline != null) {
             countdownTimeline.stop();
@@ -843,7 +924,7 @@ public class DashboardController {
                     long s = diff.toSecondsPart();
                     lblCountdown.setText(String.format("%02d:%02d:%02d", h, m, s));
                     
-                    // Nếu còn dưới 1 phút thì đổi sang màu đỏ nhấp nháy (nhấn mạnh)
+                    // Dưới 60 giây đổi màu đỏ cảnh báo khẩn cấp
                     if (diff.toSeconds() < 60) {
                         lblCountdown.setStyle("-fx-font-weight: bold; -fx-font-size: 24; -fx-text-fill: #e62117;");
                     } else {
@@ -877,6 +958,10 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Đóng gói lệnh AUTO_BID gửi lên Server khi người dùng cấu hình giá thầu tự động.
+     * Áp dụng quy tắc kiểm soát nghiệp vụ: bước giá tối thiểu thầu tự động phải đạt 10,000 đ.
+     */
     @FXML
     public void handleSetAutoBid(ActionEvent event) {
         if (selectedProductForDetail == null) return;
@@ -898,12 +983,13 @@ public class DashboardController {
                 return;
             }
             
+            // Ép buộc kiểm tra nghiệp vụ tối thiểu 10k
             if (increment < MIN_INCREMENT) {
                 showAlert(Alert.AlertType.WARNING, "Cảnh báo", "Bước giá tối thiểu phải là " + String.format("%,.0f", MIN_INCREMENT) + " ₫!");
                 return;
             }
 
-            // --- UX: XÁC NHẬN ---
+            // Hộp thoại xác nhận của JavaFX trước khi lưu thầu tự động
             Alert confirm = new Alert(Alert.AlertType.CONFIRMATION);
             confirm.setTitle("Xác nhận thiết lập Auto Bid");
             confirm.setHeaderText("Bạn có chắc chắn muốn thiết lập Auto Bid?");
@@ -922,7 +1008,7 @@ public class DashboardController {
                 
                 if (out != null) {
                     out.println(new Gson().toJson(bidRequest));
-                    // Cập nhật UI ngay lập tức
+                    // Lưu trạng thái và đổi UI sang Active ngay
                     activeAutoBids.put(selectedProductForDetail.getAuctionId(), maxBid);
                     updateAutoBidUI();
                     
@@ -939,11 +1025,13 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Gửi yêu cầu CANCEL_AUTO_BID lên Server để gỡ chế độ thầu tự động cho sản phẩm thầu.
+     */
     @FXML
     public void handleCancelAutoBid(ActionEvent event) {
         if (selectedProductForDetail == null) return;
         
-        // Gửi lệnh hủy tới server
         JsonObject cancelRequest = new JsonObject();
         cancelRequest.addProperty("command", "CANCEL_AUTO_BID");
         cancelRequest.addProperty("auctionId", selectedProductForDetail.getAuctionId());
@@ -951,13 +1039,15 @@ public class DashboardController {
         
         if (out != null) {
             out.println(new Gson().toJson(cancelRequest));
-            // Cập nhật UI
             activeAutoBids.remove(selectedProductForDetail.getAuctionId());
             updateAutoBidUI();
             showAlert(Alert.AlertType.INFORMATION, "Đã hủy", "Đã dừng Auto Bid cho sản phẩm này.");
         }
     }
 
+    /**
+     * Thay đổi ẩn hiện hai khối VBox thiết lập hoặc hiển thị Auto-Bid tùy theo trạng thái lưu trữ.
+     */
     private void updateAutoBidUI() {
         if (selectedProductForDetail == null) return;
         
@@ -973,8 +1063,9 @@ public class DashboardController {
         }
     }
 
-    // UTILS
-    // ==========================================
+    // =========================================================================
+    // --- TIỆN ÍCH MINI CART & THANH TOÁN ĐƠN HÀNG THẮNG CUỘC ---
+    // =========================================================================
 
     @FXML
     private void handleShowNotifications() {
@@ -998,6 +1089,10 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Duyệt qua toàn bộ sản phẩm đã thắng thầu của user, vẽ ra các dòng HBox hiển thị trong mini-cart
+     * và tính toán tổng số tiền tích lũy cần thanh toán.
+     */
     private void populateMiniCart() {
         vboxMiniCartItems.getChildren().clear();
         double total = 0;
@@ -1008,7 +1103,6 @@ public class DashboardController {
                 count++;
                 total += item.getRawPrice();
                 
-                // Tạo một dòng sản phẩm nhỏ gọn
                 HBox row = new HBox(10);
                 row.setAlignment(Pos.CENTER_LEFT);
                 row.setStyle("-fx-padding: 5; -fx-background-color: #fcfcfc; -fx-background-radius: 5;");
@@ -1023,7 +1117,7 @@ public class DashboardController {
                 row.getChildren().addAll(name, price);
                 vboxMiniCartItems.getChildren().add(row);
                 
-                if (count >= 5) { // Chỉ hiện tối đa 5 món để không quá dài
+                if (count >= 5) {
                     Label more = new Label("... và " + (allItems.size() - count) + " sản phẩm khác");
                     more.setStyle("-fx-font-size: 11; -fx-text-fill: gray;");
                     vboxMiniCartItems.getChildren().add(more);
@@ -1048,6 +1142,10 @@ public class DashboardController {
         showAlert(Alert.AlertType.INFORMATION, "Thanh toán", "Đang chuyển hướng đến trang thanh toán an toàn...");
     }
 
+    /**
+     * Thực hiện đóng kết nối Socket Client an toàn và định tuyến quay lại màn hình Login.fxml.
+     * @param event Sự kiện nhấp nút đăng xuất
+     */
     @FXML
     public void handleLogout(ActionEvent event) {
         try {
@@ -1063,8 +1161,9 @@ public class DashboardController {
         }
     }
 
-
-
+    /**
+     * Hàm hiển thị Dialog nhanh trong luồng xử lý UI JavaFX.
+     */
     private void showAlert(Alert.AlertType type, String title, String content) {
         Platform.runLater(() -> {
             Alert alert = new Alert(type);
@@ -1075,10 +1174,14 @@ public class DashboardController {
         });
     }
 
-    // ==========================================
-    // DATA CLASSES
-    // ==========================================
+    // =========================================================================
+    // --- LỚP DỰNG MÔ HÌNH DỮ LIỆU BẢNG GIAO DIỆN (DATA MODEL CLASS) ---
+    // =========================================================================
 
+    /**
+     * Lớp tĩnh ItemUI đóng vai trò làm Data Transfer Object chứa thông số thầu của sản phẩm
+     * được gán trực tiếp lên TableView và FlowPane lưới.
+     */
     public static class ItemUI {
         private String name;
         private String description;
