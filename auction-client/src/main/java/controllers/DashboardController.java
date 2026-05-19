@@ -2,6 +2,7 @@ package controllers;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
@@ -97,6 +98,7 @@ public class DashboardController {
     @FXML private TableColumn<ItemUI, String> colWonPrice;
     @FXML private TableColumn<ItemUI, String> colWonSeller;
     @FXML private TableColumn<ItemUI, String> colWonDate;
+    @FXML private TableColumn<ItemUI, String> colWonStatus;
 
     // --- Khối lưới sản phẩm Trang mua sắm ---
     @FXML private Label lblCategoryTitle;
@@ -118,6 +120,8 @@ public class DashboardController {
     @FXML private Label lblDetailStatus;
     @FXML private TextField txtBidAmount;
     @FXML private TextField txtAutoBidMax;
+    @FXML private Button btnPlaceBid;
+    @FXML private HBox hboxQuickBids;
     
     // Biểu đồ theo dõi giá biến động theo thời gian thực
     @FXML private LineChart<String, Number> priceChart;
@@ -136,6 +140,18 @@ public class DashboardController {
     @FXML private Label lblActiveAutoBidMax;
     @FXML private Label lblBidStatus;
     @FXML private TextField txtAutoBidIncrement;
+    
+    // --- Các đối tượng giao diện màn hình Checkout (chuẩn eBay) ---
+    @FXML private ScrollPane pageCheckout;
+    @FXML private VBox vboxCheckoutItems;
+    @FXML private Label lblCheckoutSubtotal;
+    @FXML private Label lblCheckoutTax;
+    @FXML private Label lblCheckoutTotal;
+    @FXML private Label lblShipName;
+    @FXML private Label lblShipPhone;
+    @FXML private Label lblShipAddress;
+    @FXML private RadioButton radCreditCard;
+    @FXML private RadioButton radCOD;
     
     // Lưu trữ danh sách Auto Bid đang hoạt động của người dùng (auctionId -> Mức giá tối đa)
     private java.util.Map<String, Double> activeAutoBids = new java.util.HashMap<>();
@@ -210,6 +226,7 @@ public class DashboardController {
         colWonPrice.setCellValueFactory(new PropertyValueFactory<>("priceStr"));
         colWonSeller.setCellValueFactory(new PropertyValueFactory<>("sellerName"));
         colWonDate.setCellValueFactory(new PropertyValueFactory<>("endTime"));
+        colWonStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
 
         // Gắn bộ lắng nghe từ khóa tìm kiếm (Real-time keyword listener)
         txtSearch.textProperty().addListener((observable, oldValue, newValue) -> {
@@ -248,10 +265,28 @@ public class DashboardController {
     // --- CHUYỂN TRANG & SIDEBAR NAVIGATION ---
     // =========================================================================
 
+    private void clearAllSidebarSelections() {
+        Label[] allLabels = {
+            sideBrowse, sideHistory, sideWonItems,
+            catAll, catElectronics, catArt, catVehicle, catGeneral
+        };
+        for (Label label : allLabels) {
+            if (label != null) {
+                label.setStyle("-fx-cursor: hand; -fx-background-color: transparent; -fx-text-fill: #444444;");
+            }
+        }
+    }
+
     @FXML
     public void handleSideBrowse(Event event) {
         showPage(pageBrowse);
-        setActiveSidebar(sideBrowse);
+        if (event != null) {
+            clearAllSidebarSelections();
+            setActiveSidebar(sideBrowse);
+            currentCategoryFilter = "";
+            lblCategoryTitle.setText("Tất cả sản phẩm");
+            applySearchFilter();
+        }
     }
 
     @FXML
@@ -259,19 +294,9 @@ public class DashboardController {
         handleSideBrowse(event);
     }
 
-    /**
-     * Tô màu nổi bật Sidebar item đang được chọn và khôi phục các nhãn khác về màu xám trung tính.
-     */
     private void setActiveSidebar(Label label) {
-        sideBrowse.setTextFill(javafx.scene.paint.Color.web("#707070"));
-        sideBrowse.setStyle("-fx-cursor: hand;");
-        sideHistory.setTextFill(javafx.scene.paint.Color.web("#707070"));
-        sideHistory.setStyle("-fx-cursor: hand;");
-        sideWonItems.setTextFill(javafx.scene.paint.Color.web("#707070"));
-        sideWonItems.setStyle("-fx-cursor: hand;");
-        
-        label.setTextFill(javafx.scene.paint.Color.web("#0654ba"));
-        label.setStyle("-fx-cursor: hand; -fx-font-weight: bold;");
+        clearAllSidebarSelections();
+        label.setStyle("-fx-cursor: hand; -fx-font-weight: bold; -fx-background-color: #3665f315; -fx-text-fill: #3665f3;");
     }
 
     @FXML public void handleSideHistory(MouseEvent event) {
@@ -305,14 +330,17 @@ public class DashboardController {
     private void loadWonData() {
         List<ItemUI> won = new ArrayList<>();
         for (ItemUI item : allItems) {
-            if ("Đã kết thúc".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
+            if (("Chờ thanh toán".equals(item.getStatus()) || "Hoàn thành".equals(item.getStatus())) 
+                    && currentUsername.equals(item.getWinnerUsername())) {
                 won.add(item);
             }
         }
         tableWon.setItems(FXCollections.observableArrayList(won));
+        
+        boolean hasPending = won.stream().anyMatch(item -> "Chờ thanh toán".equals(item.getStatus()));
         if (btnPayAllWon != null) {
-            btnPayAllWon.setDisable(won.isEmpty());
-            btnPayAllWon.setOpacity(won.isEmpty() ? 0.5 : 1.0);
+            btnPayAllWon.setDisable(!hasPending);
+            btnPayAllWon.setOpacity(!hasPending ? 0.5 : 1.0);
         }
     }
 
@@ -326,35 +354,23 @@ public class DashboardController {
         pageProductDetail.setManaged(false);
         if (pageHistory != null) { pageHistory.setVisible(false); pageHistory.setManaged(false); }
         if (pageWonItems != null) { pageWonItems.setVisible(false); pageWonItems.setManaged(false); }
+        if (pageCheckout != null) { pageCheckout.setVisible(false); pageCheckout.setManaged(false); }
 
         page.setVisible(true);
         page.setManaged(true);
     }
 
-    // =========================================================================
-    // --- BỘ LỌC DANH MỤC SẢN PHẨM (CATEGORY FILTERS) ---
-    // =========================================================================
-
-    private void resetCategoryStyles() {
-        Label[] cats = {catAll, catElectronics, catArt, catVehicle, catGeneral};
-        for (Label cat : cats) {
-            cat.setTextFill(javafx.scene.paint.Color.web("#707070"));
-            cat.setStyle("-fx-cursor: hand;");
+    private void setActiveCategory(Label label, String category, String title) {
+        showPage(pageBrowse);
+        setActiveSidebar(label);
+        currentCategoryFilter = category;
+        if (lblCategoryTitle != null) {
+            lblCategoryTitle.setText(title);
         }
-    }
-
-    private void setActiveCategory(Label cat, String type, String title) {
-        resetCategoryStyles();
-        cat.setTextFill(javafx.scene.paint.Color.web("#0654ba"));
-        cat.setStyle("-fx-cursor: hand; -fx-font-weight: bold;");
-        currentCategoryFilter = type;
-        lblCategoryTitle.setText(title);
         applySearchFilter();
-        
-        // Điều hướng quay lại trang duyệt chính
-        handleSideBrowse(null);
     }
 
+    // =======================================================================
     @FXML public void handleCategoryAll(MouseEvent event) { setActiveCategory(catAll, "", "Tất cả sản phẩm"); }
     @FXML public void handleCategoryElectronics(MouseEvent event) { setActiveCategory(catElectronics, "ELECTRONICS", "Đồ điện tử"); }
     @FXML public void handleCategoryArt(MouseEvent event) { setActiveCategory(catArt, "ART", "Nghệ thuật"); }
@@ -376,21 +392,18 @@ public class DashboardController {
                 out = new PrintWriter(socket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                // Gửi bản tin đầu tiên xin danh sách sản phẩm
                 out.println("{\"command\":\"GET_ITEMS\"}");
 
                 String response;
                 while ((response = in.readLine()) != null) {
                     try {
                         JsonObject json = JsonParser.parseString(response).getAsJsonObject();
-                        String cmd = (json.has("command") && !json.get("command").isJsonNull()) ? json.get("command").getAsString() : "";
+                        String cmd = json.has("command") ? json.get("command").getAsString() : "";
 
-                        // Bản tin trả về danh sách toàn bộ sản phẩm đấu giá
                         if ("SET_ITEMS".equals(cmd)) {
                             JsonArray dataArray = json.getAsJsonArray("data");
                             List<ItemUI> newItems = new ArrayList<>();
-                            
-                            for (com.google.gson.JsonElement element : dataArray) {
+                            for (JsonElement element : dataArray) {
                                 JsonObject obj = element.getAsJsonObject();
                                 String name = obj.has("name") ? obj.get("name").getAsString() : "Sản phẩm";
                                 String desc = obj.has("description") ? obj.get("description").getAsString() : "";
@@ -433,15 +446,20 @@ public class DashboardController {
 
                                 String serverStatus = obj.has("auctionStatus") ? obj.get("auctionStatus").getAsString() : "RUNNING";
                                 String status = "Đang đấu giá";
-                                if ("FINISHED".equals(serverStatus)) status = "Đã kết thúc";
+                                if ("FINISHED".equals(serverStatus)) status = "Hoàn thành";
+                                else if ("ENDED_NO_WINNER".equals(serverStatus)) status = "Đã kết thúc";
+                                else if ("ENDED_WITH_WINNER".equals(serverStatus)) status = "Chờ thanh toán";
                                 else if ("OPEN".equals(serverStatus)) status = "Chờ mở";
+                                
+                                String winnerUsername = obj.has("winnerUsername") ? obj.get("winnerUsername").getAsString() : "";
                                 
                                 int bidsCount = obj.has("bidsCount") ? obj.get("bidsCount").getAsInt() : 0;
                                 String imageUrls = obj.has("imageUrls") ? obj.get("imageUrls").getAsString() : "";
-
+ 
                                 ItemUI itemUI = new ItemUI(
                                     name, desc, currentPrice, status, startPrice, endTime, type, sellerName, bidsCount, imageUrls
                                 );
+                                itemUI.setWinnerUsername(winnerUsername);
                                 
                                 if (obj.has("auctionId")) {
                                     itemUI.setAuctionId(obj.get("auctionId").getAsString());
@@ -499,6 +517,10 @@ public class DashboardController {
                                 });
                             }
                         }
+                        // Nhận sự kiện thời gian thực khi có sản phẩm mới được thêm hoặc xóa trên hệ thống
+                        else if ("UPDATE_ITEMS".equals(cmd)) {
+                            out.println("{\"command\":\"GET_ITEMS\"}");
+                        }
                     } catch (Exception ex) {
                         if (!socket.isClosed()) {
                             System.out.println("Lỗi xử lý JSON: " + ex.getMessage());
@@ -529,6 +551,10 @@ public class DashboardController {
         List<ItemUI> result = new ArrayList<>();
         
         for (ItemUI item : allItems) {
+            // Chỉ hiển thị sản phẩm đang chạy thầu hoặc chờ mở trên giao diện tìm kiếm / mua sắm chính
+            if (!"Đang đấu giá".equals(item.getStatus()) && !"Chờ mở".equals(item.getStatus())) {
+                continue;
+            }
             // Lọc theo Danh mục
             if (!currentCategoryFilter.isEmpty() && !currentCategoryFilter.equalsIgnoreCase(item.getType())) {
                 continue;
@@ -834,6 +860,15 @@ public class DashboardController {
         startChartAutoUpdate();
         updateAutoBidUI();
         updateBidStatusUI();
+        
+        // Vô hiệu hóa điều khiển đặt thầu nếu phiên đấu giá đã kết thúc
+        boolean isEnded = "Đã kết thúc".equals(item.getStatus());
+        txtBidAmount.setDisable(isEnded);
+        if (btnPlaceBid != null) btnPlaceBid.setDisable(isEnded);
+        if (hboxQuickBids != null) hboxQuickBids.setDisable(isEnded);
+        if (vboxAutoBidSetup != null) vboxAutoBidSetup.setDisable(isEnded);
+        if (vboxAutoBidActive != null) vboxAutoBidActive.setDisable(isEnded);
+        
         showPage(pageProductDetail);
     }
 
@@ -923,6 +958,21 @@ public class DashboardController {
                 if (diff.isNegative() || diff.isZero()) {
                     lblCountdown.setText("ĐÃ KẾT THÚC");
                     lblCountdown.setStyle("-fx-font-weight: bold; -fx-font-size: 24; -fx-text-fill: #999;");
+                    
+                    // Cập nhật trạng thái hiển thị thời gian thực trên giao diện chi tiết
+                    if (lblDetailStatus != null) {
+                        lblDetailStatus.setText("Đã kết thúc");
+                        lblDetailStatus.setTextFill(javafx.scene.paint.Color.RED);
+                    }
+                    selectedProductForDetail.setStatus("Đã kết thúc");
+                    
+                    // Vô hiệu hóa tất cả bộ điều khiển đặt thầu để tránh người dùng thao tác thừa
+                    txtBidAmount.setDisable(true);
+                    if (btnPlaceBid != null) btnPlaceBid.setDisable(true);
+                    if (hboxQuickBids != null) hboxQuickBids.setDisable(true);
+                    if (vboxAutoBidSetup != null) vboxAutoBidSetup.setDisable(true);
+                    if (vboxAutoBidActive != null) vboxAutoBidActive.setDisable(true);
+                    
                     countdownTimeline.stop();
                 } else {
                     long h = diff.toHours();
@@ -1105,7 +1155,7 @@ public class DashboardController {
         int count = 0;
 
         for (ItemUI item : allItems) {
-            if ("Đã kết thúc".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
+            if ("Chờ thanh toán".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
                 count++;
                 total += item.getRawPrice();
                 
@@ -1145,7 +1195,95 @@ public class DashboardController {
 
     @FXML
     private void handleQuickPay() {
-        showAlert(Alert.AlertType.INFORMATION, "Thanh toán", "Đang chuyển hướng đến trang thanh toán an toàn...");
+        showCheckoutPage();
+    }
+
+    /**
+     * Nạp dữ liệu và chuyển sang màn hình thanh toán Checkout chuẩn eBay
+     */
+    private void showCheckoutPage() {
+        if (vboxCheckoutItems == null) return;
+        
+        vboxCheckoutItems.getChildren().clear();
+        double subtotal = 0;
+        int count = 0;
+
+        for (ItemUI item : allItems) {
+            if ("Chờ thanh toán".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
+                subtotal += item.getRawPrice();
+                count++;
+                
+                HBox row = new HBox(15);
+                row.setAlignment(Pos.CENTER_LEFT);
+                row.setStyle("-fx-padding: 10; -fx-background-color: #f9f9f9; -fx-background-radius: 8; -fx-border-color: #eee; -fx-border-width: 1; -fx-border-radius: 8;");
+                
+                Label name = new Label(item.getName());
+                name.setPrefWidth(220);
+                name.setWrapText(true);
+                name.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #191919;");
+                
+                Region space = new Region();
+                HBox.setHgrow(space, Priority.ALWAYS);
+                
+                Label price = new Label(item.getPriceStr());
+                price.setStyle("-fx-font-weight: bold; -fx-text-fill: #3665f3; -fx-font-size: 13;");
+                
+                row.getChildren().addAll(name, space, price);
+                vboxCheckoutItems.getChildren().add(row);
+            }
+        }
+
+        if (count == 0) {
+            vboxCheckoutItems.getChildren().add(new Label("Không có sản phẩm nào cần thanh toán."));
+            if (lblCheckoutSubtotal != null) lblCheckoutSubtotal.setText("0 ₫");
+            if (lblCheckoutTax != null) lblCheckoutTax.setText("0 ₫");
+            if (lblCheckoutTotal != null) lblCheckoutTotal.setText("0 ₫");
+            return;
+        }
+
+        double tax = subtotal * 0.08;
+        double total = subtotal + tax;
+
+        if (lblCheckoutSubtotal != null) lblCheckoutSubtotal.setText(String.format("%,.0f ₫", subtotal));
+        if (lblCheckoutTax != null) lblCheckoutTax.setText(String.format("%,.0f ₫", tax));
+        if (lblCheckoutTotal != null) lblCheckoutTotal.setText(String.format("%,.0f ₫", total));
+        
+        // Thiết lập thông tin giao nhận mẫu
+        if (lblShipName != null) lblShipName.setText(currentUsername);
+        if (lblShipPhone != null) lblShipPhone.setText("0912 345 678");
+        if (lblShipAddress != null) lblShipAddress.setText("144 Xuân Thủy, Cầu Giấy, Hà Nội");
+
+        // Chọn mặc định hình thức thẻ
+        if (radCreditCard != null) radCreditCard.setSelected(true);
+
+        showPage(pageCheckout);
+    }
+
+    @FXML
+    private void handleBackToWonItems() {
+        showPage(pageWonItems);
+    }
+
+    @FXML
+    private void handleConfirmAndPay() {
+        if (out != null) {
+            JsonObject req = new JsonObject();
+            req.addProperty("command", "PAY_WINNINGS");
+            req.addProperty("username", currentUsername);
+            
+            String methodStr = "COD (Thanh toán khi nhận hàng)";
+            if (radCreditCard != null && radCreditCard.isSelected()) {
+                methodStr = "Credit Card (Thẻ tín dụng)";
+            }
+            req.addProperty("paymentMethod", methodStr);
+            out.println(req.toString());
+            
+            showAlert(Alert.AlertType.INFORMATION, "Thanh toán thành công", 
+                "Đơn giao dịch của bạn đã được gửi đi thành công!\nPhương thức thanh toán đã chọn: " + methodStr + ".\neBid sẽ sớm giao hàng đến bạn.");
+            
+            // Quay về danh sách chính để cập nhật hiển thị sản phẩm
+            showPage(pageBrowse);
+        }
     }
 
     /**
@@ -1222,6 +1360,7 @@ public class DashboardController {
         public String getDescription() { return description; }
         public String getPriceStr() { return priceStr; }
         public String getStatus() { return status; }
+        public void setStatus(String status) { this.status = status; }
         public double getRawPrice() { return rawPrice; }
         public double getStartingPrice() { return startingPrice; }
         public String getEndTime() { return endTime; }

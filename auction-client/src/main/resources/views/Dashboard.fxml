@@ -59,24 +59,24 @@
     </top>
 
     <left>
-        <VBox fx:id="sidebar" prefWidth="230.0" spacing="15.0" style="-fx-background-color: #FFFFFF; -fx-padding: 25 20; -fx-border-color: transparent #E0E0E0 transparent transparent;">
+        <VBox fx:id="sidebar" prefWidth="260.0" spacing="15.0" style="-fx-background-color: #F8F9FA; -fx-padding: 25 10; -fx-border-color: transparent #E0E0E0 transparent transparent;">
             <children>
-                <Label fx:id="sideBrowse" styleClass="sidebar-label" text="Sản phẩm đang bán" textFill="#0654ba" onMouseClicked="#handleSideBrowse" style="-fx-font-weight: bold;"/>
+                <Label fx:id="sideBrowse" styleClass="sidebar-label" text="Sản phẩm đang bán" textFill="#3665f3" onMouseClicked="#handleSideBrowse" style="-fx-font-weight: bold; -fx-background-color: #3665f315;" maxWidth="Infinity"/>
                 
                 <Separator style="-fx-padding: 10 0;"/>
                 
-                <Label text="Cá nhân" style="-fx-font-weight: bold; -fx-font-size: 15;"/>
-                <Label fx:id="sideHistory" styleClass="sidebar-label" text="Lịch sử đấu giá" textFill="#707070" onMouseClicked="#handleSideHistory" />
-                <Label fx:id="sideWonItems" styleClass="sidebar-label" text="Sản phẩm đã thắng" textFill="#707070" onMouseClicked="#handleSideWonItems" />
+                <Label text="CÁ NHÂN" textFill="#999999" style="-fx-padding: 0 20 5 20;"><font><Font name="System Bold" size="12.0"/></font></Label>
+                <Label fx:id="sideHistory" styleClass="sidebar-label" text="Lịch sử đấu giá" textFill="#444444" onMouseClicked="#handleSideHistory" maxWidth="Infinity"/>
+                <Label fx:id="sideWonItems" styleClass="sidebar-label" text="Sản phẩm đã thắng" textFill="#444444" onMouseClicked="#handleSideWonItems" maxWidth="Infinity"/>
                 
                 <Separator style="-fx-padding: 10 0;"/>
-
-                <Label text="Danh mục" style="-fx-font-weight: bold; -fx-font-size: 15;"/>
-                <Label fx:id="catAll" styleClass="sidebar-label" text="Tất cả sản phẩm" textFill="#707070" onMouseClicked="#handleCategoryAll" />
-                <Label fx:id="catElectronics" styleClass="sidebar-label" text="Đồ điện tử" textFill="#707070" onMouseClicked="#handleCategoryElectronics" />
-                <Label fx:id="catArt" styleClass="sidebar-label" text="Nghệ thuật" textFill="#707070" onMouseClicked="#handleCategoryArt" />
-                <Label fx:id="catVehicle" styleClass="sidebar-label" text="Xe cộ" textFill="#707070" onMouseClicked="#handleCategoryVehicle" />
-                <Label fx:id="catGeneral" styleClass="sidebar-label" text="Khác" textFill="#707070" onMouseClicked="#handleCategoryGeneral" />
+                
+                <Label text="DANH MỤC" textFill="#999999" style="-fx-padding: 0 20 5 20;"><font><Font name="System Bold" size="12.0"/></font></Label>
+                <Label fx:id="catAll" styleClass="sidebar-label" text="Tất cả sản phẩm" textFill="#444444" onMouseClicked="#handleCategoryAll" maxWidth="Infinity"/>
+                <Label fx:id="catElectronics" styleClass="sidebar-label" text="Đồ điện tử" textFill="#444444" onMouseClicked="#handleCategoryElectronics" maxWidth="Infinity"/>
+                <Label fx:id="catArt" styleClass="sidebar-label" text="Nghệ thuật" textFill="#444444" onMouseClicked="#handleCategoryArt" maxWidth="Infinity"/>
+                <Label fx:id="catVehicle" styleClass="sidebar-label" text="Xe cộ" textFill="#444444" onMouseClicked="#handleCategoryVehicle" maxWidth="Infinity"/>
+                <Label fx:id="catGeneral" styleClass="sidebar-label" text="Khác" textFill="#444444" onMouseClicked="#handleCategoryGeneral" maxWidth="Infinity"/>
             </children>
         </VBox>
     </left>
@@ -165,11 +165,11 @@
                                                  <HBox spacing="10">
                                                      <children>
                                                          <TextField fx:id="txtBidAmount" prefHeight="50" promptText="Nhập mức giá..." style="-fx-background-radius: 25; -fx-padding: 0 20; -fx-font-size: 16;" HBox.hgrow="ALWAYS" />
-                                                         <Button text="Đặt giá" onAction="#handlePlaceBid" style="-fx-background-color: #0654ba; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-weight: bold; -fx-font-size: 16;" prefHeight="50" prefWidth="120" />
+                                                         <Button fx:id="btnPlaceBid" text="Đặt giá" onAction="#handlePlaceBid" style="-fx-background-color: #0654ba; -fx-text-fill: white; -fx-background-radius: 25; -fx-font-weight: bold; -fx-font-size: 16;" prefHeight="50" prefWidth="120" />
                                                      </children>
                                                  </HBox>
                                                  
-                                                 <HBox spacing="10" alignment="CENTER_LEFT">
+                                                 <HBox fx:id="hboxQuickBids" spacing="10" alignment="CENTER_LEFT">
                                                      <children>
                                                          <Label text="Tăng nhanh:" textFill="#707070" style="-fx-font-size: 12;" />
                                                          <Button text="+50k" onAction="#handleAdd50k" style="-fx-background-color: white; -fx-border-color: #ddd; -fx-border-radius: 15; -fx-background-radius: 15; -fx-font-size: 11;" />
@@ -269,11 +269,185 @@
                             <TableColumn fx:id="colWonPrice" text="Giá thắng" prefWidth="150" />
                             <TableColumn fx:id="colWonSeller" text="Người bán" prefWidth="150" />
                             <TableColumn fx:id="colWonDate" text="Ngày kết thúc" prefWidth="180" />
+                            <TableColumn fx:id="colWonStatus" text="Trạng thái" prefWidth="150" />
                         </columns>
                     </TableView>
                 </children>
             </VBox>
             
+            <!-- PAGE 7: Màn hình Thanh toán eBay Checkout (Pay with Credit Card & COD) -->
+            <ScrollPane fx:id="pageCheckout" visible="false" managed="false" fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                <content>
+                    <VBox spacing="30.0" style="-fx-padding: 30; -fx-background-color: #F5F5F5;">
+                        <children>
+                            <!-- Back Button Link -->
+                            <Hyperlink text="&lt; Quay lại danh sách sản phẩm đã thắng" onAction="#handleBackToWonItems" style="-fx-text-fill: #3665f3; -fx-font-size: 14; -fx-font-weight: bold;" />
+                            
+                            <!-- Main Layout: 2 Columns -->
+                            <HBox spacing="30.0" alignment="TOP_LEFT">
+                                <children>
+                                    
+                                    <!-- LEFT COLUMN: Payment Options & Shipping Info (65% width) -->
+                                    <VBox spacing="25.0" HBox.hgrow="ALWAYS" maxWidth="650.0">
+                                        <children>
+                                            
+                                            <!-- Brand Header -->
+                                            <HBox alignment="BOTTOM_LEFT" spacing="10">
+                                                <children>
+                                                    <HBox alignment="CENTER_LEFT" spacing="1.0">
+                                                        <Label text="e" textFill="#e53238"><font><Font name="System Bold" size="26.0"/></font></Label>
+                                                        <Label text="b" textFill="#0064d2"><font><Font name="System Bold" size="26.0"/></font></Label>
+                                                        <Label text="i" textFill="#f5af02"><font><Font name="System Bold" size="26.0"/></font></Label>
+                                                        <Label text="d" textFill="#86b817"><font><Font name="System Bold" size="26.0"/></font></Label>
+                                                    </HBox>
+                                                    <Label text="Checkout" textFill="#191919"><font><Font name="System Bold" size="24.0"/></font></Label>
+                                                </children>
+                                            </HBox>
+                                            
+                                            <!-- Banner Promotion -->
+                                            <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-background-color: #E8F0FE; -fx-padding: 15; -fx-background-radius: 8; -fx-border-color: #3665f3; -fx-border-width: 1; -fx-border-radius: 8;">
+                                                <children>
+                                                    <Label text="💳" style="-fx-font-size: 20;" />
+                                                    <Label text="Thanh toán an toàn 100% với chính sách Bảo vệ người mua hàng eBid Money Back Guarantee." style="-fx-font-size: 13; -fx-text-fill: #1a73e8; -fx-font-weight: bold;" wrapText="true" />
+                                                </children>
+                                            </HBox>
+                                            
+                                            <!-- Section 1: Pay with (Payment Methods) -->
+                                            <VBox spacing="15.0" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 3);">
+                                                <children>
+                                                    <Label text="Chọn phương thức thanh toán" style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #191919;" />
+                                                    <Separator />
+                                                    
+                                                    <!-- Option 1: Credit / Debit Card -->
+                                                    <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-border-color: #ddd; -fx-border-radius: 8; -fx-background-radius: 8;">
+                                                        <children>
+                                                            <RadioButton fx:id="radCreditCard" selected="true" style="-fx-cursor: hand;">
+                                                                <toggleGroup>
+                                                                    <ToggleGroup fx:id="paymentGroup" />
+                                                                </toggleGroup>
+                                                            </RadioButton>
+                                                            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                                                <children>
+                                                                    <Label text="Thẻ tín dụng hoặc Thẻ ghi nợ (Credit/Debit Card)" style="-fx-font-weight: bold; -fx-font-size: 14;" />
+                                                                    <Label text="Visa, Mastercard, JCB, American Express" textFill="GRAY" style="-fx-font-size: 12;" />
+                                                                </children>
+                                                            </VBox>
+                                                            <Label text="💳" style="-fx-font-size: 22;" />
+                                                        </children>
+                                                    </HBox>
+                                                    
+                                                    <!-- Option 2: COD (Cash on Delivery) -->
+                                                    <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-border-color: #ddd; -fx-border-radius: 8; -fx-background-radius: 8;">
+                                                        <children>
+                                                            <RadioButton fx:id="radCOD" toggleGroup="$paymentGroup" style="-fx-cursor: hand;" />
+                                                            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                                                <children>
+                                                                    <Label text="Thanh toán khi nhận hàng (COD)" style="-fx-font-weight: bold; -fx-font-size: 14;" />
+                                                                    <Label text="Thanh toán bằng tiền mặt ngay khi nhận được sản phẩm đấu giá" textFill="GRAY" style="-fx-font-size: 12;" />
+                                                                </children>
+                                                            </VBox>
+                                                            <Label text="📦" style="-fx-font-size: 22;" />
+                                                        </children>
+                                                    </HBox>
+                                                </children>
+                                            </VBox>
+                                            
+                                            <!-- Section 2: Ship to (Shipping Address) -->
+                                            <VBox spacing="15.0" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 3);">
+                                                <children>
+                                                    <Label text="Địa chỉ nhận hàng (Ship to)" style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #191919;" />
+                                                    <Separator />
+                                                    <GridPane hgap="15" vgap="12">
+                                                        <columnConstraints>
+                                                            <ColumnConstraints prefWidth="120" />
+                                                            <ColumnConstraints hgrow="ALWAYS" />
+                                                        </columnConstraints>
+                                                        <rowConstraints>
+                                                            <RowConstraints />
+                                                            <RowConstraints />
+                                                            <RowConstraints />
+                                                        </rowConstraints>
+                                                        <children>
+                                                            <Label text="Người nhận:" textFill="GRAY" style="-fx-font-size: 14;" GridPane.columnIndex="0" GridPane.rowIndex="0" />
+                                                            <Label fx:id="lblShipName" text="Bidder_01" style="-fx-font-weight: bold; -fx-font-size: 14;" GridPane.columnIndex="1" GridPane.rowIndex="0" />
+                                                            
+                                                            <Label text="Số điện thoại:" textFill="GRAY" style="-fx-font-size: 14;" GridPane.columnIndex="0" GridPane.rowIndex="1" />
+                                                            <Label fx:id="lblShipPhone" text="0912 345 678" style="-fx-font-weight: bold; -fx-font-size: 14;" GridPane.columnIndex="1" GridPane.rowIndex="1" />
+                                                            
+                                                            <Label text="Địa chỉ giao hàng:" textFill="GRAY" style="-fx-font-size: 14;" GridPane.columnIndex="0" GridPane.rowIndex="2" />
+                                                            <Label fx:id="lblShipAddress" text="144 Xuân Thủy, Cầu Giấy, Hà Nội" style="-fx-font-weight: bold; -fx-font-size: 14;" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="2" />
+                                                        </children>
+                                                    </GridPane>
+                                                </children>
+                                            </VBox>
+                                            
+                                        </children>
+                                    </VBox>
+                                    
+                                    <!-- RIGHT COLUMN: Order Summary (35% width) -->
+                                    <VBox prefWidth="350.0" spacing="20.0" style="-fx-background-color: white; -fx-padding: 25; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 15, 0, 0, 5);">
+                                        <children>
+                                            <Label text="Tóm tắt đơn hàng" style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #191919;" />
+                                            <Separator />
+                                            
+                                            <!-- List of items to purchase -->
+                                            <Label text="Sản phẩm thanh toán:" textFill="GRAY" style="-fx-font-size: 12; -fx-font-weight: bold;" />
+                                            <ScrollPane fitToWidth="true" prefHeight="150" style="-fx-background-color: transparent; -fx-border-color: transparent;">
+                                                <content>
+                                                    <VBox fx:id="vboxCheckoutItems" spacing="10" />
+                                                </content>
+                                            </ScrollPane>
+                                            <Separator />
+                                            
+                                            <!-- Price Details -->
+                                            <HBox alignment="CENTER_LEFT">
+                                                <children>
+                                                    <Label text="Giá trị sản phẩm" textFill="GRAY" style="-fx-font-size: 14;" />
+                                                    <Region HBox.hgrow="ALWAYS" />
+                                                    <Label fx:id="lblCheckoutSubtotal" text="0 ₫" style="-fx-font-size: 14; -fx-font-weight: bold;" />
+                                                </children>
+                                            </HBox>
+                                            
+                                            <HBox alignment="CENTER_LEFT">
+                                                <children>
+                                                    <Label text="Vận chuyển (Shipping)" textFill="GRAY" style="-fx-font-size: 14;" />
+                                                    <Region HBox.hgrow="ALWAYS" />
+                                                    <Label text="Miễn phí (Free)" textFill="#2e7d32" style="-fx-font-size: 14; -fx-font-weight: bold;" />
+                                                </children>
+                                            </HBox>
+                                            
+                                            <HBox alignment="CENTER_LEFT">
+                                                <children>
+                                                    <Label text="Thuế VAT (8%)" textFill="GRAY" style="-fx-font-size: 14;" />
+                                                    <Region HBox.hgrow="ALWAYS" />
+                                                    <Label fx:id="lblCheckoutTax" text="0 ₫" style="-fx-font-size: 14; -fx-font-weight: bold;" />
+                                                </children>
+                                            </HBox>
+                                            <Separator />
+                                            
+                                            <!-- Order Total -->
+                                            <HBox alignment="CENTER_LEFT">
+                                                <children>
+                                                    <Label text="Tổng thanh toán" style="-fx-font-weight: bold; -fx-font-size: 16;" />
+                                                    <Region HBox.hgrow="ALWAYS" />
+                                                    <Label fx:id="lblCheckoutTotal" text="0 ₫" textFill="#e62117" style="-fx-font-weight: bold; -fx-font-size: 22;" />
+                                                </children>
+                                            </HBox>
+                                            
+                                            <!-- Action Button -->
+                                            <Button fx:id="btnConfirmAndPay" text="XÁC NHẬN VÀ THANH TOÁN" onAction="#handleConfirmAndPay" maxWidth="Infinity" prefHeight="50" style="-fx-background-color: #3665f3; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 15; -fx-background-radius: 25; -fx-cursor: hand; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);" />
+                                            
+                                            <Label text="Bằng việc nhấn Xác nhận và Thanh toán, bạn đồng ý với Điều khoản dịch vụ và chính sách thanh toán của eBid." textFill="GRAY" style="-fx-font-size: 11; -fx-text-alignment: center;" wrapText="true" />
+                                        </children>
+                                    </VBox>
+                                    
+                                </children>
+                            </HBox>
+                            
+                        </children>
+                    </VBox>
+                </content>
+            </ScrollPane>
 
         </StackPane>
     </center>
