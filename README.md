@@ -20,6 +20,7 @@ Dự án này là kết tinh của việc ứng dụng các nguyên lý lập tr
 11. [Hướng dẫn Khởi chạy Hệ thống](#11-hướng-dẫn-khởi-chạy-hệ-thống)
 12. [Cẩm nang Kiểm thử Hệ thống (Test Cases & Scenarios)](#12-cẩm-nang-kiểm-thử-hệ-thống-test-cases--scenarios)
 13. [Cấu trúc thư mục nguồn chi tiết (Directory Tree)](#13-cấu-trúc-thư-mục-nguồn-chi-tiết-directory-tree)
+14. [Tài liệu Báo cáo & Video Demo](#14-tài-liệu-báo-cáo--video-demo)
 
 ---
 
@@ -462,6 +463,17 @@ Project-LTNC-Group-4/
                 ├── AddProduct.fxml
                 └── admin_dashboard.fxml
 ```
+
+---
+
+## 14. Tài liệu Báo cáo & Video Demo
+
+Thầy/Cô và các bạn có thể truy cập các tài nguyên báo cáo chi tiết và tài liệu hướng dẫn trực quan của dự án theo các đường dẫn bên dưới:
+
+*   **Bản Báo Cáo Dự Án PDF chính thức:**
+    [Tải xuống hoặc xem trực tuyến tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
+*   **Video Demo Hoạt động Hệ thống trực quan:**
+    [Xem Video Demo tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
 
 ---
 
