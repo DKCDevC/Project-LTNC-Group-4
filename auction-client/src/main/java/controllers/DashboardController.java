@@ -1225,23 +1225,71 @@ public class DashboardController {
                 subtotal += item.getRawPrice();
                 count++;
                 
-                HBox row = new HBox(15);
+                HBox row = new HBox(12);
                 row.setAlignment(Pos.CENTER_LEFT);
-                row.setStyle("-fx-padding: 10; -fx-background-color: #f9f9f9; -fx-background-radius: 8; -fx-border-color: #eee; -fx-border-width: 1; -fx-border-radius: 8;");
+                row.setStyle("-fx-padding: 12; -fx-background-color: #FFFFFF; -fx-background-radius: 10; -fx-border-color: #E9ECEF; -fx-border-width: 1; -fx-border-radius: 10; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);");
+                
+                // 1. Thumbnail Container
+                StackPane thumbContainer = new StackPane();
+                thumbContainer.setPrefSize(50, 50);
+                thumbContainer.setMinSize(50, 50);
+                thumbContainer.setMaxSize(50, 50);
+                thumbContainer.setStyle("-fx-background-color: #F1F3F5; -fx-background-radius: 8;");
+                
+                if (item.getImageUrls() != null && !item.getImageUrls().isEmpty()) {
+                    String firstImage = item.getImageUrls().split(",")[0];
+                    try {
+                        javafx.scene.image.Image img = new javafx.scene.image.Image(firstImage, 100, 100, true, true, true);
+                        javafx.scene.image.ImageView imgView = new javafx.scene.image.ImageView(img);
+                        imgView.setFitWidth(50);
+                        imgView.setFitHeight(50);
+                        imgView.setPreserveRatio(true);
+                        
+                        // Clip rounded corners for image
+                        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle(50, 50);
+                        clip.setArcWidth(16);
+                        clip.setArcHeight(16);
+                        imgView.setClip(clip);
+                        
+                        thumbContainer.getChildren().add(imgView);
+                    } catch (Exception e) {
+                        Label errIcon = new Label("🏷️");
+                        errIcon.setStyle("-fx-font-size: 18;");
+                        thumbContainer.getChildren().add(errIcon);
+                    }
+                } else {
+                    Label defaultIcon = new Label("🏷️");
+                    defaultIcon.setStyle("-fx-font-size: 18;");
+                    thumbContainer.getChildren().add(defaultIcon);
+                }
+                
+                // 2. Info VBox (Name + Quantity badge)
+                VBox infoBox = new VBox(6);
+                infoBox.setAlignment(Pos.CENTER_LEFT);
+                infoBox.setPrefWidth(140);
                 
                 Label name = new Label(item.getName());
-                name.setPrefWidth(220);
                 name.setWrapText(true);
                 name.setStyle("-fx-font-size: 13; -fx-font-weight: bold; -fx-text-fill: #191919;");
                 
+                Label qtyBadge = new Label("x1");
+                qtyBadge.setStyle("-fx-background-color: #E8F0FE; -fx-text-fill: #1a73e8; -fx-padding: 1 6; -fx-background-radius: 4; -fx-font-size: 10; -fx-font-weight: bold;");
+                
+                HBox qtyWrapper = new HBox(qtyBadge);
+                qtyWrapper.setAlignment(Pos.CENTER_LEFT);
+                
+                infoBox.getChildren().addAll(name, qtyWrapper);
+                
+                // 3. Spacing
                 Region space = new Region();
                 HBox.setHgrow(space, Priority.ALWAYS);
                 
+                // 4. Price Label
                 Label price = new Label(item.getPriceStr());
                 price.setMinWidth(Region.USE_PREF_SIZE);
                 price.setStyle("-fx-font-weight: bold; -fx-text-fill: #3665f3; -fx-font-size: 13;");
                 
-                row.getChildren().addAll(name, space, price);
+                row.getChildren().addAll(thumbContainer, infoBox, space, price);
                 vboxCheckoutItems.getChildren().add(row);
             }
         }
