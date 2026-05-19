@@ -278,10 +278,12 @@
             <!-- PAGE 7: Màn hình Thanh toán eBay Checkout (Pay with Credit Card & COD) -->
             <ScrollPane fx:id="pageCheckout" visible="false" managed="false" fitToWidth="true" style="-fx-background-color: transparent; -fx-border-color: transparent;">
                 <content>
-                    <VBox spacing="30.0" style="-fx-padding: 30; -fx-background-color: #F5F5F5;">
+                    <VBox alignment="TOP_CENTER" spacing="30.0" style="-fx-padding: 30; -fx-background-color: #F5F5F5;">
                         <children>
-                            <!-- Back Button Link -->
-                            <Hyperlink text="&lt; Quay lại danh sách sản phẩm đã thắng" onAction="#handleBackToWonItems" style="-fx-text-fill: #3665f3; -fx-font-size: 14; -fx-font-weight: bold;" />
+                            <VBox maxWidth="1050.0" spacing="20.0" alignment="TOP_LEFT">
+                                <children>
+                                    <!-- Back Button Link -->
+                                    <Hyperlink text="&lt; Quay lại danh sách sản phẩm đã thắng" onAction="#handleBackToWonItems" style="-fx-text-fill: #3665f3; -fx-font-size: 14; -fx-font-weight: bold;" />
                             
                             <!-- Main Layout: 2 Columns -->
                             <HBox spacing="30.0" alignment="TOP_LEFT">
@@ -442,6 +444,8 @@
                                 </children>
                             </HBox>
                             
+                                </children>
+                            </VBox>
                         </children>
                     </VBox>
                 </content>
