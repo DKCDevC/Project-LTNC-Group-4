@@ -1,5 +1,7 @@
+// 1. Khai báo package: Nằm trong phân hệ kiến trúc tên miền Domain Repository của Server.
 package domain.repository;
 
+// 2. Import các mô hình nghiệp vụ được sử dụng trong quyền hạn quản trị viên
 import models.User;
 import models.Auction;
 import models.BidTransaction;
@@ -8,6 +10,12 @@ import java.util.List;
 /**
  * Interface AdminRepository định nghĩa các quyền hạn quản trị (Administrator Capabilities).
  * Bao gồm quản lý người dùng, quản lý phiên đấu giá, theo dõi lịch sử đặt giá và giám sát hệ thống.
+ * 
+ * Ý nghĩa thiết kế Clean Architecture:
+ * - Domain Layer Abstraction: Đây là phần lõi trung tâm của hệ thống (Domain Core). Nó định hình các khả năng
+ *   hành vi nghiệp vụ của người quản trị mà không quan tâm đến hạ tầng lưu trữ cụ thể.
+ * - Tách biệt lo ngại (Separation of Concerns): Giúp tách rời tầng Use Cases quản lý người dùng khỏi các 
+ *   lệnh SQL chèn bảng cụ thể, đáp ứng hoàn hảo nguyên lý Dependency Inversion Principle (DIP) của SOLID.
  */
 public interface AdminRepository {
     
@@ -17,7 +25,7 @@ public interface AdminRepository {
     
     /**
      * Lấy toàn bộ danh sách người dùng trong hệ thống (gồm cả Admin, Seller, Bidder).
-     * @return Danh sách các đối tượng User
+     * @return Danh sách các đối tượng User đa hình
      */
     List<User> getAllUsers();
     
@@ -85,7 +93,7 @@ public interface AdminRepository {
     
     /**
      * Lấy các bản ghi nhật ký hoạt động hệ thống.
-     * @return Danh sách các chuỗi log ghi nhận hoạt động
+     * @return Danh sách các chuỗi log ghi nhận hoạt động máy chủ
      */
     List<String> getSystemLogs();
 }

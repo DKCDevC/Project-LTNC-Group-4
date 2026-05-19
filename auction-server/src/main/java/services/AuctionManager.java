@@ -1,10 +1,13 @@
+// 1. Khai báo package: Nằm trong phân hệ dịch vụ nghiệp vụ (Services) của Server.
 package services;
 
+// 2. Import các mô hình (Models) dữ liệu liên quan đến cấu trúc đấu giá.
 import models.Auction;
 import models.AuctionStatus;
 import models.BidTransaction;
 import models.Bidder;
 import models.AutoBid;
+// 3. Import các cấu trúc dữ liệu đa luồng và tiện ích Java SE.
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.ArrayList;
@@ -17,30 +20,35 @@ import dao.OrderDAO;
  * Quản lý tính trạng đấu giá thời gian thực, xử lý đặt thầu an toàn đa luồng (thread-safe),
  * kích hoạt các bot đặt giá tự động, thực thi quy tắc chống bắn tỉa phút chót (anti-sniping),
  * giới hạn tần suất gửi thầu (rate limiting/throttling), và chạy ngầm một bộ giám sát thời gian kết thúc (timer thread).
- * Thiết kế áp dụng mẫu Singleton (Singleton Pattern).
+ * 
+ * Mẫu thiết kế & Java Concurrency áp dụng:
+ * - Singleton Design Pattern: Đảm bảo chỉ tồn tại duy nhất một đối tượng điều phối đấu giá trên toàn Server.
+ * - ConcurrentHashMap: Cấu trúc bản đồ chia nhỏ phân đoạn khóa (Segmented Lock) giúp đa luồng đọc/ghi 
+ *   mạnh mẽ mà không bị xung đột khóa (Lock Contention) hay ConcurrentModificationException.
+ * - Thread Synchronization: Sử dụng `synchronized` cục bộ trên từng thực thể Auction để khóa luồng thầu song song.
  */
 public class AuctionManager {
 
-    // Thể hiện duy nhất của bộ quản trị đấu giá
+    // 4. Khai báo biến Singleton static lưu trữ thể hiện duy nhất trong RAM Heap.
     private static AuctionManager instance;
     
-    // Bản đồ lưu trữ các phiên đấu giá đang kích hoạt, sử dụng ConcurrentHashMap để an toàn đa luồng
+    // Bản đồ lưu trữ các phiên đấu giá đang kích hoạt. Sử dụng ConcurrentHashMap để an toàn đa luồng.
     private Map<String, Auction> activeAuctions;
     
-    // Dịch vụ gửi thông báo thời gian thực đến toàn bộ kết nối Client kết nối WebSocket/Socket
+    // Dịch vụ gửi thông báo thời gian thực đến toàn bộ các socket client trực tuyến (Observer Pattern).
     private AuctionNotificationService notificationService;
     
-    // Đối tượng truy cập cơ sở dữ liệu để ghi hóa đơn khi phiên kết thúc thành công
+    // Đối tượng truy cập cơ sở dữ liệu để ghi hóa đơn khi phiên kết thúc thành công.
     private OrderDAO orderDAO;
     
-    // Lưu trữ thời điểm đặt giá cuối cùng của người dùng để chống Spam đặt thầu (Throttling)
+    // Lưu trữ thời điểm đặt giá cuối cùng của người dùng để chống Spam đặt thầu (Throttling/Rate Limiting).
     private Map<String, Long> userLastBidTime = new ConcurrentHashMap<>();
     
-    // Tránh việc kích hoạt lặp đi lặp lại nhiều luồng chạy Đặt thầu tự động cùng lúc trên cùng 1 phiên đấu giá
+    // Tránh việc kích hoạt lặp đi lặp lại nhiều luồng Thread chạy Đặt thầu tự động cùng lúc trên cùng 1 phiên đấu giá (Cờ khóa luồng).
     private Map<String, Boolean> auctionAutoBidProcessing = new ConcurrentHashMap<>();
-
+ 
     /**
-     * Hàm khởi tạo riêng tư, khởi dựng bản đồ phiên đấu giá đồng thời và đối tượng hóa đơn.
+     * Hàm khởi tạo riêng tư (Private Constructor) để ngăn cản việc đúc đối tượng từ bên ngoài qua từ khóa `new`.
      */
     private AuctionManager() {
         activeAuctions = new ConcurrentHashMap<>();
@@ -49,6 +57,9 @@ public class AuctionManager {
 
     /**
      * Lấy thể hiện duy nhất của AuctionManager (Thread-safe).
+     * Sử dụng từ khóa `synchronized` ở cấp độ phương thức để đảm bảo nếu có nhiều luồng
+     * khởi chạy Server đồng thời, chỉ có đúng một thực thể được đúc.
+     * 
      * @return Đối tượng AuctionManager duy nhất
      */
     public static synchronized AuctionManager getInstance() {
@@ -57,13 +68,17 @@ public class AuctionManager {
         }
         return instance;
     }
-
+ 
+    /**
+     * Tiêm phụ thuộc (Dependency Injection) cho dịch vụ gửi thông tin cập nhật Socket.
+     */
     public void setNotificationService(AuctionNotificationService service) {
         this.notificationService = service;
     }
 
     /**
      * Hủy bỏ cấu hình tự động đấu giá (Auto-bid) của một người dùng trên một sản phẩm.
+     * 
      * @param auctionId Mã phiên đấu giá
      * @param username Tên tài khoản người muốn hủy bot đặt giá
      * @return true nếu tìm thấy và xóa cấu hình thành công, ngược lại false
@@ -73,13 +88,14 @@ public class AuctionManager {
         if (auction == null) return false;
         
         // Đồng bộ hóa trên đối tượng auction để tránh xung đột dữ liệu đa luồng (ConcurrentModificationException)
+        // khi vừa duyệt danh sách vừa gỡ bỏ phần tử ở luồng Thread khác.
         synchronized (auction) {
             return auction.getAutoBids().removeIf(bot -> bot.getBidder().getUsername().equals(username));
         }
     }
 
     /**
-     * Gửi bản tin thông báo thời gian thực đến tầng Server để chuyển phát đến các Client.
+     * Gửi bản tin thông báo thời gian thực đến tầng Server để chuyển phát đến các Client (Observer Pattern).
      * @param message Nội dung bản tin định dạng JSON
      */
     private void notifyObservers(String message) {
@@ -100,6 +116,18 @@ public class AuctionManager {
     /**
      * Phương thức cốt lõi xử lý ĐẶT THỦY THỦ CÔNG (Manual Bidding) của người dùng.
      * Đảm bảo tính Thread-safe tuyệt đối nhờ cơ chế đồng bộ hóa `synchronized (auction)`.
+     * 
+     * Quy trình xử lý (Input -> Process -> Output):
+     * 1. Đầu vào (Input): Nhận mã phiên thầu, đối tượng người mua, và số tiền đặt giá.
+     * 2. Xử lý (Process): 
+     *    - Kiểm duyệt trạng thái hoạt động (phải là RUNNING).
+     *    - Áp dụng bộ lọc chống spam đặt giá (Throttling - tối thiểu 1.5 giây giữa hai lượt nhấn của cùng một người).
+     *    - So khớp giá tiền (phải lớn hơn giá cao nhất hiện tại).
+     *    - Thiết lập người tạm thắng, phát sóng thông báo giá mới thời gian thực đến toàn Client.
+     *    - Kích hoạt luật chống bắn tỉa phút chót (Anti-Sniping).
+     *    - Kích hoạt cơ chế Bot thầu tự động.
+     * 3. Đầu ra (Output): Trả về kết quả thầu thành công (true) hoặc thất bại (false).
+     * 
      * @param auctionId Mã phiên đấu giá
      * @param bidder Đối tượng người đấu thầu
      * @param bidAmount Số tiền thầu đề xuất
@@ -112,15 +140,18 @@ public class AuctionManager {
             return false;
         }
 
-        // Khóa đồng bộ hóa trên chính phiên đấu giá này
+        // Khóa đồng bộ hóa trên chính phiên đấu giá này (Object Monitor Monitor Lock):
+        // Đảm bảo tại một thời điểm, chỉ có duy nhất một luồng (Thread) kết nối được thay đổi thông tin thầu
+        // của phiên đấu giá này, giải quyết triệt để lỗi đua tranh dữ liệu (Race Condition).
         synchronized (auction) {
             // 1. Chỉ được đặt thầu khi phiên đang chạy
             if (auction.getStatus() != AuctionStatus.RUNNING) {
                 return false;
             }
 
-            // 2. THROTTLING (Giới hạn tần suất đặt thầu)
-            // Ngăn chặn bot hoặc người dùng bấm nút liên tục spam server. Giới hạn khoảng cách mỗi lần đặt thầu là 1.5 giây.
+            // 2. THROTTLING (Giới hạn tần suất đặt thầu - Rate Limiting):
+            // Ngăn chặn các tool auto clicker hoặc người dùng bấm nút liên tục spam server làm sập DB.
+            // Sử dụng thời gian thực tế dạng Epoch Milliseconds. Giới hạn khoảng cách mỗi lần đặt thầu là 1.5 giây.
             long nowTime = System.currentTimeMillis();
             String throttleKey = bidder.getUsername() + "_" + auctionId;
             if (userLastBidTime.containsKey(throttleKey)) {
@@ -130,7 +161,8 @@ public class AuctionManager {
             }
             userLastBidTime.put(throttleKey, nowTime); // Ghi nhận mốc thời gian gửi thầu mới nhất
 
-            // 3. Kiểm tra số tiền đặt thầu phải cao hơn giá cao nhất hiện tại
+            // 3. Kiểm tra số tiền đặt thầu phải cao hơn giá cao nhất hiện tại (Ràng buộc nghiệp vụ đấu giá tự do):
+            // Đã lược bỏ gợi ý bước nhảy cố định theo yêu cầu của người dùng, cho phép đặt bất kỳ giá nào lớn hơn giá hiện hành.
             if (bidAmount <= auction.getItem().getCurrentHighestPrice()) {
                 return false;
             }
@@ -142,7 +174,7 @@ public class AuctionManager {
 
             System.out.println("Thành công: " + bidder.getUsername() + " đã đặt giá " + bidAmount);
             
-            // 5. Phát sóng thông báo cập nhật giá mới đến tất cả các Client qua mạng
+            // 5. Phát sóng thông báo cập nhật giá mới đến tất cả các Client qua mạng (JSON broadcast)
             String manualMsg = "{\"command\":\"UPDATE_PRICE\", \"auctionId\":\"" + auction.getAuctionId() + "\", \"price\":" + bidAmount + ", \"winnerUsername\":\"" + bidder.getUsername() + "\", \"message\":\"[MANUAL] " + bidder.getUsername() + " đã đặt giá " + bidAmount + "\"}";
             notifyObservers(manualMsg);
 
@@ -161,6 +193,7 @@ public class AuctionManager {
      * Nếu xuất hiện bất kỳ lượt đặt thầu hợp lệ nào trong vòng 30 giây cuối cùng trước khi hết giờ,
      * tự động gia hạn thời gian kết thúc phiên đấu giá thêm 60 giây để đảm bảo tính công bằng,
      * ngăn chặn các phần mềm tự động thầu cướp sản phẩm ở mili-giây cuối mà người dùng khác không kịp phản ứng.
+     * 
      * @param auction Phiên đấu giá đang được kiểm duyệt
      */
     private void handleAntiSniping(Auction auction) {
@@ -193,7 +226,17 @@ public class AuctionManager {
     /**
      * Xử lý ĐẶT THẦU TỰ ĐỘNG (Auto-Bidding Engine) bằng cách khởi chạy luồng bất đồng bộ ngầm (Background Async Thread).
      * Cơ chế chạy vòng lặp cạnh tranh giữa các Bot cho đến khi không còn ai đủ điều kiện nâng giá.
-     * Phân xử thứ tự nâng giá ưu tiên dựa trên thời điểm đăng ký bot (FIFO - đăng ký trước được ưu tiên trước).
+     * Phân xử thứ tự nâng giá ưu tiên dựa trên thời điểm đăng ký bot (FIFO - đăng ký trước được ưu tiên nâng giá trước).
+     * 
+     * Kỹ thuật & Nghiệp vụ Auto-Bid:
+     * - Chạy đa luồng bất đồng bộ: `new Thread(...)` giúp quá trình robot tự động nâng giá liên tục
+     *   không gây tắc nghẽn giao tiếp mạng chính (Socket I/O thread).
+     * - Cờ khóa luồng (`auctionAutoBidProcessing`): Đảm bảo tại một thời điểm trên cùng một sản phẩm,
+     *   chỉ có đúng một tiến trình Bot đấu giá tự động chạy ngầm.
+     * - Độ trễ giả lập hành vi người dùng: Ngủ ngẫu nhiên từ 1.5s - 2.5s để tạo cảm giác tự nhiên như có người nâng thầu thật.
+     * - FIFO Sắp xếp Bot: Nếu nhiều Bot cùng đủ điều kiện, Bot đăng ký trước sẽ nâng giá trước.
+     * - Ràng buộc giá trị bước nhảy tự do: Mỗi bot sở hữu một bước giá nhảy độc lập tùy cấu hình từ người dùng.
+     * 
      * @param auction Phiên đấu giá chạy động cơ bot
      */
     public void triggerAutoBids(Auction auction) {
@@ -231,7 +274,7 @@ public class AuctionManager {
 
                         // 1. Tìm các bot đủ điều kiện nâng thầu
                         // Bot hợp lệ là bot không phải của người đang giữ giá cao nhất hiện tại,
-                        // và số tiền đấu giá tiếp theo (giá hiện tại + bước giá thầu) không vượt quá giới hạn tối đa mà chủ bot thiết lập.
+                        // và số tiền đấu giá tiếp theo (giá hiện tại + bước giá thầu cấu hình của bot) không vượt quá giới hạn tối đa mà chủ bot thiết lập.
                         List<AutoBid> eligibleBots = new ArrayList<>();
                         for (AutoBid bot : auction.getAutoBids()) {
                             if (currentWinner == null || !bot.getBidder().getUsername().equals(currentWinner.getUsername())) {
@@ -241,9 +284,9 @@ public class AuctionManager {
                             }
                         }
 
-                        // 2. Phân xử nâng giá nếu có bot đủ điều kiện
+                        // 2. Phân xử nâng giá nếu có bot đủ điều kiện (Áp dụng FIFO)
                         if (!eligibleBots.isEmpty()) {
-                            // Sắp xếp các bot theo thứ tự thời điểm đăng ký (Đăng ký trước được ưu tiên nâng giá trước)
+                            // Sắp xếp các bot theo thứ tự thời điểm đăng ký (FIFO - Đăng ký trước được ưu tiên nâng giá trước)
                             eligibleBots.sort(Comparator.comparing(AutoBid::getRegisterTime));
                             AutoBid nextBot = eligibleBots.get(0);
 
@@ -273,6 +316,11 @@ public class AuctionManager {
      * Luồng chạy ngầm liên tục mỗi 1 giây quét qua toàn bộ danh sách các phiên đấu giá đang mở.
      * Tự động kết thúc phiên, cập nhật trạng thái FINISHED và lưu hóa đơn mua bán vào SQLite 
      * nếu thời gian thực tế vượt quá mốc endTime của sản phẩm.
+     * 
+     * Kỹ thuật Java Daemon Thread:
+     * - `timerThread.setDaemon(true)`: Đánh dấu luồng định thì chạy ngầm này là một Daemon Thread.
+     *   Ý nghĩa: Khi luồng chính (Main Thread) của Server bị tắt, JVM sẽ tự động chấm dứt Daemon Thread này ngay lập tức
+     *   mà không cần chờ nó kết thúc vòng lặp vô tận, ngăn ngừa lỗi "Treo Server ngầm" chiếm dụng CPU.
      */
     public void startAuctionTimer() {
         Thread timerThread = new Thread(() -> {
@@ -298,7 +346,7 @@ public class AuctionManager {
                                 notifyObservers(msg);
                                 System.out.println(">>> Đóng phiên: " + auction.getAuctionId());
                                 
-                                // Ghi hóa đơn mua bán thành công xuống Database để người bán thống kê doanh thu
+                                // Ghi hóa đơn mua bán thành công xuống Database để người bán thống kê doanh thu (Persistent Order Data)
                                 if (auction.getWinner() != null) {
                                     orderDAO.insertOrder(
                                         auction.getItem().getId(),

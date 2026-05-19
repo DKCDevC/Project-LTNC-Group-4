@@ -1,5 +1,7 @@
+// 1. Khai báo package: Nằm trong phân hệ bộ điều khiển (Controllers) quản lý luồng Client.
 package controllers;
 
+// 2. Import các thư viện phân tích JSON Gson, cấu phần giao diện JavaFX và kết nối mạng
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.reflect.TypeToken;
@@ -36,10 +38,16 @@ import javafx.event.ActionEvent;
  * - Quản lý Phiên Đấu Giá: Theo dõi toàn bộ phiên đấu giá thời gian thực và cưỡng chế hủy thầu vi phạm quy chế.
  * - Phân trang dữ liệu người dùng (Pagination) thông minh tối ưu hiệu năng.
  * - Điều khiển Sidebar chuyển đổi màn hình động và xử lý Đăng xuất an toàn.
+ * 
+ * Vai trò kiến trúc:
+ * - Presentation Controller (MVC): Nhận hành vi tương tác từ View, gọi ngầm socket truyền tải thông tin mạng 
+ *   ở luồng background bất đồng bộ, sau đó đồng bộ kết quả lên UI thread bằng Platform.runLater.
+ * - Dynamic cell styling: Tùy biến vẽ ô màu sắc cho trạng thái tài khoản và lồng ghép nút bấm bấm Khóa/Mở khóa.
+ * - JavaFX Layout Bindings: Tối ưu co giãn diện tích khi ẩn hiện các menu bằng bind managedProperty.
  */
 public class AdminDashboardController {
 
-    // Thành phần điều khiển bảng Người dùng (User Table)
+    // Thành phần điều khiển bảng Người dùng (User Table) và ánh xạ cột dữ liệu
     @FXML private TableView<User> userTable;
     @FXML private TableColumn<User, String> usernameCol;
     @FXML private TableColumn<User, String> emailCol;
@@ -68,30 +76,30 @@ public class AdminDashboardController {
     @FXML private Button btnTransactions;
     @FXML private Button btnReports;
     
-    // Khung màn hình chuyển đổi tương ứng
+    // Khung màn hình chuyển đổi tương ứng (Sử dụng VBox)
     @FXML private VBox viewManageUsers;
     @FXML private VBox viewAuctions;
     @FXML private VBox viewTransactions;
     @FXML private VBox viewReports;
 
-    // Bộ phân tích JSON GSON cấu hình LocalDateTime tương thích
+    // Bộ phân tích JSON GSON cấu hình LocalDateTime tương thích dùng chung
     private final Gson gson = GsonConfig.createGson();
     
     // Danh sách gốc người dùng
     private ObservableList<User> masterData = FXCollections.observableArrayList();
     
-    // Danh sách lọc trung gian phục vụ tìm kiếm động
+    // Danh sách lọc trung gian phục vụ tìm kiếm động (FilteredList)
     private FilteredList<User> filteredData;
     
     // Danh sách gốc các phiên đấu giá
     private ObservableList<models.Auction> auctionMasterData = FXCollections.observableArrayList();
     
-    // Số hàng hiển thị tối đa trên một trang
+    // Số hàng hiển thị tối đa trên một trang phân đoạn
     private static final int ROWS_PER_PAGE = 10;
 
     /**
      * Phương thức khởi tạo cấu hình các cột, sự kiện bộ lọc, tải dữ liệu người dùng ban đầu 
-     * và liên kết thuộc tính layout động.
+     * và liên kết thuộc tính layout động. Được JavaFX gọi sau khi View đã sẵn sàng.
      */
     @FXML
     public void initialize() {
@@ -102,7 +110,7 @@ public class AdminDashboardController {
         
         // Kỹ thuật JavaFX Layout Bindings: Liên kết thuộc tính managed với visible. 
         // Khi ẩn một VBox (visible = false), nó sẽ tự giải phóng diện tích (managed = false) 
-        // giúp giao diện co giãn linh hoạt mà không bị khoảng trắng thừa.
+        // giúp giao diện co giãn linh hoạt mà không bị khoảng trắng thừa trong ngăn xếp chứa.
         viewManageUsers.managedProperty().bind(viewManageUsers.visibleProperty());
         viewAuctions.managedProperty().bind(viewAuctions.visibleProperty());
         viewTransactions.managedProperty().bind(viewTransactions.visibleProperty());
@@ -117,6 +125,12 @@ public class AdminDashboardController {
 
     /**
      * Cấu hình nạp giá trị và hiển thị màu sắc tùy chỉnh cho bảng Người dùng.
+     * 
+     * Kỹ thuật setCellFactory (Tùy biến hiển thị ô):
+     * - `statusCol.setCellFactory`: Ghi đè phương thức `updateItem` để kiểm tra điều kiện dữ liệu 
+     *   và tô chữ màu đỏ (Đã khóa) hoặc chữ màu xanh (Hoạt động) tương ứng.
+     * - `actionCol.setCellFactory`: Sinh động một nút bấm (lockBtn) trên mỗi hàng, gán sự kiện hành động 
+     *   `handleLockToggle` và kết xuất nút bấm đó vào giao diện thông qua `setGraphic(lockBtn)`.
      */
     private void setupTableColumns() {
         usernameCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getUsername()));
@@ -141,7 +155,7 @@ public class AdminDashboardController {
             }
         });
 
-        // Tạo nút Khóa/Mở khóa động trực tiếp trên từng hàng của bảng dữ liệu
+        // Tạo nút Khóa/Mở khóa động trực tiếp trên từng hàng của bảng dữ liệu (Table Action Buttons)
         actionCol.setCellFactory(param -> new TableCell<>() {
             private final Button lockBtn = new Button();
             @Override
@@ -342,6 +356,12 @@ public class AdminDashboardController {
 
     /**
      * Hàm Callback phân trang: Cắt lát dữ liệu tương ứng hiển thị lên TableView.
+     * 
+     * Kỹ thuật phân trang (Pagination Sublisting):
+     * - Tính toán vị trí biên `from` và `to` dựa trên chỉ số trang hiện tại.
+     * - Trích xuất tập con (subList) từ FilteredList và bơm ngược vào TableView.
+     * - Trả về một đối tượng đồ họa Group rỗng vì TableView tự vẽ giao diện.
+     * 
      * @param pageIndex Chỉ mục trang hiện tại
      * @return Node rỗng (vì TableView tự cập nhật dữ liệu)
      */

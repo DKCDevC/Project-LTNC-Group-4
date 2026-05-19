@@ -1,5 +1,7 @@
+// 1. Khai báo package: Nằm trong phân hệ DAO (Data Access Object) quản lý cơ sở dữ liệu.
 package dao;
 
+// 2. Import các mô hình dữ liệu đa hình và nhà máy sản xuất đối tượng
 import models.Art;
 import models.Electronics;
 import models.Item;
@@ -7,7 +9,7 @@ import models.Vehicle;
 import models.Seller;
 import services.ItemFactory;
 import utils.DBConnection;
-
+// 3. Import các thư viện JDBC xử lý SQL
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -22,6 +24,11 @@ import java.util.List;
 /**
  * Lớp ItemDAO (Data Access Object) quản lý việc lưu trữ, cập nhật, xóa
  * và truy vấn thông tin sản phẩm (Items) từ cơ sở dữ liệu SQLite.
+ * 
+ * Ý nghĩa thiết kế của DAO Pattern:
+ * - Tách biệt logic truy xuất dữ liệu (Data Persistence) khỏi logic nghiệp vụ (Business Services).
+ * - Đóng gói các câu truy vấn SQL thô (Raw SQL) bên trong các phương thức Java sạch sẽ.
+ * - Bảo vệ hệ thống khỏi SQL Injection bằng cách áp dụng triệt để `PreparedStatement`.
  */
 public class ItemDAO {
     // Định dạng thời gian chuẩn ISO (ví dụ: 2026-05-18T11:00:00)
@@ -33,6 +40,11 @@ public class ItemDAO {
     /**
      * Phương thức phân tích chuỗi ký tự ngày tháng thành đối tượng LocalDateTime.
      * Hỗ trợ tự động nhận diện cả 2 định dạng chuỗi phổ biến (chứa "T" hoặc khoảng trắng).
+     * 
+     * Kỹ thuật xử lý phòng thủ (Defensive Parsing):
+     * - Ngăn ngừa NullPointerException khi chuỗi đưa vào rỗng, tự động bù thời gian mặc định (LocalDateTime.now().plusDays(1)).
+     * - Bắt lỗi ngoại lệ `DateTimeParseException` để không chặn đứng luồng đọc dữ liệu từ DB nếu có một dòng dữ liệu bị lỗi format ngày.
+     * 
      * @param dateTimeStr Chuỗi thời gian cần phân tích
      * @return Đối tượng LocalDateTime hợp lệ, hoặc thời điểm mặc định (now + 1 ngày) nếu lỗi
      */
@@ -51,9 +63,16 @@ public class ItemDAO {
     }
 
     /**
-     * Lấy toàn bộ danh sách sản phẩm đăng đấu giá từ Database.
+     * Lấy toàn bộ danh sách sản phẩm đăng đấu giá từ Database SQLite.
      * Sử dụng ItemFactory để tạo đối tượng con cụ thể (Electronics, Art, Vehicle...) dựa trên cột type.
-     * @return Danh sách các Item
+     * 
+     * Kỹ thuật JDBC & OOP:
+     * - Try-with-resources: Khai báo `Connection`, `PreparedStatement` và `ResultSet` trong dấu ngoặc đơn `try`.
+     *   Đảm bảo JVM tự động gọi hàm `.close()` giải phóng tài nguyên kết nối cơ sở dữ liệu ngay cả khi có lỗi SQLException xảy ra,
+     *   tránh rò rỉ bộ nhớ hoặc khóa file database SQLite (Database Lock).
+     * - Polymorphic Reconstruction: Đọc trường phân loại "type" và gọi `ItemFactory.createItem()` để đúc lại đối tượng con đa hình tương ứng.
+     * 
+     * @return Danh sách các Item đa hình
      */
     public List<Item> getAllItems() {
         List<Item> itemList = new ArrayList<>();
@@ -75,7 +94,7 @@ public class ItemDAO {
                 String sellerName = rs.getString("seller_name");
                 String imageUrls = rs.getString("image_urls");
 
-                // Sử dụng Factory Pattern để sinh đối tượng Item con thích hợp
+                // Sử dụng Factory Pattern để sinh đối tượng Item con thích hợp (Đóng gói khởi dựng)
                 Item item = ItemFactory.createItem(type, name, description, startingPrice, startTime, endTime, extraInfo);
                 item.setId(id);
                 if (sellerName != null) {
@@ -93,6 +112,12 @@ public class ItemDAO {
 
     /**
      * Tìm kiếm một sản phẩm theo mã ID.
+     * 
+     * Kỹ thuật an toàn:
+     * - Dùng dấu hỏi chấm `?` làm tham số giữ chỗ (Placeholder) trong câu SQL.
+     * - Gọi `stmt.setString(1, productId)` để tài điều khiển JDBC tự động quét mã hóa ký tự nguy hiểm,
+     *   triệt tiêu hoàn toàn khả năng bị tấn công SQL Injection.
+     * 
      * @param productId Mã sản phẩm cần tìm
      * @return Đối tượng Item nếu tìm thấy, ngược lại null
      */
@@ -128,8 +153,14 @@ public class ItemDAO {
     }
 
     /**
-     * Lưu một sản phẩm mới vào Database.
+     * Lưu một sản phẩm mới bền vững vào cơ sở dữ liệu SQLite.
      * Phân tích kiểu sản phẩm để trích xuất các thuộc tính đặc trưng lưu vào cột extra_info.
+     * 
+     * Kỹ thuật Object-Relational Mapping (ORM thô):
+     * - Trích xuất các thuộc tính đặc trưng độc lập của các lớp con (số tháng bảo hành của Electronics,
+     *   tên nghệ sĩ của Art, thương hiệu của Vehicle) để lưu trữ vào chung một cột cơ sở dữ liệu `extra_info` dạng chuỗi thô.
+     * - Giúp tiết kiệm số lượng bảng DB, tối giản hóa lược đồ SQLite (Schema) mà vẫn giữ tính linh hoạt đa hình cao.
+     * 
      * @param id Mã định danh duy nhất của sản phẩm
      * @param item Đối tượng Item cần thêm
      */
@@ -183,7 +214,7 @@ public class ItemDAO {
      * @param newName Tên mới
      * @param newDesc Mô tả mới
      * @param newStartPrice Giá khởi điểm mới
-     * @return true nếu sửa thành công, ngược lại false
+     * @return true nếu sửa thành công (số dòng bị tác động > 0), ngược lại false
      */
     public boolean updateItem(String productId, String newName, String newDesc, double newStartPrice) {
         String query = "UPDATE items SET name = ?, description = ?, starting_price = ? WHERE id = ?";

@@ -51,14 +51,20 @@ import javafx.util.Duration;
 
 /**
  * Lớp DashboardController điều khiển toàn bộ giao diện Mua hàng / Đấu giá chính của khách hàng (Dashboard.fxml).
- * Thiết lập hệ thống tính năng tương tác thời gian thực cao cấp:
- * - Hệ thống Tìm kiếm & Lọc Đa tiêu chí: Tình trạng sản phẩm, mức giá, từ khóa thời gian thực.
- * - Infinite Scroll (Cuộn trang vô tận): Tự động nạp thêm sản phẩm khi cuộn tới cuối trang tối ưu hóa bộ nhớ JavaFX.
- * - Grid Responsive Layout: Tự co giãn điều chỉnh số cột hiển thị (4, 3, 2, 1) theo bề rộng cửa sổ máy tính.
- * - Background Socket Listener: Nhận cập nhật giá thầu mới (UPDATE_PRICE), gia hạn thời gian (UPDATE_TIME) bất đồng bộ.
- * - Hệ thống Auto-Bid (Đấu giá tự động): Ràng buộc bước nhảy tối thiểu 10,000 đ, lưu cấu hình và hủy thầu tự động.
- * - Màn hình Chi tiết Sản phẩm thời gian thực: Countdown đếm ngược, biểu đồ LineChart vẽ lịch sử biến động giá theo giây.
- * - Tiện ích đặt thầu nhanh: Nút cộng nhanh (+50k, +100k, +500k) và Mini-Cart chứa các đơn hàng thắng cuộc chờ thanh toán.
+ * Kế thừa các nguyên lý kiến trúc lập trình JavaFX và Client-Server chuyên nghiệp.
+ * 
+ * Các nguyên lý kỹ thuật cốt lõi được áp dụng:
+ * 1. MVC Presentation Controller: Định nghĩa ánh xạ FXML `@FXML` tương ứng với bố cục View, 
+ *    nhận tương tác và cập nhật trạng thái các thẻ sản phẩm đồ họa.
+ * 2. JavaFX Single-Threaded Rule (Quy tắc đơn luồng JavaFX): Mọi tác vụ vẽ đồ họa bắt buộc phải được gọi 
+ *    trên luồng chính JavaFX Application Thread. Nếu luồng Client Socket nhận tin mới từ Server, 
+ *    phải đóng gói tác vụ qua `Platform.runLater` để đẩy về luồng chính cập nhật an toàn.
+ * 3. Infinite Scroll / Lazy Loading (Cuộn vô tận & nạp trễ): Lắng nghe thuộc tính `vvalueProperty` 
+ *    của ScrollPane để tải thêm thẻ sản phẩm khi cuộn quá 90% chiều cao trang, tối ưu dung lượng bộ nhớ.
+ * 4. Responsive Grid Flow: Lắng nghe sự thay đổi độ rộng `widthProperty` của FlowPane để tự động tính toán 
+ *    số cột card sản phẩm hiển thị (4, 3, 2, 1) giúp giao diện tương thích tốt với mọi độ phân giải.
+ * 5. Anti-Sniping & Auto-Bid Integration: Ràng buộc nghiệp vụ thầu tự động tối thiểu 10k VND và cập nhật 
+ *    đồng hồ đếm ngược Countdown, đồ thị biến động giá LineChart thời gian thực.
  */
 public class DashboardController {
 

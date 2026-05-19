@@ -1,38 +1,50 @@
+// 1. Khai báo package: Định nghĩa không gian tên chứa lớp AutoBid để tổ chức code gọn gàng, tránh xung đột tên.
 package models;
 
+// 2. Import lớp LocalDateTime: Dùng để ghi nhận ngày giờ hệ thống chính xác đến từng mili-giây.
 import java.time.LocalDateTime;
 
 /**
- * Lớp AutoBid đại diện cho cấu hình tính năng Đặt giá tự động (Auto-bid) của một người dùng.
- * Cho phép người đấu giá cài đặt một số tiền tối đa có thể trả và bước giá tự động tăng lên
- * mỗi khi có người dùng khác đặt giá cao hơn mình.
+ * Lớp AutoBid đại diện cho cấu hình tính năng Đặt giá tự động (Auto-bid) của một người dùng cụ thể.
+ * Thiết kế theo nguyên lý Bất biến (Immutability): Một khi đối tượng được tạo ra từ constructor,
+ * các giá trị của nó không thể bị thay đổi từ bên ngoài (vì không có các phương thức setter), đảm bảo tính an toàn dữ liệu.
  */
 public class AutoBid {
-    // Đối tượng người đấu giá (Bidder) thiết lập cấu hình tự động này
+    
+    // 3. Khai báo biến bidder: Lưu trữ đối tượng Người đặt giá sở hữu cấu hình tự động này (Composition - quan hệ HAS-A).
     private Bidder bidder;
     
-    // Số tiền tối đa mà người dùng sẵn sàng chi trả cho sản phẩm này
+    // 4. Khai báo biến maxBid: Số tiền giới hạn tối đa mà người dùng này sẵn sàng trả cho sản phẩm đấu giá.
     private double maxBid;
     
-    // Bước giá tăng lên mỗi lần nâng giá tự động (ví dụ: mỗi lần tăng thêm 10,000đ)
+    // 5. Khai báo biến increment: Bước giá nhảy tự động cộng thêm mỗi khi robot nâng giá thầu để tranh giành sản phẩm.
     private double increment;
     
-    // Thời điểm người dùng đăng ký cấu hình Auto-bid này (dùng để ưu tiên bot đăng ký trước)
+    // 6. Khai báo biến registerTime: Thời điểm người dùng đăng ký cấu hình này (được dùng để ưu tiên robot đăng ký trước).
     private LocalDateTime registerTime;
 
     /**
-     * Hàm khởi tạo cấu hình Auto-bid.
-     * @param bidder Người đấu giá thiết lập
-     * @param maxBid Giới hạn giá tối đa
-     * @param increment Bước giá tự động cộng thêm
+     * Hàm khởi tạo (Constructor) để thiết lập một cấu hình Auto-bid hoàn chỉnh.
+     * 
+     * @param bidder Đối tượng người đấu giá thiết lập cấu hình
+     * @param maxBid Số tiền giới hạn tối đa có thể trả
+     * @param increment Bước giá tự động cộng thêm mỗi lần nhảy
      */
     public AutoBid(Bidder bidder, double maxBid, double increment) {
+        // 7. Gán giá trị biến tham chiếu bidder truyền vào cho biến instance của class.
         this.bidder = bidder;
+        
+        // 8. Gán giá trị giới hạn tối đa truyền vào cho biến instance maxBid.
         this.maxBid = maxBid;
+        
+        // 9. Gán bước giá tự động truyền vào cho biến instance increment.
         this.increment = increment;
-        this.registerTime = LocalDateTime.now(); // Tự động ghi nhận thời điểm đăng ký hiện tại
+        
+        // 10. Tự động lấy ngày giờ hiện tại chính xác của hệ thống làm dấu mốc thời gian đăng ký robot.
+        this.registerTime = LocalDateTime.now(); 
     }
 
+    // 11. Các phương thức Getter: Chỉ cho phép đọc các thông số của cấu hình Robot, tuyệt đối không cho ghi đè (đảm bảo tính đóng gói).
     public Bidder getBidder() { return bidder; }
     public double getMaxBid() { return maxBid; }
     public double getIncrement() { return increment; }

@@ -1,5 +1,7 @@
+// 1. Khai báo package: Nằm trong phân hệ DAO (Data Access Object) quản lý cơ sở dữ liệu.
 package dao;
 
+// 2. Import các tiện ích kết nối mạng cơ sở dữ liệu và cấu trúc dữ liệu Java
 import utils.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
@@ -12,11 +14,21 @@ import java.time.LocalDate;
 /**
  * Lớp OrderDAO (Data Access Object) quản lý việc lưu trữ hóa đơn (orders),
  * tính toán thống kê doanh thu bán hàng và lấy lịch sử giao dịch thành công cho Người bán.
+ * 
+ * Vai trò kiến trúc:
+ * - Persistence Layer (Tầng lưu trữ bền vững): Tương tác trực tiếp với bảng `orders` của SQLite.
+ * - Triển khai an toàn hóa: Áp dụng PreparedStatement ngăn chặn SQL Injection, đóng luồng qua try-with-resources.
  */
 public class OrderDAO {
 
     /**
-     * Tạo một hóa đơn bán hàng thành công mới vào Database sau khi phiên đấu giá kết thúc.
+     * Tạo một hóa đơn bán hàng thành công mới vào Database SQLite sau khi phiên đấu giá kết thúc.
+     * 
+     * Quy trình xử lý (Input -> Process -> Output):
+     * 1. Đầu vào (Input): Nhận mã sản phẩm, tài khoản người bán, người mua thắng cuộc, và giá chung cuộc.
+     * 2. Xử lý (Process): Nạp các tham số vào câu lệnh INSERT bằng phương thức setString/setDouble an toàn.
+     * 3. Đầu ra (Output): Trả về true nếu chèn thành công dòng dữ liệu, ngược lại false.
+     * 
      * @param itemId Mã sản phẩm đấu giá thành công
      * @param sellerName Tên tài khoản người bán
      * @param bidderName Tên tài khoản người mua (thắng cuộc)
@@ -42,6 +54,8 @@ public class OrderDAO {
 
     /**
      * Tính tổng doanh thu (tổng giá trị tất cả hóa đơn thành công) của một Người bán.
+     * Thực hiện hàm gộp SUM SQL trực tiếp ở tầng dữ liệu nhằm tối ưu băng thông đường truyền và RAM.
+     * 
      * @param sellerName Tên tài khoản người bán
      * @return Tổng số tiền doanh thu bán hàng
      */
@@ -63,14 +77,24 @@ public class OrderDAO {
     /**
      * Lấy dữ liệu thống kê doanh thu theo từng ngày trong 7 ngày gần đây nhất của Người bán.
      * Sử dụng LinkedHashMap để bảo đảm thứ tự thời gian từ cũ nhất đến mới nhất trên biểu đồ.
+     * 
+     * Kỹ thuật xử lý đệm ngày (Date Padding & LinkedHashMap):
+     * - `LinkedHashMap`: Khác với HashMap thông thường (sắp xếp ngẫu nhiên dựa trên mã băm Hashcode), 
+     *   LinkedHashMap duy trì một danh sách liên kết đôi (Double-linked list) xuyên qua tất cả các phần tử.
+     *   Nó đảm bảo thứ tự duyệt (Iteration Order) luôn trùng khớp với thứ tự chèn phần tử (Insertion Order).
+     * - Date Padding (Bù khuyết ngày): Khởi tạo trước 7 ngày gần nhất với giá trị mặc định bằng 0.0. 
+     *   Việc này cực kỳ quan trọng để đảm bảo biểu đồ Client vẽ ra liên tục, không bị méo mó hay khuyết cột 
+     *   ở những ngày mà người bán đó không bán được sản phẩm nào.
+     * - Sử dụng SQLite Date Functions: `DATE('now', '-7 days')` để lọc nhanh dữ liệu dưới 1 tuần.
+     * 
      * @param sellerName Tên tài khoản người bán
-     * @return Bản đồ (Map) ánh xạ từ chuỗi ngày (yyyy-MM-dd) sang doanh thu ngày đó
+     * @return Bản đồ (Map) ánh xạ từ chuỗi ngày (yyyy-MM-dd) sang doanh thu ngày đó (giữ đúng thứ tự chèn)
      */
     public Map<String, Double> getRevenueLast7Days(String sellerName) {
-        // Sử dụng LinkedHashMap để giữ đúng thứ tự hiển thị thời gian
+        // Sử dụng LinkedHashMap để giữ đúng thứ tự hiển thị thời gian trên biểu đồ
         Map<String, Double> revenueData = new LinkedHashMap<>();
 
-        // Khởi tạo trước 7 ngày gần nhất với giá trị mặc định bằng 0.0 để tránh bị khuyết ngày trên biểu đồ
+        // Khởi tạo trước 7 ngày gần nhất với giá trị mặc định bằng 0.0 để tránh bị khuyết ngày
         for (int i = 6; i >= 0; i--) {
             String date = LocalDate.now().minusDays(i).toString();
             revenueData.put(date, 0.0);
@@ -88,7 +112,7 @@ public class OrderDAO {
             stmt.setString(1, sellerName);
             ResultSet rs = stmt.executeQuery();
 
-            // Điền dữ liệu doanh thu thực tế truy vấn được vào Map
+            // Điền dữ liệu doanh thu thực tế truy vấn được vào Map, ghi đè giá trị 0.0 khởi tạo
             while (rs.next()) {
                 revenueData.put(rs.getString("order_date"), rs.getDouble("daily_sum"));
             }
@@ -101,8 +125,16 @@ public class OrderDAO {
     /**
      * Lấy danh sách các đơn hàng đã giao dịch thành công của Người bán.
      * Thực hiện LEFT JOIN bảng orders với bảng items để hiển thị tên sản phẩm, ngay cả khi sản phẩm gốc đã bị xóa.
+     * 
+     * Kỹ thuật SQL & Xử lý Null:
+     * - LEFT JOIN: Giúp lấy toàn bộ dòng hóa đơn của bảng bên trái (`orders`) ngay cả khi sản phẩm tương ứng 
+     *   trong bảng bên phải (`items`) đã bị xóa khỏi hệ thống.
+     * - `COALESCE(i.name, 'Sản phẩm đã xóa')`: Hàm COALESCE của SQL sẽ trả về tham số phi-null đầu tiên. 
+     *   Nếu sản phẩm bị người bán xóa mất khỏi SQLite (`i.name` trả về NULL), hệ thống sẽ hiển thị chuỗi thay thế 
+     *   "Sản phẩm đã xóa" thay vì bị trống tên hoặc gây lỗi NullPointerException trên giao diện.
+     * 
      * @param sellerName Tên tài khoản người bán
-     * @return Danh sách các đơn hàng dạng bản đồ thuộc tính (Map<String, String>) để dễ truyền lên bảng giao diện
+     * @return Danh sách các đơn hàng dạng bản đồ thuộc tính (Map<String, String>)
      */
     public List<Map<String, String>> getOrdersBySeller(String sellerName) {
         List<Map<String, String>> orders = new ArrayList<>();

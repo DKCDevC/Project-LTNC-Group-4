@@ -1,5 +1,7 @@
+// 1. Khai báo package: Nằm trong phân hệ DAO (Data Access Object) quản lý cơ sở dữ liệu.
 package dao;
 
+// 2. Import tầng trừu tượng Domain Repository và các thực thể của Server
 import domain.repository.AdminRepository;
 import models.*;
 import utils.DBConnection;
@@ -10,14 +12,18 @@ import java.util.List;
 /**
  * Lớp AdminJDBCRepository triển khai các nghiệp vụ quản lý của Admin (AdminRepository).
  * Giao tiếp trực tiếp với SQLite sử dụng JDBC PreparedStatement và Statement.
- * Sử dụng mẫu thiết kế Singleton (Singleton Pattern).
+ * 
+ * Ý nghĩa thiết kế:
+ * - Singleton Design Pattern: Đảm bảo chỉ tồn tại duy nhất một đối tượng điều phối nghiệp vụ quản trị viên trên RAM máy chủ.
+ * - Triển khai Domain Interface (Dependency Inversion): Kế thừa hợp đồng `AdminRepository` định hình ở tầng Domain, 
+ *   giúp tầng nghiệp vụ Use Case không bị phụ thuộc trực tiếp vào phương thức truy xuất SQLite thô.
  */
 public class AdminJDBCRepository implements AdminRepository {
     // Thể hiện duy nhất của lớp (Singleton Instance)
     private static AdminJDBCRepository instance;
 
     /**
-     * Hàm khởi tạo riêng tư để ngăn việc khởi tạo từ bên ngoài.
+     * Hàm khởi tạo riêng tư để ngăn việc khởi tạo từ bên ngoài tự do.
      */
     private AdminJDBCRepository() {}
 
@@ -33,9 +39,18 @@ public class AdminJDBCRepository implements AdminRepository {
     }
 
     /**
-     * Lấy toàn bộ danh sách tất cả người dùng trong hệ thống từ Database.
+     * Lấy toàn bộ danh sách tất cả người dùng trong hệ thống từ Database SQLite.
      * Tự động khởi tạo đối tượng thích hợp (Admin, Seller, Bidder) dựa trên cột role.
-     * @return Danh sách các User
+     * 
+     * Kỹ thuật JDBC & OOP:
+     * - `Statement` vs `PreparedStatement`: Ở đây sử dụng `Statement` thô vì câu SQL là tĩnh (`SELECT * FROM users`), 
+     *   hoàn toàn không chứa bất kỳ tham số đầu vào động nào của người dùng. Không có nguy cơ bị SQL Injection.
+     * - Try-with-resources: Tự động đóng cả `Connection`, `Statement` và `ResultSet` khi khối `try` kết thúc, 
+     *   phòng chống triệt để Connection Leak (Rò rỉ tài nguyên mạng kết nối).
+     * - Polymorphic Hydration: Đọc trường `role` và sinh đối tượng con cụ thể (Admin, Seller, Bidder)
+     *   được đúc dưới kiểu dữ liệu cha `User`.
+     * 
+     * @return Danh sách các User đa hình
      */
     @Override
     public List<User> getAllUsers() {
@@ -53,7 +68,7 @@ public class AdminJDBCRepository implements AdminRepository {
                 try { isLocked = rs.getBoolean("isLocked"); } catch (SQLException ignore) {}
                 try { isVerified = rs.getBoolean("isVerified"); } catch (SQLException ignore) {}
                 
-                // Khởi tạo đối tượng dựa trên vai trò
+                // Khởi tạo đối tượng đa hình dựa trên vai trò thực tế
                 User user;
                 if ("ADMIN".equalsIgnoreCase(role)) user = new Admin(username, "", email);
                 else if ("SELLER".equalsIgnoreCase(role)) user = new Seller(username, "", email);
@@ -70,9 +85,13 @@ public class AdminJDBCRepository implements AdminRepository {
 
     /**
      * Thay đổi trạng thái khóa/mở khóa của người dùng.
-     * @param username Tên tài khoản
+     * 
+     * Kỹ thuật an toàn:
+     * - Áp dụng `PreparedStatement` để truyền biến an toàn tuyệt đối.
+     * 
+     * @param username Tên tài khoản người dùng
      * @param isLocked true để khóa, false để mở khóa
-     * @return true nếu thay đổi thành công, ngược lại false
+     * @return true nếu số dòng được cập nhật trong DB > 0, ngược lại false
      */
     @Override
     public boolean updateUserStatus(String username, boolean isLocked) {
@@ -87,6 +106,7 @@ public class AdminJDBCRepository implements AdminRepository {
 
     /**
      * Duyệt xác minh hoặc hủy xác minh cho Người bán (Seller).
+     * 
      * @param username Tên tài khoản người bán
      * @param isVerified true để duyệt, false để hủy duyệt
      * @return true nếu thành công, ngược lại false
@@ -103,7 +123,8 @@ public class AdminJDBCRepository implements AdminRepository {
     }
 
     /**
-     * Xóa một người dùng cụ thể khỏi cơ sở dữ liệu.
+     * Xóa một người dùng cụ thể khỏi cơ sở dữ liệu SQLite.
+     * 
      * @param username Tên tài khoản cần xóa
      * @return true nếu xóa thành công, ngược lại false
      */
@@ -119,6 +140,8 @@ public class AdminJDBCRepository implements AdminRepository {
 
     /**
      * Lấy toàn bộ danh sách phiên đấu giá dựa trên danh sách sản phẩm lấy từ ItemDAO.
+     * Thực hiện lắp ráp (Assembly) cấu trúc Item và Seller sang cấu trúc phiên đấu giá `Auction`.
+     * 
      * @return Danh sách các phiên đấu giá tương ứng
      */
     @Override
@@ -137,6 +160,8 @@ public class AdminJDBCRepository implements AdminRepository {
 
     /**
      * Cập nhật trạng thái của phiên đấu giá (Chờ triển khai thêm nếu cần lưu trạng thái vào DB).
+     * Hiện tại được thiết kế như một cổng chờ mở (Open Endpoint Extension).
+     * 
      * @return Luôn trả về true
      */
     @Override
@@ -146,6 +171,7 @@ public class AdminJDBCRepository implements AdminRepository {
 
     /**
      * Hủy bỏ một phiên đấu giá bằng cách xóa sản phẩm khỏi Database thông qua ItemDAO.
+     * 
      * @param auctionId Mã phiên đấu giá (cũng là mã sản phẩm)
      * @return true nếu hủy thành công, ngược lại false
      */
@@ -157,6 +183,8 @@ public class AdminJDBCRepository implements AdminRepository {
 
     /**
      * Lấy lịch sử giao dịch thầu (Dữ liệu tạm thời hoặc chờ nâng cấp DB lưu lịch sử thầu).
+     * Hiện tại trả về danh sách rỗng để tương thích hợp đồng giao tiếp.
+     * 
      * @return Danh sách rỗng
      */
     @Override
@@ -165,7 +193,8 @@ public class AdminJDBCRepository implements AdminRepository {
     }
 
     /**
-     * Lấy log giám sát hoạt động hệ thống (Giả lập logs mẫu).
+     * Lấy log giám sát hoạt động hệ thống (Mô phỏng dữ liệu Logs mẫu phục vụ đồ án).
+     * 
      * @return Danh sách các dòng logs hệ thống
      */
     @Override

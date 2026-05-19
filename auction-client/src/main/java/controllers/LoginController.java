@@ -1,5 +1,7 @@
+// 1. Khai báo package: Nằm trong phân hệ bộ điều khiển (Controllers) quản lý luồng Client.
 package controllers;
 
+// 2. Import các cấu phần UI JavaFX, luồng mạng socket, và Preferences lưu trữ cục bộ
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -10,7 +12,6 @@ import javafx.scene.control.*;
 import javafx.stage.Stage;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
@@ -19,13 +20,18 @@ import java.util.prefs.Preferences;
 
 /**
  * Lớp LoginController điều khiển logic giao diện Đăng nhập (Login.fxml).
- * Xử lý nhập liệu tài khoản/mật khẩu, ghi nhớ thông tin đăng nhập (Remember Me)
- * bằng Preferences API, ẩn/hiển thị mật khẩu bằng binding song phương (bidirectional binding), 
- * và thực hiện gửi yêu cầu xác thực bất đồng bộ qua Socket TCP tới Server.
+ * 
+ * Vai trò kiến trúc và giải pháp kỹ thuật:
+ * - Presentation Layer Controller: Điều phối luồng xác thực đăng nhập người dùng trước khi vào hệ thống.
+ * - Preferences API Cache: Lưu trữ cục bộ thông tin tài khoản (Preferences registry) khi tích "Remember Me".
+ * - Bidirectional Property Binding (Đồng bộ hai chiều): Ràng buộc textProperty của PasswordField và 
+ *   TextField hiển thị giúp mật khẩu luôn đồng bộ bất kể đang ẩn hay hiện.
+ * - Thread-safe Socket Networking: Thực hiện bắt tay mạng Socket TCP ở luồng phụ (Worker Thread) 
+ *   và cập nhật đồ họa hoặc định hướng màn hình (Role-based Stage Routing) thông qua Platform.runLater về luồng chính.
  */
 public class LoginController {
 
-    // Các thành phần UI được liên kết từ file FXML
+    // Các thành phần UI được liên kết từ file FXML bằng chú thích FXML Injection
     @FXML private TextField txtUsername;
     @FXML private PasswordField txtPassword;
     @FXML private TextField txtPasswordVisible;
@@ -34,7 +40,7 @@ public class LoginController {
     @FXML private Label lblError;
     @FXML private CheckBox chkRemember;
 
-    // Đối tượng preferences của Java API để lưu trữ cục bộ cấu hình đăng nhập trên ổ đĩa máy khách (Client Registry)
+    // Đối tượng preferences của Java API để lưu trữ cục bộ cấu hình đăng nhập trên ổ đĩa máy khách (Client Registry Caching)
     private Preferences prefs = Preferences.userNodeForPackage(LoginController.class);
 
     /**
@@ -63,6 +69,7 @@ public class LoginController {
 
     /**
      * Thay đổi trạng thái hiển thị của mật khẩu (Ẩn dưới dạng dấu sao hoặc Hiển thị văn bản trần).
+     * Bằng cách chuyển trạng thái ẩn/hiển thị (.setVisible) của TextField và PasswordField song song.
      */
     @FXML
     public void togglePasswordVisibility() {
@@ -80,6 +87,7 @@ public class LoginController {
     /**
      * Xử lý sự kiện nhấn nút Đăng nhập.
      * Mở một luồng Thread phụ chạy Socket TCP bất đồng bộ kết nối máy chủ để tránh block (đơ) JavaFX UI Thread.
+     * 
      * @param event Sự kiện ActionEvent kích hoạt từ nút bấm
      */
     @FXML
@@ -112,7 +120,7 @@ public class LoginController {
 
                 out.println(new Gson().toJson(loginData));
 
-                // Chờ và đọc phản hồi từ Server
+                // Chờ và đọc phản hồi đồng bộ (Blocking read) từ Server
                 String response = in.readLine();
                 JsonObject jsonResponse = new Gson().fromJson(response, JsonObject.class);
                 String status = jsonResponse.get("status").getAsString();
@@ -120,7 +128,7 @@ public class LoginController {
                 // 3. Sử dụng Platform.runLater để đẩy các thao tác cập nhật giao diện đồ họa (UI Thread safe)
                 Platform.runLater(() -> {
                     if ("SUCCESS".equals(status)) {
-                        // Lưu thông tin đăng nhập nếu người dùng chọn Ghi nhớ tài khoản
+                        // Lưu thông tin đăng nhập vào Registry của máy khách nếu người dùng chọn Ghi nhớ tài khoản
                         if (chkRemember != null && chkRemember.isSelected()) {
                             prefs.put("username", identifier);
                             prefs.put("password", password);
@@ -140,7 +148,7 @@ public class LoginController {
                             FXMLLoader loader;
                             Parent root;
 
-                            // Phân luồng chuyển hướng màn hình dựa trên vai trò (Role Routing)
+                            // Phân luồng chuyển hướng màn hình dựa trên vai trò (Role-based Stage Routing)
                             if ("SELLER".equalsIgnoreCase(role)) {
                                 // Giao diện Dashboard của Người Bán
                                 loader = new FXMLLoader(getClass().getResource("/views/SellerDashboard.fxml"));

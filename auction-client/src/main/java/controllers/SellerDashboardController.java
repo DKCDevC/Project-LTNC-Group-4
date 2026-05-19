@@ -35,13 +35,19 @@ import java.util.List;
 
 /**
  * Lớp SellerDashboardController điều khiển toàn bộ giao diện làm việc chuyên nghiệp của Người bán (SellerDashboard.fxml).
- * Triển khai các khối chức năng toàn diện:
- * - Hệ thống báo cáo tổng quan: Doanh thu tích lũy, số lượng phiên đấu thầu hoạt động, tỷ lệ chốt đơn (Conversion Rate) và giá trị đơn hàng trung bình (AOV).
- * - Biểu đồ trực quan: Sử dụng BarChart và AreaChart biểu diễn doanh số 7 ngày gần nhất.
- * - Quản lý sản phẩm đa bảng: Tổng quan, Đang đấu giá, Đã bán, Đơn hàng chốt và Tất cả tin đăng (Listings).
- * - Tìm kiếm thời gian thực (Real-time search) và Lọc theo Danh mục sản phẩm (Category Filters).
- * - Tác vụ CRUD trực tuyến: Thêm sản phẩm mới (AddProduct dialog), Chỉnh sửa giá khởi điểm nhanh, Xóa tin thầu.
- * - Tích hợp Toggle Selection trên TableView (cho phép hủy chọn hàng khi click lại hoặc click ra nền trống).
+ * Thiết lập kiến trúc quản lý và kết xuất chỉ số kinh doanh thông minh cho Người bán.
+ * 
+ * Các nguyên lý kỹ thuật & nghiệp vụ:
+ * 1. KPI & Business Analytics (Chỉ số đo lường hiệu quả): Tự động tính toán các chỉ số tài chính nâng cao:
+ *    - Average Order Value (AOV - Giá trị đơn hàng trung bình): Tổng doanh thu chốt chia cho tổng đơn hàng thành công.
+ *    - Conversion Rate (Tỷ lệ chuyển đổi): Tỷ lệ phần trăm sản phẩm đấu giá thành công (Đã bán) trên tổng số sản phẩm đã đăng bán.
+ * 2. Visual Reporting (Báo cáo trực quan): Ánh xạ dữ liệu cột BarChart và đồ thị vùng AreaChart doanh thu theo thời gian.
+ * 3. Toggle Selection Support (Chống kẹt hàng TableView): Cấu hình rowFactory tùy biến để giải phóng lựa chọn hàng 
+ *    (clearSelection) khi nhấp chuột ra ngoài vùng trống hoặc nhấp đúp giúp trải nghiệm người dùng mượt mà.
+ * 4. Background Network Data Polling (Truy vấn dữ liệu chạy ngầm): Gửi lệnh Socket GET_SELLER_DASHBOARD qua luồng Thread ngầm 
+ *    để lấy thông tin sản phẩm và chỉ số, đồng bộ UI thông qua Platform.runLater.
+ * 5. Dynamic Table Actions CRUD: Tích hợp Cell Factory chứa tổ hợp nút Sửa (sửa nhanh giá khởi điểm qua TextInputDialog) 
+ *    và Xóa (cưỡng chế hạ phiên đấu giá) gửi trực tiếp lên Server thông qua UPDATE_ITEM và DELETE_ITEM.
  */
 public class SellerDashboardController {
 

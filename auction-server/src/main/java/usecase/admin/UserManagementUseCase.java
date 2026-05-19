@@ -1,5 +1,7 @@
+// 1. Khai báo package: Nằm trong phân hệ Nghiệp vụ Sử dụng (Use Case Layer) chuyên biệt của Admin.
 package usecase.admin;
 
+// 2. Import tầng trừu tượng Domain Repository, cấu hình JDBC và mô hình
 import domain.repository.AdminRepository;
 import dao.AdminJDBCRepository;
 import models.User;
@@ -8,19 +10,25 @@ import java.util.List;
 /**
  * Lớp UserManagementUseCase đại diện cho tầng Nghiệp vụ Sử dụng (Use Case Layer trong Clean Architecture).
  * Đóng vai trò là cầu nối nghiệp vụ điều phối các hoạt động của Admin liên quan đến quản lý người dùng và phiên đấu giá.
- * Phụ thuộc vào trừu tượng AdminRepository thay vì các lớp triển khai cụ thể (Dependency Inversion Principle).
- * Áp dụng mẫu thiết kế Singleton (Singleton Pattern).
+ * 
+ * Ý nghĩa thiết kế Clean Architecture:
+ * - Use Case Layer (Application Business Rules): Chứa đựng các quy tắc nghiệp vụ ứng dụng thuần túy. 
+ *   Nó đứng trên các chi tiết kỹ thuật như cơ sở dữ liệu JDBC, giao thức Socket mạng hay giao diện FX UI.
+ * - Dependency Inversion Principle (DIP): Phụ thuộc vào interface trừu tượng `AdminRepository` thay vì các 
+ *   lớp triển khai cụ thể (`AdminJDBCRepository`). Giúp hệ thống cực kỳ linh hoạt khi thay đổi hạ tầng cơ sở dữ liệu.
+ * - Singleton Design Pattern: Đảm bảo duy nhất một đối tượng điều phối Use Case vận hành trên RAM máy chủ để quản lý đồng bộ.
  */
 public class UserManagementUseCase {
     // Thể hiện duy nhất của lớp Use Case
     private static UserManagementUseCase instance;
     
-    // Tham chiếu đến interface Repository quản lý dữ liệu Admin
+    // Tham chiếu đến interface Repository quản lý dữ liệu Admin trừu tượng (Dependency Inversion)
     private final AdminRepository repository;
 
     /**
      * Hàm khởi tạo riêng tư nhận vào một đối tượng Repository trừu tượng.
-     * @param repository Nơi lưu trữ dữ liệu quản trị
+     * 
+     * @param repository Nơi lưu trữ dữ liệu quản trị đa hình
      */
     private UserManagementUseCase(AdminRepository repository) {
         this.repository = repository;
@@ -32,6 +40,7 @@ public class UserManagementUseCase {
      */
     public static synchronized UserManagementUseCase getInstance() {
         if (instance == null) {
+            // Tiêm phụ thuộc (Dependency Injection) bằng cách truyền thể hiện của JDBC Repository vào hàm dựng
             instance = new UserManagementUseCase(AdminJDBCRepository.getInstance());
         }
         return instance;
@@ -39,7 +48,7 @@ public class UserManagementUseCase {
 
     /**
      * Lấy danh sách toàn bộ người dùng trong hệ thống.
-     * @return Danh sách các đối tượng User
+     * @return Danh sách các đối tượng User đa hình
      */
     public List<User> getUsers() {
         return repository.getAllUsers();

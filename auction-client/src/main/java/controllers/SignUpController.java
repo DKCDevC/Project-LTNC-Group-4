@@ -18,11 +18,22 @@ import java.net.Socket;
 
 /**
  * Lớp SignUpController điều khiển logic giao diện Đăng ký tài khoản (SignUp.fxml).
- * Hỗ trợ nhập liệu thông tin cá nhân, chọn vai trò (Người mua - BIDDER hoặc Người bán - SELLER)
- * thông qua ComboBox, gửi yêu cầu đăng ký tài khoản bất đồng bộ tới Server eBid qua Socket TCP.
+ * Hiện thực hóa quy trình thiết lập tài khoản mới an toàn và bảo mật cho eBid.
+ * 
+ * Các nguyên lý kỹ thuật:
+ * 1. Client-Side Integrity Validation (Kiểm duyệt dữ liệu đầu vào): Thực hiện kiểm tra tính toàn vẹn 
+ *    của thông tin (Username, Email, Password, Role) trước khi đóng gói gói tin mạng nhằm tránh lãng phí 
+ *    tài nguyên kết nối và giảm tải áp lực cho Server.
+ * 2. Multi-Role Account Provisioning (Cung cấp tài khoản đa vai trò): Đọc giá trị tuyển chọn của ComboBox 
+ *    (BIDDER - Người mua hoặc SELLER - Người bán) để ánh xạ vào trường dữ liệu tài khoản gửi đi.
+ * 3. Asynchronous TCP Socket Pipeline (Luồng TCP Socket bất đồng bộ): Đóng gói dữ liệu dạng JSON, 
+ *    thực hiện bắt tay gửi gói tin REGISTER qua luồng socket bất đồng bộ độc lập (Worker Thread) để bảo toàn 
+ *    tính mượt mà và chống giật lag cho giao diện đồ họa.
+ * 4. UI Synchronization (Đồng bộ đồ họa): Bơm ngược phản hồi trạng thái (Thành công / Thất bại do trùng Username/Email) 
+ *    về JavaFX Application Thread an toàn thông qua Platform.runLater.
  */
 public class SignUpController {
-    // Các trường UI liên kết từ FXML
+    // Các trường UI liên kết từ FXML bằng chú thích FXML Injection
     @FXML private TextField txtUsername;
     @FXML private TextField txtEmail;
     @FXML private PasswordField txtPassword;
