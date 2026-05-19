@@ -24,6 +24,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.Region;
+import javafx.scene.layout.GridPane;
 import javafx.stage.Stage;
 import models.Item;
 import javafx.beans.property.SimpleStringProperty;
@@ -70,6 +71,8 @@ import javafx.util.Duration;
 public class DashboardController {
 
     // --- Khung Tiêu đề & Sidebar ---
+    @FXML private VBox sidebar;
+    @FXML private VBox topHeaderContainer;
     @FXML private Label lblGreeting;
     @FXML private TextField txtSearch;
     @FXML private Label sideBrowse;
@@ -355,6 +358,15 @@ public class DashboardController {
         if (pageHistory != null) { pageHistory.setVisible(false); pageHistory.setManaged(false); }
         if (pageWonItems != null) { pageWonItems.setVisible(false); pageWonItems.setManaged(false); }
         if (pageCheckout != null) { pageCheckout.setVisible(false); pageCheckout.setManaged(false); }
+
+        // Enclosed Checkout: Ẩn thanh Sidebar và thanh Tìm kiếm khi đang ở trang thanh toán để tránh gây xao nhãng
+        if (page == pageCheckout) {
+            if (topHeaderContainer != null) { topHeaderContainer.setVisible(false); topHeaderContainer.setManaged(false); }
+            if (sidebar != null) { sidebar.setVisible(false); sidebar.setManaged(false); }
+        } else {
+            if (topHeaderContainer != null) { topHeaderContainer.setVisible(true); topHeaderContainer.setManaged(true); }
+            if (sidebar != null) { sidebar.setVisible(true); sidebar.setManaged(true); }
+        }
 
         page.setVisible(true);
         page.setManaged(true);
@@ -1226,6 +1238,7 @@ public class DashboardController {
                 HBox.setHgrow(space, Priority.ALWAYS);
                 
                 Label price = new Label(item.getPriceStr());
+                price.setMinWidth(Region.USE_PREF_SIZE);
                 price.setStyle("-fx-font-weight: bold; -fx-text-fill: #3665f3; -fx-font-size: 13;");
                 
                 row.getChildren().addAll(name, space, price);
@@ -1284,6 +1297,59 @@ public class DashboardController {
             // Quay về danh sách chính để cập nhật hiển thị sản phẩm
             showPage(pageBrowse);
         }
+    }
+
+    @FXML
+    private void handleEditShippingAddress() {
+        // Mở hộp thoại nhập thông tin mới
+        Dialog<List<String>> dialog = new Dialog<>();
+        dialog.setTitle("Thay đổi thông tin nhận hàng");
+        dialog.setHeaderText("Cập nhật thông tin giao nhận của bạn");
+        
+        ButtonType btnSave = new ButtonType("Lưu", ButtonBar.ButtonData.OK_DONE);
+        dialog.getDialogPane().getButtonTypes().addAll(btnSave, ButtonType.CANCEL);
+        
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setStyle("-fx-padding: 20;");
+        
+        TextField txtName = new TextField(lblShipName != null ? lblShipName.getText() : "");
+        TextField txtPhone = new TextField(lblShipPhone != null ? lblShipPhone.getText() : "");
+        TextField txtAddress = new TextField(lblShipAddress != null ? lblShipAddress.getText() : "");
+        
+        txtName.setPrefWidth(250);
+        txtPhone.setPrefWidth(250);
+        txtAddress.setPrefWidth(250);
+        
+        grid.add(new Label("Người nhận:"), 0, 0);
+        grid.add(txtName, 1, 0);
+        grid.add(new Label("Số điện thoại:"), 0, 1);
+        grid.add(txtPhone, 1, 1);
+        grid.add(new Label("Địa chỉ giao hàng:"), 0, 2);
+        grid.add(txtAddress, 1, 2);
+        
+        dialog.getDialogPane().setContent(grid);
+        
+        dialog.setResultConverter(dialogButton -> {
+            if (dialogButton == btnSave) {
+                List<String> res = new java.util.ArrayList<>();
+                res.add(txtName.getText());
+                res.add(txtPhone.getText());
+                res.add(txtAddress.getText());
+                return res;
+            }
+            return null;
+        });
+        
+        Optional<List<String>> result = dialog.showAndWait();
+        result.ifPresent(info -> {
+            if (info.size() == 3) {
+                if (lblShipName != null) lblShipName.setText(info.get(0));
+                if (lblShipPhone != null) lblShipPhone.setText(info.get(1));
+                if (lblShipAddress != null) lblShipAddress.setText(info.get(2));
+            }
+        });
     }
 
     /**

@@ -10,7 +10,7 @@
     <BorderPane prefHeight="768.0" prefWidth="1024.0" style="-fx-background-color: #F5F5F5; -fx-font-family: '-apple-system', 'Segoe UI', sans-serif;">
 
     <top>
-        <VBox style="-fx-background-color: #FFFFFF; -fx-border-color: transparent transparent #E0E0E0 transparent; -fx-border-width: 1;">
+        <VBox fx:id="topHeaderContainer" style="-fx-background-color: #FFFFFF; -fx-border-color: transparent transparent #E0E0E0 transparent; -fx-border-width: 1;">
             <children>
                 <HBox alignment="CENTER_LEFT" prefHeight="60.0" spacing="20.0" style="-fx-padding: 0 30;">
                     <children>
@@ -338,7 +338,7 @@
                                                                     <Label text="Thanh toán bằng tiền mặt ngay khi nhận được sản phẩm đấu giá" textFill="GRAY" style="-fx-font-size: 12;" />
                                                                 </children>
                                                             </VBox>
-                                                            <Label text="📦" style="-fx-font-size: 22;" />
+                                                            <Label text="🚚" style="-fx-font-size: 22;" />
                                                         </children>
                                                     </HBox>
                                                 </children>
@@ -347,7 +347,13 @@
                                             <!-- Section 2: Ship to (Shipping Address) -->
                                             <VBox spacing="15.0" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 3);">
                                                 <children>
-                                                    <Label text="Địa chỉ nhận hàng (Ship to)" style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #191919;" />
+                                                    <HBox alignment="CENTER_LEFT">
+                                                        <children>
+                                                            <Label text="Địa chỉ nhận hàng (Ship to)" style="-fx-font-weight: bold; -fx-font-size: 18; -fx-text-fill: #191919;" />
+                                                            <Region HBox.hgrow="ALWAYS" />
+                                                            <Hyperlink text="Thay đổi" onAction="#handleEditShippingAddress" style="-fx-text-fill: #3665f3; -fx-font-size: 13; -fx-font-weight: bold; -fx-underline: true;" />
+                                                        </children>
+                                                    </HBox>
                                                     <Separator />
                                                     <GridPane hgap="15" vgap="12">
                                                         <columnConstraints>
