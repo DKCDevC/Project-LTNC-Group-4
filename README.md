@@ -12,7 +12,7 @@ Dự án này là kết tinh của việc ứng dụng các nguyên lý lập tr
 3. [Kiến trúc Đa Phân hệ (Multi-module Architecture)](#3-kiến-trúc-đa-phân-hệ-multi-module-architecture)
 4. [Sơ đồ Lớp & Thiết kế OOP (Class Diagram)](#4-sơ-đồ-lớp--thiết-kế-oop-class-diagram)
 5. [Ứng dụng các Mẫu thiết kế (Design Patterns)](#5-ứng-dụng-các-mẫu-thiết-kế-design-patterns)
-6. [Mô hình Cơ sở dữ liệu SQLite (Database Schema)](#6-mô-hình-cơ-sở-dữ-liệu-sqlite-database-schema)
+6. [Mô hình Cơ sở dữ liệu SQLite (Database Schema) & Cơ chế Seeding](#6-mô-hình-cơ-sở-dữ-liệu-sqlite-database-schema--cơ-cế-seeding)
 7. [Giao thức truyền thông Custom TCP Socket & JSON](#7-giao-thức-truyền-thông-custom-tcp-socket--json)
 8. [Phân tích Thuật toán & Tính năng Nâng cao Cốt lõi](#8-phân-tích-thuật-toán--tính-năng-nâng-cao-cốt-lõi)
 9. [Cơ chế Đóng gói Fat JAR & Giải quyết Lỗi JavaFX Runtime](#9-cơ-chế-đóng-gói-fat-jar--giải-quyết-lỗi-javafx-runtime)
@@ -78,11 +78,44 @@ Dự án tuân thủ kiến trúc chia tách trách nhiệm (Separation of Conce
 
 Hệ thống được mô hình hóa hướng đối tượng chặt chẽ. Toàn bộ thiết kế cấu trúc lớp được định nghĩa chi tiết trong tệp [online-auction-system.puml](file:///f:/LTNC/Bai7/Project-LTNC-Group-4/online-auction-system.puml) và đã được xuất thành tệp hình ảnh sơ đồ chất lượng cao [online-auction-system.png](file:///f:/LTNC/Bai7/Project-LTNC-Group-4/online-auction-system.png).
 
-### Các điểm nhấn trong thiết kế đối tượng:
-*   **Tính kế thừa & Đa hình (Inheritance & Polymorphism):** 
-    *   Lớp cha trừu tượng `User` được mở rộng bởi các lớp con cụ thể: `Bidder` (Người thầu), `Seller` (Người bán), và `Admin` (Quản trị viên).
-    *   Lớp cha trừu tượng `Item` phân tách thành các danh mục mặt hàng cụ thể: `Electronics` (Điện tử), `Vehicle` (Phương tiện), `Art` (Mỹ thuật), và `GeneralItem` (Tổng hợp).
-*   **Tính đóng gói (Encapsulation):** Mọi thuộc tính dữ liệu nhạy cảm đều được bảo vệ nghiêm ngặt bằng phạm vi truy cập `private` và giao tiếp an toàn thông qua các phương thức Getter/Setter tương ứng.
+### Các điểm nhấn trong thiết kế đối tượng & Nguyên lý OOP:
+
+#### 1. Tính Kế thừa & Đa hình (Inheritance & Polymorphism):
+*   **Thành phần Người dùng (`User`):** Lớp cha trừu tượng `User` được định nghĩa với các trường cốt lõi (`username`, `password`, `email`, `role`). Các thực thể con bao gồm `Bidder` (Người đấu thầu), `Seller` (Người bán) và `Admin` (Quản trị viên) kế thừa trực tiếp từ `User`, cho phép hệ thống quản lý danh tính đồng bộ và xử lý đa hình trong phân quyền.
+*   **Thành phần Sản phẩm (`Item`):** Lớp cha trừu tượng `Item` định nghĩa các thuộc tính cơ sở (`id`, `name`, `description`, `startingPrice`, `startTime`, `endTime`, `currentHighestPrice`, `imageUrls`). Các danh mục sản phẩm cụ thể kế thừa `Item` bao gồm:
+    *   `Electronics`: Bổ sung thuộc tính `warrantyMonths` (Thời gian bảo hành).
+    *   `Vehicle`: Bổ sung thuộc tính `brand` (Hãng sản xuất/Thương hiệu xe).
+    *   `Art`: Bổ sung thuộc tính `artistName` (Tên danh họa/Nghệ sĩ sáng tác).
+    *   `GeneralItem`: Mặt hàng thông thường không có thuộc tính bổ sung phức tạp.
+*   **Ý nghĩa thực tiễn:** Việc thiết kế đa hình giúp Server và Client xử lý các loại hàng hóa khác nhau thông qua kiểu dữ liệu tổng quát `Item`, đồng thời dễ dàng ép kiểu xuống các lớp con chuyên biệt khi cần trích xuất thông tin đặc thù.
+
+```
+                   ┌───────────────────────┐
+                   │    <<abstract>>       │
+                   │        User           │
+                   └──────────┬────────────┘
+         ┌────────────────────┼───────────────────┐
+         ▼                    ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐
+│     Bidder      │  │     Seller      │  │     Admin     │
+└─────────────────┘  └─────────────────┘  └───────────────┘
+
+                   ┌───────────────────────┐
+                   │    <<abstract>>       │
+                   │        Item           │
+                   └──────────┬────────────┘
+         ┌────────────────────┼───────────────────┬───────────────────┐
+         ▼                    ▼                   ▼                   ▼
+┌─────────────────┐  ┌─────────────────┐  ┌───────────────┐  ┌────────────────┐
+│   Electronics   │  │     Vehicle     │  │      Art      │  │  GeneralItem   │
+└─────────────────┘  └─────────────────┘  └───────────────┘  └────────────────┘
+```
+
+#### 2. Tính Đóng gói (Encapsulation):
+Mọi thuộc tính của các thực thể (`User`, `Item`, `Auction`, `BidTransaction`, `AutoBid`) đều được khai báo với phạm vi truy cập `private` hoặc `protected` để ngăn chặn các sửa đổi trạng thái ngoài ý muốn từ bên ngoài. Các trường dữ liệu nhạy cảm được truy xuất và cập nhật an toàn thông qua các phương thức Getter/Setter tương ứng có tích hợp logic kiểm duyệt dữ liệu đầu vào.
+
+#### 3. Tính Trừu tượng (Abstraction):
+Bản thân các thực thể nền tảng `User` và `Item` đều là các lớp trừu tượng (`abstract class`). Chúng đại diện cho các khái niệm chung và không thể khởi tạo trực tiếp thông qua từ khóa `new`. Các lớp này định hình khuôn mẫu chuẩn cho các phân hệ cụ thể mở rộng phía sau.
 
 ---
 
@@ -91,66 +124,122 @@ Hệ thống được mô hình hóa hướng đối tượng chặt chẽ. Toà
 Nhóm 4 đã áp dụng thực tiễn nhiều mẫu thiết kế kinh điển giúp mã nguồn linh hoạt, dễ mở rộng và đạt chuẩn mực công nghiệp:
 
 ### 5.1. Singleton Pattern (Mẫu đơn thể)
-Áp dụng cho các lớp quản lý bộ nhớ đệm và điều phối nghiệp vụ ở phía Server để đảm bảo tính duy nhất và nhất quán của dữ liệu trên toàn hệ thống:
+Áp dụng cho các lớp quản lý bộ nhớ đệm và điều phối nghiệp vụ ở phía Server để đảm bảo tính duy nhất và nhất quán của dữ liệu trên toàn hệ thống, tránh việc tạo ra nhiều thực thể trùng lặp tiêu tốn RAM và xung đột logic:
 *   `ItemManager.getInstance()`: Quản lý danh mục sản phẩm duy nhất trong bộ nhớ máy chủ.
 *   `UserManager.getInstance()`: Điều phối thông tin các tài khoản đang hoạt động.
 *   `AuctionManager.getInstance()`: Đảm bảo chỉ duy nhất một luồng điều phối đấu thầu và đồng hồ đếm ngược phiên đấu giá tồn tại.
+*   `CommandRouter.getInstance()`: Bộ định tuyến lệnh duy nhất trên Server.
+
+*Minh họa mã nguồn triển khai Singleton Thread-safe trong `AuctionManager`:*
+```java
+public class AuctionManager {
+    private static AuctionManager instance;
+    
+    private AuctionManager() {
+        activeAuctions = new ConcurrentHashMap<>();
+        orderDAO = new OrderDAO();
+    }
+
+    public static synchronized AuctionManager getInstance() {
+        if (instance == null) {
+            instance = new AuctionManager(); // Khởi tạo trì hoãn (Lazy Initialization)
+        }
+        return instance;
+    }
+}
+```
 
 ### 5.2. Observer Pattern (Mẫu quan sát)
-Giải quyết bài toán cập nhật thời gian thực không đồng bộ (Real-time Broadcast):
-*   **Subject:** `AuctionSubject` (Được thực hiện bởi `AuctionSocketServer` hoặc `AuctionManager`).
-*   **Observer:** `AuctionObserver` (Được định nghĩa qua interface và triển khai bởi `ClientHandler`).
-*   **Nguyên lý:** Mỗi khi có một Client mới kết nối hoặc có hành động đấu giá mới phát sinh, hệ thống sẽ đăng ký `ClientHandler` đó vào danh sách quan sát. Khi có biến động giá hoặc thời gian, Server chỉ cần gọi hàm thông báo, toàn bộ các Client đang trực tuyến sẽ lập tức nhận được gói tin cập nhật giao diện mà không cần cơ chế kéo dữ liệu liên tục (Polling).
+Giải quyết triệt để bài toán cập nhật thời gian thực không đồng bộ (Real-time Broadcast). Khi có biến động giá thầu mới hoặc thời gian thay đổi, Server sẽ phát sóng cập nhật lập tức tới mọi Client đang trực tuyến mà không cần các Client phải gửi yêu cầu liên tục (Polling).
+*   **Subject:** `AuctionSubject` (Định nghĩa các phương thức đăng ký, gỡ bỏ và thông báo tới các Observer).
+*   **Observer:** `AuctionObserver` (Interface định nghĩa phương thức tiếp nhận bản tin mạng).
+*   **Concrete Observer:** `ClientHandler` (Mỗi kết nối của Client là một tiến trình quản lý Socket riêng biệt. Khi kết nối thành công, `ClientHandler` được đăng ký vào danh sách của `AuctionSubject`. Mỗi khi Server có cập nhật giá hay trạng thái, nó sẽ duyệt qua danh sách và ghi dữ liệu ra luồng Socket của từng `ClientHandler`).
+
+```
+┌──────────────┐          1. Đăng ký kết nối           ┌───────────────┐
+│ Client (1)   ├──────────────────────────────────────>│               │
+├──────────────┤                                       │               │
+│ Client (2)   ├──────────────────────────────────────>│ AuctionServer │
+└──────────────┘                                       │ (Subject)     │
+       ▲                                               │               │
+       │ 2. Broadcast JSON khi có sự thay đổi giá thầu  │               │
+       └───────────────────────────────────────────────┤               │
+                                                       └───────────────┘
+```
 
 ### 5.3. Command Pattern (Mẫu lệnh)
-Được sử dụng làm nền tảng cho giao tiếp mạng Client-Server:
-*   Định nghĩa interface `Command` có phương thức `execute(ClientHandler handler, String data)`.
-*   Các lớp cụ thể thực thi lệnh: `LoginCommand`, `BidCommand`, `AutoBidCommand`, `CancelAutoBidCommand`, `AddItemCommand`, `DeleteItemCommand`, `AdminCommand`...
-*   **Lợi ích:** Hệ thống định tuyến lệnh thông qua `CommandRouter` một cách linh hoạt, loại bỏ hoàn toàn các khối cấu trúc `if-else` lồng nhau phức tạp khi phân tích gói tin Socket, dễ dàng thêm lệnh mới mà không ảnh hưởng tới kiến trúc cũ.
+Mẫu thiết kế đóng vai trò là kiến trúc nền tảng cho giao tiếp mạng Client-Server. Loại bỏ hoàn toàn các cấu trúc `if-else` lồng nhau phức tạp khi phân tích các gói tin thô từ Socket.
+*   **Interface `Command`:** Định nghĩa phương thức chuẩn `execute(JsonObject requestData, PrintWriter out, ClientHandler handler)`.
+*   **Concrete Commands:** Các lớp thực thi nghiệp vụ chi tiết bao gồm `LoginCommand`, `BidCommand`, `AutoBidCommand`, `CancelAutoBidCommand`, `AddItemCommand`, `DeleteItemCommand`, `GetSellerDashboardCommand`, `AdminCommand`...
+*   **Invoker/Router (`CommandRouter`):** Chứa bản đồ `HashMap<String, Command>`. Khi nhận được gói JSON dạng `{"command": "TÊN_LỆNH", "data": {...}}`, Router sẽ tìm kiếm lớp xử lý tương ứng trong bản đồ với độ phức tạp thuật toán cực kỳ tối ưu là $O(1)$ và thực thi lệnh.
 
-### 5.4. DAO Pattern (Data Access Object)
-Cô lập hoàn toàn tầng logic nghiệp vụ khỏi các câu lệnh truy vấn SQL thô:
-*   Các lớp `UserDAO`, `ItemDAO`, `OrderDAO` đảm nhận việc mở kết nối JDBC, chuẩn bị câu lệnh `PreparedStatement`, thực thi truy vấn và ánh xạ kết quả (ORM thủ công) thành các đối tượng Java thuần túy.
+```
+                        ┌───────────────────┐
+                        │   CommandRouter   │
+                        └─────────┬─────────┘
+                                  │ Tra cứu O(1)
+                                  ▼
+                        ┌───────────────────┐
+                        │    <<interface>>  │
+                        │      Command      │
+                        └─────────┬─────────┘
+         ┌────────────────────────┼────────────────────────┐
+         ▼                        ▼                        ▼
+┌─────────────────┐      ┌─────────────────┐      ┌─────────────────┐
+│  LoginCommand   │      │   BidCommand    │      │ AddItemCommand  │
+└─────────────────┘      └─────────────────┘      └─────────────────┘
+```
+
+### 5.4. Factory Method Pattern (Mẫu nhà máy)
+Được triển khai thông qua lớp `ItemFactory` đóng vai trò là điểm khởi dựng duy nhất (Single Point of Instantiation) cho cấu trúc đa hình của sản phẩm `Item`.
+*   **Mục tiêu thiết kế:** Che giấu logic tạo lập phức tạp của các lớp con (`Electronics`, `Art`, `Vehicle`, `GeneralItem`).
+*   **Cơ chế phòng thủ lỗi (Defensive Parsing):** Trong `ItemFactory.createItem()`, thuộc tính mở rộng `extraInfo` được bóc tách an toàn. Ví dụ đối với sản phẩm điện tử, số tháng bảo hành được parse từ chuỗi sang số nguyên bao bọc trong khối `try-catch` đề phòng lỗi định dạng `NumberFormatException`, nếu xảy ra lỗi sẽ tự động đưa về giá trị mặc định là 0 thay vì làm crash Server.
+
+### 5.5. DAO Pattern (Data Access Object)
+Tách biệt hoàn toàn tầng logic nghiệp vụ của Server ra khỏi tầng dữ liệu SQL thô.
+*   Các lớp `UserDAO`, `ItemDAO`, `OrderDAO` đảm nhận nhiệm vụ mở kết nối JDBC, chuẩn bị các câu lệnh `PreparedStatement` an toàn, thực thi truy vấn và ánh xạ kết quả (ORM thủ công) thành các đối tượng Java thuần túy.
 
 ---
 
-## 6. Mô hình Cơ sở dữ liệu SQLite (Database Schema)
+## 6. Mô hình Cơ sở dữ liệu SQLite (Database Schema) & Cơ chế Seeding
 
-Cơ sở dữ liệu SQLite tự khởi tạo hoàn toàn cục bộ, tự động tạo lập 3 bảng nghiệp vụ chính với cấu trúc như sau:
+Hệ thống sử dụng cơ sở dữ liệu cục bộ SQLite, toàn bộ cấu trúc bảng và dữ liệu mẫu được khởi tạo tự động thông qua lớp `DBConnection.java`.
 
-### 6.1. Bảng Người dùng (`users`)
-Lưu trữ định danh người dùng, mật khẩu đăng nhập, email và vai trò phân quyền:
+### 6.1. Chi tiết cấu trúc các bảng (DDL):
+
+#### 1. Bảng Người dùng (`users`)
+Lưu trữ danh tính người dùng, mật khẩu thô (hoặc băm), email và vai trò phân quyền trên sàn.
 ```sql
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     password TEXT NOT NULL,
     email TEXT NOT NULL,
-    role TEXT NOT NULL,         -- 'BIDDER', 'SELLER', 'ADMIN'
-    isLocked INTEGER DEFAULT 0, -- 0: Hoạt động, 1: Bị khóa
+    role TEXT NOT NULL,         -- Vai trò: 'BIDDER', 'SELLER', 'ADMIN'
+    isLocked INTEGER DEFAULT 0, -- 0: Hoạt động bình thường, 1: Tài khoản bị khóa
     isVerified INTEGER DEFAULT 0
 );
 ```
 
-### 6.2. Bảng Sản phẩm (`items`)
-Lưu trữ thông tin chi tiết của từng mặt hàng đấu giá và liên kết người bán:
+#### 2. Bảng Sản phẩm (`items`)
+Lưu trữ thông tin chi tiết của từng mặt hàng được đăng ký tham gia sàn đấu giá.
 ```sql
 CREATE TABLE IF NOT EXISTS items (
     id TEXT PRIMARY KEY,
     name TEXT NOT NULL,
     description TEXT,
     starting_price REAL NOT NULL,
-    start_time TEXT NOT NULL, -- Định dạng chuẩn ISO 8601 String
-    end_time TEXT NOT NULL,
-    type TEXT NOT NULL,       -- 'ELECTRONICS', 'VEHICLE', 'ART', 'GENERAL'
-    extra_info TEXT,          -- Lưu trữ thông tin đặc thù (vd: Bảo hành, Số dặm...)
-    seller_name TEXT,
-    image_urls TEXT
+    start_time TEXT NOT NULL, -- Định dạng ISO 8601 String
+    end_time TEXT NOT NULL,   -- Định dạng ISO 8601 String
+    type TEXT NOT NULL,       -- Thể loại: 'ELECTRONICS', 'VEHICLE', 'ART', 'GENERAL'
+    extra_info TEXT,          -- Thuộc tính mở rộng đặc hữu của từng loại con
+    seller_name TEXT,         -- Liên kết người sở hữu
+    image_urls TEXT           -- Chuỗi đường dẫn hình ảnh minh họa sản phẩm
 );
 ```
 
-### 6.3. Bảng Đơn hàng thắng cuộc (`orders`)
-Lưu trữ thông tin hóa đơn khi phiên đấu giá kết thúc thành công:
+#### 3. Bảng Đơn hàng thắng cuộc (`orders`)
+Hóa đơn lưu vết lịch sử giao dịch thành công khi một phiên đấu giá hoàn thành thời gian chạy và có người chiến thắng hợp lệ.
 ```sql
 CREATE TABLE IF NOT EXISTS orders (
     order_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -162,41 +251,90 @@ CREATE TABLE IF NOT EXISTS orders (
 );
 ```
 
-### ⚙️ Cơ chế Data Seeding (Tự động nạp dữ liệu mồi)
-Để dự án luôn trong trạng thái sẵn sàng chạy thử nghiệm mà không cần thao tác thủ công, `DBConnection.java` và `MainServer.java` thực hiện cơ chế mồi dữ liệu:
-*   Nếu bảng `users` hoàn toàn trống, hệ thống sẽ tự động thêm vào 4 tài khoản thử nghiệm chuẩn (`Admin_01`, `Seller_01`, `Bidder_01`, `Bidder_02`).
-*   Tại `MainServer`, hệ thống sử dụng cơ chế kiểm tra chống trùng lặp (`Anti-duplication check`) để tự động tạo mới **20 sản phẩm mẫu đa dạng** thuộc quyền sở hữu của người bán `user1` cùng các phiên đấu giá tương ứng.
+### 6.2. Cơ chế Data Seeding (Tự động nạp dữ liệu mồi):
+Để dự án luôn sẵn sàng chạy thử nghiệm E2E ngay lập tức mà không cần bất cứ thao tác cài cắm dữ liệu ban đầu nào, hệ thống thực hiện hai luồng Seeding thông minh:
+1.  **Mồi tài khoản mặc định:** Trong phương thức `createTablesAndDefaultUsers()`, hệ thống đếm số lượng bản ghi bảng `users`. Nếu bảng trống (`COUNT == 0`), Server sẽ tự động chèn vào 4 tài khoản mặc định đại diện cho cả 3 vai trò (`Admin_01`, `Seller_01`, `Bidder_01`, `Bidder_02`).
+2.  **Mồi 20 sản phẩm mẫu đa dạng:** Trong `MainServer.java`, hệ thống tự động sinh ra 20 sản phẩm mẫu (với các mức giá khởi điểm tăng dần đều từ $1,100,000$ ₫ đến $3,000,000$ ₫) thuộc sở hữu của người bán mặc định `user1`.
+3.  **Cơ chế chống trùng lặp dữ liệu (Anti-duplication check):** Trước khi nạp các sản phẩm mẫu này vào SQLite và bộ nhớ RAM, Server sử dụng Java Stream API quét đối chiếu ID sản phẩm (`item_user1_i`) trong `ItemManager`. Cơ chế này loại bỏ hoàn toàn lỗi khóa chính (`UNIQUE constraint failed`) khi quản trị viên khởi chạy lại Server nhiều lần trên cùng một tệp cơ sở dữ liệu.
 
 ---
 
 ## 7. Giao thức truyền thông Custom TCP Socket & JSON
 
-Hệ thống giao tiếp thông qua Socket TCP bất đồng bộ. Mọi gói tin truyền tải qua mạng đều được đóng gói dưới định dạng JSON thống nhất:
+Toàn bộ hệ thống giao tiếp qua mạng dựa trên giao thức TCP Socket nguyên bản, đảm bảo dữ liệu truyền tải tin cậy và theo đúng thứ tự. 
 
-### Định dạng gói tin gửi từ Client lên Server:
-```json
-{
-  "command": "TÊN_LỆNH",
-  "data": "NỘI_DUNG_DỮ_LIỆU_DẠNG_JSON_STRING_HOẶC_TEXT"
-}
-```
+### 7.1. Cơ chế Serialization & Deserialization với Gson:
+Lớp tiện ích `GsonConfig.java` thiết lập cấu hình đặc biệt cho bộ thư viện Google Gson để giải quyết hai thách thức lớn trong lập trình mạng của Java:
+1.  **Định dạng Java 8 `LocalDateTime`:** Mặc định Gson không hỗ trợ kiểu dữ liệu thời gian mới này của Java 8 và sẽ phân giải nó thành một cấu trúc JSON lồng ghép rất cồng kềnh. `GsonConfig` đăng ký TypeAdapter tùy biến để ép toàn bộ các đối tượng thời gian về chuỗi dẹt chuẩn **ISO-8601** (Ví dụ: `2026-05-18T11:00:00`) và ngược lại.
+2.  **Đa hình lớp trừu tượng `Item` (Polymorphic Deserialization):** Do `Item` là một abstract class nên Gson thô không thể khởi tạo nó khi nhận gói tin từ socket. Chúng tôi viết một Custom Deserializer hoạt động như một bộ phân giải dựa trên đặc trưng thuộc tính (Discriminator-based parser):
+    *   Nếu JSON có chứa trường `"warrantyMonths"` $\rightarrow$ Đúc thành thực thể `Electronics.class`.
+    *   Nếu JSON có chứa trường `"artistName"` $\rightarrow$ Đúc thành thực thể `Art.class`.
+    *   Nếu JSON có chứa trường `"brand"` $\rightarrow$ Đúc thành thực thể `Vehicle.class`.
+    *   Mặc định chuyển dịch về `Electronics.class` để phòng thủ lỗi crash.
 
-### 🔬 Ví dụ minh họa luồng truyền nhận gói tin thực tế:
+### 7.2. Đặc tả các gói tin JSON thực tế giữa Client và Server:
 
-#### 1. Yêu cầu Đặt giá thầu thường (BidCommand):
+#### 🧪 Kịch bản 1: Đăng nhập hệ thống (Login Flow)
+*   **Client gửi:**
+    ```json
+    {
+      "command": "LOGIN",
+      "data": {
+        "username": "Bidder_01",
+        "password": "pass123"
+      }
+    }
+    ```
+*   **Server trả về (Thành công):**
+    ```json
+    {
+      "status": "SUCCESS",
+      "role": "BIDDER",
+      "message": "Đăng nhập thành công"
+    }
+    ```
+
+#### 🧪 Kịch bản 2: Đặt giá thủ công (Manual Bid Flow)
 *   **Client gửi:**
     ```json
     {
       "command": "BID",
-      "data": "{\"auctionId\":\"item_user1_1\",\"bidderName\":\"Bidder_01\",\"amount\":1200000.0}"
+      "data": {
+        "auctionId": "item_user1_1",
+        "bidderName": "Bidder_01",
+        "amount": 1200000.0
+      }
     }
     ```
-*   **Server xử lý & kiểm tra bước giá:** 
-    Nếu hợp lệ, Server cập nhật bộ nhớ đệm và SQLite, sau đó phát quảng bá (Broadcast) gói tin cập nhật tới **tất cả** Client đang online:
+*   **Server phát sóng Broadcast toàn mạng (AUCTION_UPDATE):**
     ```json
     {
-      "command": "AUCTION_UPDATE",
-      "data": "{\"auctionId\":\"item_user1_1\",\"currentPrice\":1200000.0,\"bidsCount\":1,\"lastBidder\":\"Bidder_01\",\"endTime\":\"2026-05-21T12:00:00\"}"
+      "command": "UPDATE_PRICE",
+      "auctionId": "item_user1_1",
+      "price": 1200000.0,
+      "winnerUsername": "Bidder_01",
+      "message": "[MANUAL] Bidder_01 đã đặt giá 1,200,000 ₫"
+    }
+    ```
+
+#### 🧪 Kịch bản 3: Thiết lập Robot đặt thầu tự động (Auto-Bidding Setup)
+*   **Client gửi:**
+    ```json
+    {
+      "command": "AUTO_BID",
+      "data": {
+        "auctionId": "item_user1_3",
+        "username": "Bidder_02",
+        "maxBid": 2500000.0,
+        "increment": 50000.0
+      }
+    }
+    ```
+*   **Server phản hồi trực tiếp về Client gửi thầu:**
+    ```json
+    {
+      "status": "SUCCESS",
+      "message": "Đã kích hoạt Auto Bid"
     }
     ```
 
@@ -204,66 +342,107 @@ Hệ thống giao tiếp thông qua Socket TCP bất đồng bộ. Mọi gói ti
 
 ## 8. Phân tích Thuật toán & Tính năng Nâng cao Cốt lõi
 
-Nhóm 4 đã nghiên cứu và triển khai thành công 3 thuật toán phức tạp phục vụ trực tiếp cho hoạt động thực tế của sàn đấu giá:
+Hệ thống được nghiên cứu và tối ưu hóa cao độ để xử lý các bài toán nghiệp vụ phức tạp của một sàn đấu giá chuyên nghiệp trong thế giới thực:
 
-### 8.1. Thuật toán Đặt thầu tự động thông minh (Auto-Bidding)
-Người mua có thể ủy quyền cho một robot AI cắm chốt đấu giá thay thế họ.
-*   **Tham số đầu vào:** `Max Budget` (Giá tối đa chịu đựng) và `Bid Increment` (Bước nhảy thầu mong muốn).
-*   **Nguyên lý vận hành:**
-    1. Khi một Bidder khác đặt giá mới $P_{new}$ trên sản phẩm, hệ thống lập tức kích hoạt luồng quét kiểm tra xem sản phẩm đó có Robot Auto-Bid nào đang hoạt động hay không.
-    2. Nếu có, robot sẽ tính toán mức giá phản công: $P_{counter} = P_{new} + \text{Bid Increment}$.
-    3. Hệ thống kiểm tra điều kiện bảo vệ: Nếu $P_{counter} \le \text{Max Budget}$, hệ thống tự động thực thi đặt giá $P_{counter}$ thay cho người dùng sở hữu robot.
-    4. **Tranh chấp đa Robot (Robot vs Robot):** Nếu có nhiều Robot Auto-Bid cùng cài cắm trên 1 sản phẩm, máy chủ sẽ thực hiện mô phỏng đấu thầu vòng lặp tức thời giữa các robot cho đến khi một bên chạm ngưỡng ngân sách tối đa, bên còn lại sẽ giành chiến thắng ở bước giá tối thiểu tiếp theo.
+### 8.1. Thuật toán Đặt thầu tự động thông minh (Auto-Bidding Engine)
+Tính năng cho phép người thầu ủy quyền cho một robot thông minh cắm chốt và tự động trả đũa tăng giá thay thế họ.
+*   **Tham số đầu vào:** Ngân sách trần tối đa (`maxBid`) và bước nhảy giá thầu mong muốn (`increment`).
+*   **Cơ chế hoạt động bất đồng bộ ngầm (Background Async Thread):** Khi có một lượt đặt giá mới (thủ công hoặc từ bot khác) làm thay đổi người dẫn đầu của một sản phẩm, Server sẽ quét qua danh sách Robot Auto-Bid đã được cắm trên sản phẩm đó. Để không gây tắc nghẽn (freeze) luồng xử lý mạng Socket I/O chính, Server khởi chạy một luồng bất đồng bộ (`new Thread()`) chuyên trách chạy vòng lặp cạnh tranh giữa các Bot.
+*   **Độ trễ hành vi người dùng (Human-like Latency):** Thay vì robot nâng giá lập tức trong 0ms (dễ gây nghẽn mạng và tạo cảm giác phi thực tế), luồng Bot sẽ ngủ ngẫu nhiên từ **1.5 giây đến 2.5 giây** trước khi ra đòn phản công.
+*   **Phân xử thứ tự ưu tiên (FIFO - First In, First Out):** Nếu có nhiều Bot của nhiều người dùng cùng đăng ký trên một sản phẩm và cùng đủ điều kiện ngân sách nâng thầu, Server sẽ sắp xếp danh sách Bot theo mốc thời gian đăng ký (`registerTime`). Bot nào được cài cắm trước sẽ được quyền đặt giá trước.
+*   **Trận chiến Robot đấu giá (Bot Duel):** Vòng lặp thầu tự động sẽ tiếp diễn liên tục cho đến khi mức giá vượt quá ngân sách tối đa của một bên, robot của bên thua cuộc sẽ tự động dừng hoạt động và thông báo về client, giành chiến thắng cho bên còn lại ở mức bước nhảy tối thiểu.
 
 ```
-[Giá thầu mới từ Bidder X: P_new]
-              │
-              ▼
-[Tìm kiếm Robot Auto-Bid đăng ký] ──(Không có)──> [Giữ nguyên giá P_new]
-              │
-          (Có robot)
-              ▼
-[Tính toán: P_counter = P_new + Increment]
-              │
-      ┌───────┴───────┐
-      ▼               ▼
-(P_counter <= Max)  (P_counter > Max)
-      │               │
-      ▼               ▼
-[Tự động đặt thầu]  [Hủy Auto-Bid của Robot]
-[Broadcast cập nhật] [Gửi cảnh báo vượt ngân sách]
+      [Thầu mới xuất hiện]
+               │
+               ▼
+   [Quét danh sách Robot] ──(Không có)──> [Dừng luồng]
+               │
+           (Có robot)
+               ▼
+   [Sắp xếp FIFO theo thời gian đăng ký]
+               │
+               ▼
+   [Tính giá phản công: P = Current + Increment]
+               │
+       ┌───────┴───────┐
+       ▼               ▼
+   (P <= Max Budget)   (P > Max Budget)
+       │               │
+       ▼               ▼
+[Ngủ ngẫu nhiên 1.5-2.5s] [Hủy robot & Báo cạn ví]
+       │
+       ▼
+ [Đặt giá thành công]
+ [Phát JSON Broadcast]
+       │
+       └───────> (Lặp lại vòng quét thầu)
 ```
 
-### 8.2. Thuật toán Chống bắn tỉa phút chót (Anti-sniping)
-Ngăn chặn hành vi đầu cơ phá hoại của các "Sniper" (người dùng đợi sát giây cuối cùng để đặt giá khiến người khác không kịp phản ứng).
-*   **Nguyên lý vận hành:**
-    1. Khi có một thầu hợp lệ được đặt, hệ thống tính toán khoảng thời gian còn lại đến khi đóng phiên: $\Delta t = T_{end} - T_{current}$.
-    2. Nếu $\Delta t \le 30 \text{ giây}$, thuật toán sẽ tự động gia hạn thời gian kết thúc phiên đấu giá: $T_{new\_end} = T_{current} + 30 \text{ giây}$.
-    3. Hệ thống lưu thời gian mới vào database SQLite và lập tức phát thông báo đổi lịch đóng phiên tới tất cả Client. Biểu đồ đếm ngược trên UI của toàn bộ người dùng sẽ tự động kéo dài thêm 30 giây một cách mượt mà.
+### 8.2. Thuật toán Chống bắn tỉa phút chót (Anti-sniping Protection)
+Khắc phục triệt để hành vi đầu cơ phi thể thao của các người dùng sử dụng tool tự động ("Sniper") - đợi đến mili-giây cuối cùng trước khi đóng phiên mới nhấn đặt thầu, khiến những người tham gia khác không có cơ hội phản ứng.
+*   **Nguyên lý vận hành:** Khi Server tiếp nhận một giá thầu hợp lệ, nó sẽ tính toán khoảng thời gian còn lại đến khi đóng phiên đấu giá:
+    $$\Delta t = T_{end} - T_{current}$$
+*   **Kích hoạt gia hạn:** Nếu khoảng cách này nhỏ hơn hoặc bằng 30 giây ($\Delta t \le 30$s), Server sẽ tự động đẩy lùi thời gian kết thúc phiên đấu giá kéo dài thêm đúng 60 giây nữa:
+    $$T_{new\_end} = T_{current} + 60\text{s}$$
+*   **Đồng bộ thời gian thực:** Trạng thái thời gian mới lập tức được lưu bền vững vào SQLite DB thông qua `ItemDAO`, đồng thời Server phát sóng gói tin `UPDATE_TIME` toàn mạng. Giao diện ClientFX của mọi người dùng sẽ tự động kéo dài thêm 1 phút trên thanh đồng hồ đếm ngược một cách mượt mà và trực quan.
 
 ### 8.3. Đảm bảo an toàn Đa luồng & Tranh chấp thầu (Concurrency Safety)
 *   **Thách thức:** Khi hàng chục Client cùng nhấn nút đặt thầu ở cùng một mili-giây, máy chủ có thể bị tranh chấp tài nguyên (Race Condition), dẫn đến ghi nhận sai giá thầu hoặc một người mua bị mất lượt oan uổng.
 *   **Giải pháp:** Mọi hành vi đặt thầu trong `AuctionManager` được bao bọc bởi từ khóa đồng bộ hóa **`synchronized`** trên chính đối tượng phiên đấu giá (`Auction`). Điều này ép các luồng mạng từ các Client khác nhau phải xếp hàng tuần tự. Máy chủ xử lý giá thầu đến trước, cập nhật giá mới làm mốc, và từ chối các giá thầu đến sau nếu chúng thấp hơn hoặc bằng mức giá mới cập nhật này.
 
+### 8.4. Giới hạn tần suất đặt thầu (Spam Throttling / Rate Limiting)
+*   **Nguyên lý:** Nhằm ngăn chặn các công cụ Auto-Clicker phá hoại, spam liên tục nút đặt giá làm quá tải luồng xử lý của Socket Server và làm nghẽn DB SQLite, hệ thống triển khai bộ đệm giám sát thời gian thực dạng Epoch Milliseconds.
+*   **Cơ chế:** Server duy trì một `ConcurrentHashMap<String, Long>` lưu trữ mốc thời gian đặt thầu gần nhất của từng khóa kết hợp giữa tên tài khoản và ID đấu giá (`username_auctionId`). Khoảng cách tối thiểu bắt buộc giữa hai lượt thầu liên tiếp của cùng một người trên một sản phẩm là **1.5 giây (1500ms)**. Mọi yêu cầu gửi nhanh hơn sẽ bị từ chối thẳng thừng tại Server.
+
 ---
 
 ## 9. Cơ chế Đóng gói Fat JAR & Giải quyết Lỗi JavaFX Runtime
 
-Quy trình đóng gói sử dụng `maven-shade-plugin` nhằm xuất bản ra các tệp JAR hoàn chỉnh, độc lập và chạy được ngay.
+Quy trình đóng gói của dự án sử dụng `maven-shade-plugin` nhằm xuất bản ra các tệp JAR hoàn chỉnh, độc lập và chạy được ngay.
 
-### 9.1. Workaround tránh lỗi JavaFX Runtime: Lớp mồi `UILauncher`
-Nhóm phát triển đã tách biệt hoàn toàn điểm khởi chạy máy ảo Java:
-*   Thông thường, nếu chỉ định lớp chính của tệp JAR chạy thẳng vào `MainUI` (kế thừa từ `javafx.application.Application`), JVM khi quét Classpath lúc khởi động sẽ tìm kiếm cấu trúc mô-đun JavaFX và báo lỗi crash hệ thống ngay lập tức.
-*   **Giải pháp xử lý:** Chúng tôi tạo lớp `network.UILauncher` không hề kế thừa từ bất cứ lớp nào của JavaFX:
+### 9.1. Lớp mồi `UILauncher` - Giải pháp giải quyết lỗi JavaFX Runtime:
+*   **Bối cảnh lỗi:** Kể từ Java 9+, hệ thống mô-đun hóa (Java Platform Module System - JPMS) được đưa vào vận hành chặt chẽ. Nếu ta chỉ định tệp JAR chạy trực tiếp bằng cách gọi lớp `MainUI` (kế thừa trực tiếp từ `javafx.application.Application`), máy ảo JVM khi khởi chạy sẽ phát hiện lớp JavaFX trên Classpath mà không có cấu hình mô-đun liên kết phù hợp, lập tức ném ngoại lệ và crash hệ thống:
+    ```
+    Error: JavaFX runtime components are missing, and are required to run this application
+    ```
+*   **Giải pháp xử lý đột phá:** Chúng tôi tạo ra một lớp trung gian thuần túy có tên `network.UILauncher` nằm tại module Client. Lớp này là một lớp Java tiêu chuẩn, hoàn toàn không kế thừa hay chứa bất kỳ mã nguồn phụ thuộc tĩnh nào đến thư viện JavaFX trong khai báo lớp:
     ```java
     package network;
     public class UILauncher {
-        public static void main(String[] args){
-            MainUI.main(args); // Gọi gián tiếp sang lớp ứng dụng thực tế
+        public static void main(String[] args) {
+            MainUI.main(args); // Gọi gián tiếp thông qua phương thức main của lớp ứng dụng
         }
     }
-    ```
-*   Khi chạy lệnh `java -jar`, JVM sẽ quét `UILauncher` và coi đây là một ứng dụng Java thuần túy (Standard Java App), cho phép khởi động máy ảo thành công. Lớp này sau đó mồi lệnh kích hoạt JavaFX Runtime tĩnh, lách qua rào cản kiểm soát mô-đun của JVM và khởi chạy giao diện đồ họa eBid mượt mà.
+}
+```
+*   **Nguyên lý hoạt động:** Khi chạy lệnh `java -jar`, JVM sẽ quét `UILauncher` và coi đây là một ứng dụng dòng lệnh Java SE truyền thống, cho phép khởi động máy ảo thành công. Lớp này sau đó mồi lệnh kích hoạt JavaFX Runtime tĩnh, lách qua rào cản kiểm soát mô-đun của JVM và khởi chạy giao diện đồ họa eBid mượt mà.
+
+### 9.2. Cấu hình Maven Shade Plugin:
+Được thiết lập cấu hình trong tệp `pom.xml` của cả Server và Client nhằm thu gom toàn bộ các tệp class biên dịch cùng với mọi thư viện phụ thuộc (.jar ngoại vi như Gson, SQLite Driver, JavaFX Modules) nén chung vào một tệp JAR duy nhất:
+```xml
+<plugin>
+    <groupId>org.apache.maven.plugins</groupId>
+    <artifactId>maven-shade-plugin</artifactId>
+    <version>3.2.4</version>
+    <executions>
+        <execution>
+            <phase>package</phase>
+            <goals>
+                <goal>shade</goal>
+            </goals>
+            <configuration>
+                <transformers>
+                    <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                        <!-- Chỉ định rõ ràng lớp mồi hoặc Main Class chạy tệp JAR -->
+                        <mainClass>network.UILauncher</mainClass> 
+                    </transformer>
+                </transformers>
+            </configuration>
+        </execution>
+    </executions>
+</plugin>
+```
 
 ---
 
@@ -326,7 +505,7 @@ Dưới đây là danh sách tài khoản thử nghiệm tích hợp sẵn trong
 5.  **Bidder_01** nhập một mức giá cao hơn giá hiện tại và nhấn nút **Đặt giá (Place Bid)**.
     *   *Hiện tượng:* Mức giá mới và tên người dẫn đầu (`Bidder_01`) lập tức được cập nhật trên màn hình của cả **Bidder_01** và **Bidder_02** mà không cần tải lại trang. Biểu đồ đường Lịch sử biến động giá vẽ thêm một điểm mốc mới.
 6.  **Kiểm tra Anti-sniping:** Quan sát đồng hồ đếm ngược của sản phẩm mẫu này trên màn hình. Khi đồng hồ chỉ thời gian còn lại dưới 30 giây, hãy cho **Bidder_02** nhấn đặt thầu giá mới hợp lệ.
-    *   *Hiện tượng:* Thời gian kết thúc phiên đấu giá lập tức tự động cộng thêm và đặt mốc đếm ngược về lại 30 giây trên giao diện của cả hai người dùng, ngăn chặn tuyệt đối tình trạng phá hoại ở giây cuối.
+    *   *Hiện tượng:* Thời gian kết thúc phiên đấu giá lập tức tự động cộng thêm và đặt mốc đếm ngược về lại 60 giây trên giao diện của cả hai người dùng, ngăn chặn tuyệt đối tình trạng phá hoại ở giây cuối.
 
 ---
 
@@ -334,10 +513,10 @@ Dưới đây là danh sách tài khoản thử nghiệm tích hợp sẵn trong
 1.  **Client 1** (`Bidder_01`) truy cập vào sản phẩm mẫu bất kỳ.
 2.  Tại khu vực thiết lập **Tự động đấu giá (Auto Bid Setup)**:
     *   Nhập **Giá tối đa (Max Budget):** `2,000,000` ₫.
-    *   Nhập **Bước giá nhảy (Increment):** `50,000` ₫.
+    *   Nhập **Bước giá nhảy (Increment):** `50,000` ₫. (Lưu ý: Nếu nhập dưới 10,000 ₫ hệ thống sẽ báo lỗi do vi phạm ràng buộc bước thầu tối thiểu).
     *   Nhấn **Kích hoạt tự động đặt thầu (Set Auto Bid)**.
 3.  Trên **Client 2** (`Bidder_02`), thực hiện đặt giá thủ công ở mức `1,500,000` ₫.
-    *   *Hiện tượng:* Ngay sau khi `Bidder_02` đặt thầu, Robot của `Bidder_01` lập tức tự động phản công bằng cách tăng giá thầu lên thành `1,550,000` ₫ (cộng thêm bước giá 50,000 ₫). Tên người dẫn đầu vẫn tiếp tục duy trì là `Bidder_01`.
+    *   *Hiện tượng:* Ngay sau khi `Bidder_02` đặt thầu, Robot của `Bidder_01` lập tức tự động phản công (sau khoảng trễ ngẫu nhiên từ 1.5s - 2.5s) bằng cách tăng giá thầu lên thành `1,550,000` ₫ (cộng thêm bước giá 50,000 ₫). Tên người dẫn đầu vẫn tiếp tục duy trì là `Bidder_01`.
 4.  **Kiểm thử chạm ngưỡng giới hạn:** Cho `Bidder_02` đặt giá vượt qua ngưỡng giới hạn của robot, ví dụ: `2,100,000` ₫.
     *   *Hiện tượng:* Robot đấu giá của `Bidder_01` sẽ tự động ngừng hoạt động vì đã vượt quá ngân sách tối đa cho phép (`2,000,000` ₫). Quyền dẫn đầu thuộc về `Bidder_02` và Client 1 nhận được thông báo robot dừng thầu.
 
@@ -364,7 +543,7 @@ Dưới đây là danh sách tài khoản thử nghiệm tích hợp sẵn trong
 2.  Giao diện chuyên biệt của **Seller Dashboard** sẽ hiển thị.
 3.  **Đăng bán sản phẩm mới:**
     *   Nhấn nút **Thêm sản phẩm mới (Add Product)**.
-    *   Nhập tên: "Laptop Gaming Dell", chọn danh mục "Điện tử", nhập giá khởi điểm `15,000,000` ₫, mô tả sản phẩm và chọn ảnh minh họa.
+    *   Nhập tên: "Laptop Gaming Dell", chọn danh mục "Điện tử", nhập giá khởi điểm `15,000,000` ₫, mô tả sản phẩm và nhập thông tin bổ sung (Thời gian bảo hành).
     *   Thiết lập thời gian đấu giá (Ví dụ kết thúc sau 5 phút để thử nghiệm nhanh).
     *   Nhấn **Đăng bán (Submit)**.
     *   *Hiện tượng:* Sản phẩm mới lập tức xuất hiện trong danh sách hiển thị của Seller, đồng thời toàn bộ các Bidder đang online sẽ lập tức nhìn thấy sản phẩm này xuất hiện trên màn hình mua sắm của họ ở thời gian thực.
