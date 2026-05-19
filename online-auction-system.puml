@@ -1,10 +1,100 @@
 @startuml
+class services.AuctionManager {
+- {static} AuctionManager instance
+- Map<String,Auction> activeAuctions
+- AuctionNotificationService notificationService
+- OrderDAO orderDAO
+- Map<String,Long> userLastBidTime
+- Map<String,Boolean> auctionAutoBidProcessing
+- <<Create>> AuctionManager()
++ {static} AuctionManager getInstance()
++ void setNotificationService(AuctionNotificationService)
++ boolean removeAutoBid(String,String)
+- void notifyObservers(String)
++ void addAuction(Auction)
++ boolean placeBid(String,Bidder,double)
+- void handleAntiSniping(Auction)
++ void checkAndTriggerAutoBids(String)
++ void triggerAutoBids(Auction)
++ void startAuctionTimer()
++ String getFirstRunningAuctionId()
++ Auction getAuction(String)
++ List<Auction> getAllActiveAuctions()
++ java.util.Map<String,Auction> getAllActiveAuctionsMap()
++ Auction getAuctionByItemId(String)
+}
+
+
+interface dao.UserRepository {
+~ User loginUser(String,String)
+~ boolean insertUser(String,String,String,String)
+}
+
+class models.User {
+# String username
+# String password
+# String email
+# String role
+# boolean isLocked
+# boolean isVerified
++ <<Create>> User(String,String,String)
++ String getUsername()
++ void setUsername(String)
++ String getEmail()
++ void setEmail(String)
++ String getRole()
++ void setRole(String)
++ String getPassword()
++ boolean isLocked()
++ void setLocked(boolean)
++ boolean isVerified()
++ void setVerified(boolean)
+}
+
+
+interface network.AuctionObserver {
+~ void updateClient(String)
+}
+
+class MainServer {
++ {static} void main(String[])
+}
+
+class network.AuctionSocketServer {
+- int port
++ <<Create>> AuctionSocketServer(int)
++ void startServer()
+}
+
+
+class dao.OrderDAO {
++ boolean insertOrder(String,String,String,double)
++ double getTotalRevenue(String)
++ Map<String,Double> getRevenueLast7Days(String)
++ List<Map<String,String>> getOrdersBySeller(String)
+}
+
+class network.command.CancelAutoBidCommand {
++ void execute(JsonObject,PrintWriter,ClientHandler)
+}
+
+class dao.UserDAO {
++ User loginUser(String,String)
++ boolean insertUser(String,String,String,String)
+}
+
 class network.ClientHandler {
 - {static} List<AuctionObserver> observers
 - Socket clientSocket
 - PrintWriter out
 - Gson gson
+- String currentUsername
++ <<Create>> ClientHandler(Socket)
++ String getCurrentUsername()
++ void setCurrentUsername(String)
+- void initializeCommands()
 + void run()
+- void handleLegacyCommands(String,String,PrintWriter)
 + {static} void registerObserver(AuctionObserver)
 + {static} void removeObserver(AuctionObserver)
 + {static} void notifyAllObservers(String)
@@ -12,33 +102,182 @@ class network.ClientHandler {
 }
 
 
-abstract class models.User {
-# String username
-# String password
-# String email
-+ String getUsername()
-+ void setUsername(String)
-+ String getEmail()
-+ void setEmail(String)
-+ {abstract}String getRole()
-+ String getPassword()
+class controllers.AddProductController {
+- TextField txtProductName
+- TextField txtStartPrice
+- TextArea txtDescription
+- ComboBox<String> cboCategory
+- TextField txtDurationValue
+- ComboBox<String> cboDurationUnit
+- Label lblStatus
+- FlowPane photoContainer
+- String sellerName
+- List<String> imagePaths
+- String getCategoryType()
++ void initialize()
++ void setSellerName(String)
++ void handleUploadPhoto(ActionEvent)
++ void handleSaveProduct(ActionEvent)
++ void handleCancel(ActionEvent)
 }
 
 
-abstract class models.Entity {
-# String id
+class dao.ItemDAO {
+- {static} DateTimeFormatter ISO_FORMAT
+- {static} DateTimeFormatter SPACE_FORMAT
+- LocalDateTime parseDateTime(String)
++ List<Item> getAllItems()
++ Item getItemById(String)
++ void addItem(String,Item)
++ boolean updateItem(String,String,String,double)
++ boolean deleteItem(String)
+}
+
+
+class models.GeneralItem {
++ <<Create>> GeneralItem(String,String,double,LocalDateTime,LocalDateTime)
++ void printInfo()
+}
+
+class controllers.SellerDashboardController {
+- Label lblGreeting
+- TextField txtSearch
+- TextField txtSearchActive
+- HBox catAll
+- HBox catElectronics
+- HBox catArt
+- HBox catVehicle
+- Label lblTotalRevenue
+- Label lblActiveAuctions
+- Label lblPendingOrders
+- BarChart<String,Number> revenueChart
+- TableView<ProductUI> tableProducts
+- TableColumn<ProductUI,String> colId
+- TableColumn<ProductUI,String> colName
+- TableColumn<ProductUI,String> colPrice
+- TableColumn<ProductUI,String> colStatus
+- TableView<ProductUI> tableActiveProducts
+- TableColumn<ProductUI,String> colActiveId
+- TableColumn<ProductUI,String> colActiveName
+- TableColumn<ProductUI,String> colActivePrice
+- TableColumn<ProductUI,Integer> colActiveBids
+- TableColumn<ProductUI,String> colActiveTimeLeft
+- TableColumn<ProductUI,String> colActiveStatus
+- TableColumn<ProductUI,Void> colActiveAction
+- TableView<ProductUI> tableSoldProducts
+- TableColumn<ProductUI,String> colSoldId
+- TableColumn<ProductUI,String> colSoldName
+- TableColumn<ProductUI,String> colSoldPrice
+- TableColumn<ProductUI,String> colSoldEndTime
+- TableColumn<ProductUI,String> colSoldStatus
+- TableView<OrderUI> tableOrders
+- TableColumn<OrderUI,String> colOrderId
+- TableColumn<OrderUI,String> colOrderItem
+- TableColumn<OrderUI,String> colOrderBuyer
+- TableColumn<OrderUI,String> colOrderPrice
+- TableColumn<OrderUI,String> colOrderDate
+- TableView<ProductUI> tableListings
+- TableColumn<ProductUI,String> colListId
+- TableColumn<ProductUI,String> colListName
+- TableColumn<ProductUI,String> colListDesc
+- TableColumn<ProductUI,String> colListPrice
+- TableColumn<ProductUI,String> colListStatus
+- TableColumn<ProductUI,Void> colListAction
+- StackPane contentArea
+- VBox pageOverview
+- VBox pageActiveProducts
+- VBox pageSoldProducts
+- VBox pageOrders
+- VBox pageListings
+- VBox pageRevenue
+- Label lblFullRevenue
+- Label lblRevenueChange
+- Label lblAvgOrderValue
+- Label lblOrderCountDetail
+- Label lblConversionRate
+- Label lblConversionDetail
+- javafx.scene.chart.AreaChart<String,Number> revenueAreaChart
+- Label tabOverview
+- Label tabOrders
+- Label tabListings
+- HBox sideActive
+- HBox sideSold
+- HBox sideRevenue
+- String username
+- List<ProductUI> allProducts
+- List<ProductUI> activeProducts
+- List<ProductUI> soldProducts
+- List<OrderUI> allOrders
+- String currentSearchKeyword
+- String currentCategoryFilter
++ void setUserInfo(String)
++ void initialize()
+- void applyToggleSelection(TableView<T>)
+- void setupTableColumns()
+- void setupActionColumns()
+- void setupPlaceholders()
+- void showPage(VBox)
+- void updateSidebarStyle(HBox)
+- void updateTabStyle(Label)
++ void handleTabOverview(MouseEvent)
++ void handleTabOrders(MouseEvent)
++ void handleTabListings(MouseEvent)
++ void handleSideActive(MouseEvent)
++ void handleSideSold(MouseEvent)
++ void handleSideRevenue(MouseEvent)
+- void loadRevenueAnalytics()
++ void handleCategoryAll(MouseEvent)
++ void handleCategoryElectronics(MouseEvent)
++ void handleCategoryArt(MouseEvent)
++ void handleCategoryVehicle(MouseEvent)
+- void applyFilters()
+- List<ProductUI> filterProducts(List<ProductUI>)
+- void loadRealDataFromServer()
+- void updateUI(JsonObject)
+- String getProfessionalName(String,String)
++ void handleLogout(ActionEvent)
++ void handleAddProduct(ActionEvent)
++ void handleSearch(ActionEvent)
+- void editProduct(ProductUI)
+- void deleteProduct(ProductUI)
+}
+
+
+class controllers.SellerDashboardController$ProductUI {
+- String id
+- int bids
++ <<Create>> ProductUI(String,String,String,String,String,String,String,int)
 + String getId()
-+ void setId()
++ String getName()
++ String getPrice()
++ String getStatus()
++ String getEndTime()
++ String getDescription()
++ String getType()
++ int getBids()
++ String getTimeLeft()
 }
 
 
-class controllers.SignUpController {
-- TextField txtUsername
-- PasswordField txtPassword
-- ComboBox<String> cbRole
-- Label lblMessage
-+ void handleRegister(ActionEvent)
-+ void handleBackToLogin(ActionEvent)
+class controllers.SellerDashboardController$OrderUI {
+- String orderId
++ <<Create>> OrderUI(String,String,String,String,String)
++ String getOrderId()
++ String getItemName()
++ String getBuyerName()
++ String getPrice()
++ String getOrderDate()
+}
+
+
+class models.Seller {
++ <<Create>> Seller(String,String,String)
++ String getRole()
+}
+
+class network.command.GetSellerDashboardCommand {
+- Gson gson
++ void execute(JsonObject,PrintWriter,ClientHandler)
 }
 
 
@@ -46,97 +285,103 @@ class services.ItemFactory {
 + {static} Item createItem(String,String,String,double,LocalDateTime,LocalDateTime,String)
 }
 
-class models.Bidder {
-+ String getRole()
-}
-
-class network.MainUI {
-+ void start(Stage)
-+ {static} void main(String[])
-}
-
-class MainServer {
-+ {static} void main(String[])
-}
-
-class network.AuctionChartGUI {
-- XYChart.Series<String,Number> priceSeries
-- DateTimeFormatter timeFormatter
-+ void start(Stage)
-- void startNetworkListener()
-+ {static} void main(String[])
-}
-
-
-class models.AuctionRequest {
-- String command
-- Object data
-+ String getCommand()
-+ Object getData()
-}
-
-
-class network.UILauncher {
-+ {static} void main(String[])
-}
-
 class services.ItemManager {
 - {static} ItemManager instance
 - ItemDAO itemDAO
+- <<Create>> ItemManager()
 + {static} ItemManager getInstance()
-+ boolean addItem(String,Item,Seller)
-+ boolean updateItem(String,String,String,double)
-+ boolean deleteItem(String)
++ void addItem(String,Item,Seller)
++ boolean updateItem(String,String,String,String,double)
++ boolean deleteItem(String,String)
 + List<Item> getAllItems()
 }
 
 
-class network.AuctionSocketServer {
-- int port
-+ void startServer()
+class services.DashboardService {
+- {static} DashboardService instance
+- <<Create>> DashboardService()
++ {static} DashboardService getInstance()
++ JsonObject getSellerDashboardData(String)
 }
 
 
-enum models.AuctionStatus {
-+  OPEN
-+  RUNNING
-+  FINISHED
-+  PAID
-+  CANCELED
+class dao.AdminJDBCRepository {
+- {static} AdminJDBCRepository instance
+- <<Create>> AdminJDBCRepository()
++ {static} AdminJDBCRepository getInstance()
++ List<User> getAllUsers()
++ boolean updateUserStatus(String,boolean)
++ boolean verifySeller(String,boolean)
++ boolean deleteUser(String)
++ List<Auction> getAllAuctions()
++ boolean updateAuctionStatus(String,String)
++ boolean cancelAuction(String)
++ List<BidTransaction> getTransactionHistory()
++ List<String> getSystemLogs()
 }
 
-class network.AuctionClient {
-+ {static} void main(String[])
+
+interface domain.repository.AdminRepository {
+~ List<User> getAllUsers()
+~ boolean updateUserStatus(String,boolean)
+~ boolean verifySeller(String,boolean)
+~ boolean deleteUser(String)
+~ List<Auction> getAllAuctions()
+~ boolean updateAuctionStatus(String,String)
+~ boolean cancelAuction(String)
+~ List<BidTransaction> getTransactionHistory()
+~ List<String> getSystemLogs()
+}
+
+class models.Admin {
++ <<Create>> Admin(String,String,String)
++ String getRole()
+}
+
+class controllers.LoginController {
+- TextField txtUsername
+- PasswordField txtPassword
+- TextField txtPasswordVisible
+- ToggleButton btnShowPassword
+- Button btnLogin
+- Label lblError
+- CheckBox chkRemember
+- Preferences prefs
++ void initialize()
++ void togglePasswordVisibility()
++ void handleLogin(ActionEvent)
++ void handleGoToSignUp(ActionEvent)
+}
+
+
+interface network.command.Command {
+~ void execute(JsonObject,PrintWriter,ClientHandler)
 }
 
 class models.Electronics {
 - int warrantyMonths
++ <<Create>> Electronics(String,String,double,LocalDateTime,LocalDateTime,int)
 + void printInfo()
 + int getWarrantyMonths()
 }
 
 
-class models.AutoBid {
-- Bidder bidder
-- double maxBid
-- double increment
-- LocalDateTime registerTime
-+ Bidder getBidder()
-+ double getMaxBid()
-+ double getIncrement()
-+ LocalDateTime getRegisterTime()
+class utils.GsonConfig {
+- {static} DateTimeFormatter formatter
++ {static} Gson createGson()
 }
 
 
-class services.AuctionManagerTest {
-- AuctionManager manager
-- Auction auction
-- Bidder bidder1
-- Bidder bidder2
-~ void setUp()
-~ void testValidBid()
-~ void testInvalidLowerBid()
-~ void testAntiSnipingExtension()
+interface network.AuctionSubject {
+~ void registerObserver(AuctionObserver)
+~ void removeObserver(AuctionObserver)
+~ void notifyAllObservers(String)
+}
+
+class utils.DBConnection {
+- {static} String URL
++ {static} Connection getConnection()
+- {static} void createTablesAndDefaultUsers(Connection)
 }
 
 
@@ -147,6 +392,9 @@ abstract class models.Item {
 - double currentHighestPrice
 - LocalDateTime startTime
 - LocalDateTime endTime
+# Seller seller
+- String imageUrls
++ <<Create>> Item(String,String,double,LocalDateTime,LocalDateTime)
 + {abstract}void printInfo()
 + String getName()
 + void setName(String)
@@ -160,141 +408,141 @@ abstract class models.Item {
 + void setStartTime(LocalDateTime)
 + LocalDateTime getEndTime()
 + void setEndTime(LocalDateTime)
-}
-
-
-class controllers.DashboardController {
-- TableView<Item> tableItems
-- TableColumn<Item,String> colName
-- TableColumn<Item,String> colDesc
-- TableColumn<Item,Double> colPrice
-- TableColumn<Item,String> colStatus
-- TextField txtBidAmount
-- Button btnBid
-- Socket socket
-- PrintWriter out
-- BufferedReader in
-- String currentUsername
-- String userRole
-- ObservableList<Item> masterData
-- Gson gson
-+ void setUserInfo(String,String)
-+ void initialize()
-- void startBackgroundListener()
-+ void handlePlaceBid(ActionEvent)
-+ void handleShowChart(ActionEvent)
-- void showDetailPopup(Item)
-- void showAlert(Alert.AlertType,String,String)
-}
-
-
-class services.AuctionManager {
-- {static} AuctionManager instance
-- Map<String,Auction> activeAuctions
-+ {static} AuctionManager getInstance()
-+ void addAuction(Auction)
-+ boolean placeBid(String,Bidder,double)
-- void handleAntiSniping(Auction)
-- void triggerAutoBids(Auction)
-+ void startAuctionTimer()
-+ String getFirstRunningAuctionId()
++ Seller getSeller()
++ void setSeller(Seller)
++ String getImageUrls()
++ void setImageUrls(String)
 }
 
 
 class models.Vehicle {
 - String brand
++ <<Create>> Vehicle(String,String,double,LocalDateTime,LocalDateTime,String)
 + void printInfo()
 + String getBrand()
 + void setBrand(String)
 }
 
 
+class models.AuctionRequest {
+- String command
+- Object data
++ <<Create>> AuctionRequest()
++ <<Create>> AuctionRequest(String,Object)
++ String getCommand()
++ Object getData()
+}
+
+
+class models.AutoBid {
+- Bidder bidder
+- double maxBid
+- double increment
+- LocalDateTime registerTime
++ <<Create>> AutoBid(Bidder,double,double)
++ Bidder getBidder()
++ double getMaxBid()
++ double getIncrement()
++ LocalDateTime getRegisterTime()
+}
+
+
+class network.command.AdminCommand {
+- Gson gson
++ void execute(JsonObject,PrintWriter,ClientHandler)
+}
+
+
+abstract class models.Entity {
+# String id
++ <<Create>> Entity()
++ String getId()
++ void setId(String)
+}
+
+
+class network.command.LoginCommand {
++ void execute(JsonObject,PrintWriter,ClientHandler)
+}
+
+class models.Bidder {
++ <<Create>> Bidder(String,String,String)
++ String getRole()
+}
+
+class network.MainUI {
++ void start(Stage)
++ {static} void main(String[])
+}
+
+class network.command.AddItemCommand {
++ void execute(JsonObject,PrintWriter,ClientHandler)
+}
+
 class services.UserManager {
 - {static} UserManager instance
 - UserDAO userDAO
+- <<Create>> UserManager()
 + {static} UserManager getInstance()
-+ boolean register(User)
 + User login(String,String)
-+ boolean registerUser(String,String,String)
++ boolean registerUser(String,String,String,String)
 }
 
+
+class usecase.admin.UserManagementUseCase {
+- {static} UserManagementUseCase instance
+- AdminRepository repository
+- <<Create>> UserManagementUseCase(AdminRepository)
++ {static} UserManagementUseCase getInstance()
++ List<User> getUsers()
++ boolean lockUser(String)
++ boolean unlockUser(String)
++ boolean verifySeller(String)
++ boolean removeUser(String)
++ List<models.Auction> getAuctions()
++ boolean removeAuction(String)
+}
+
+
+class network.command.DeleteItemCommand {
++ void execute(JsonObject,PrintWriter,ClientHandler)
+}
+
+class network.command.AutoBidCommand {
+- {static} double MIN_INCREMENT
++ void execute(JsonObject,PrintWriter,ClientHandler)
+}
+
+
+class models.Art {
+- String artistName
++ <<Create>> Art(String,String,double,LocalDateTime,LocalDateTime,String)
++ void printInfo()
++ String getArtistName()
+}
+
+
+enum models.AuctionStatus {
++  OPEN
++  RUNNING
++  FINISHED
++  PAID
++  CANCELED
+}
 
 class models.BidTransaction {
 - Bidder bidder
 - double amount
 - LocalDateTime timestamp
++ <<Create>> BidTransaction(Bidder,double)
 + Bidder getBidder()
 + double getAmount()
 + LocalDateTime getTimestamp()
 }
 
 
-class models.Seller {
-+ String getRole()
-}
-
-class utils.DBConnection {
-- {static} String URL
-+ {static} Connection getConnection()
-- {static} void createTablesAndDefaultUsers(Connection)
-}
-
-
-interface network.AuctionObserver {
-~ void updateClient(String)
-}
-
-class controllers.LoginController {
-- TextField txtUsername
-- PasswordField txtPassword
-- Button btnLogin
-- Label lblError
-+ void handleLogin(ActionEvent)
-+ void handleGoToSignUp(ActionEvent)
-}
-
-
-class models.Art {
-- String artistName
-+ void printInfo()
-+ String getArtistName()
-}
-
-
-class dao.UserDAO {
-+ User loginUser(String,String)
-+ boolean insertUser(String,String,String)
-}
-
-class utils.GsonConfig {
-- {static} DateTimeFormatter formatter
-+ {static} Gson createGson()
-}
-
-
-class controllers.SellerDashboardController {
-- TextField txtName
-- TextField txtDesc
-- TextField txtPrice
-- ComboBox<String> cbType
-- TextField txtExtra
-- Label lblMessage
-- String currentUsername
-- PrintWriter out
-+ void setUserInfo(String)
-+ void initialize()
-+ void handleAddItem(ActionEvent)
-}
-
-
-class models.Admin {
-+ String getRole()
-}
-
-interface network.AuctionSubject {
-~ void registerObserver(AuctionObserver)
-~ void removeObserver(AuctionObserver)
-~ void notifyAllObservers(String)
+interface services.AuctionNotificationService {
+~ void notifyAll(String)
 }
 
 class models.Auction {
@@ -305,6 +553,7 @@ class models.Auction {
 - Bidder winner
 - String auctionId
 - List<AutoBid> autoBids
++ <<Create>> Auction(Item,Seller)
 + String getAuctionId()
 + void setAuctionId(String)
 + void addBid(BidTransaction)
@@ -320,31 +569,279 @@ class models.Auction {
 }
 
 
-class network.ChartLauncher {
+class network.command.BidCommand {
++ void execute(JsonObject,PrintWriter,ClientHandler)
+}
+
+class services.AuctionManagerTest {
+- AuctionManager manager
+- Auction auction
+- Bidder bidder1
+- Bidder bidder2
+~ void setUp()
+~ void testValidBid()
+~ void testInvalidLowerBid()
+~ void testAntiSnipingExtension()
+}
+
+
+class network.command.CommandRouter {
+- {static} CommandRouter instance
+- Map<String,Command> commands
+- <<Create>> CommandRouter()
++ {static} CommandRouter getInstance()
++ void registerCommand(String,Command)
++ Command getCommand(String)
+}
+
+
+class network.UILauncher {
 + {static} void main(String[])
 }
 
-class dao.ItemDAO {
-+ List<Item> getAllItems()
-+ boolean insertItem(String,Item)
-+ boolean updateItem(String,String,String,double)
-+ boolean deleteItem(String)
+class controllers.DashboardController {
+- Label lblGreeting
+- TextField txtSearch
+- Label sideBrowse
+- StackPane contentArea
+- VBox pageBrowse
+- ScrollPane scrollPaneBrowse
+- Button btnBackToTop
+- VBox pageHistory
+- VBox pageWonItems
+- Label sideHistory
+- Label sideWonItems
+- TableView<ItemUI> tableHistory
+- TableColumn<ItemUI,String> colHistName
+- TableColumn<ItemUI,String> colHistPrice
+- TableColumn<ItemUI,Integer> colHistBids
+- TableColumn<ItemUI,String> colHistStatus
+- TableView<ItemUI> tableWon
+- TableColumn<ItemUI,String> colWonName
+- TableColumn<ItemUI,String> colWonPrice
+- TableColumn<ItemUI,String> colWonSeller
+- TableColumn<ItemUI,String> colWonDate
+- Label lblCategoryTitle
+- FlowPane gridItems
+- ComboBox<String> cboFilterCondition
+- ComboBox<String> cboFilterPrice
+- ComboBox<String> cboFilterRating
+- ScrollPane pageProductDetail
+- VBox pageMiniCart
+- VBox vboxMiniCartItems
+- Label lblMiniCartTotal
+- Button btnQuickPay
+- Button btnPayAllWon
+- Label lblDetailName
+- Label lblDetailPrice
+- Label lblDetailBidsCount
+- Label lblDetailStatus
+- TextField txtBidAmount
+- TextField txtAutoBidMax
+- LineChart<String,Number> priceChart
+- XYChart.Series<String,Number> priceSeries
+- DateTimeFormatter timeFormatter
+- Label lblCountdown
+- Timeline countdownTimeline
+- Timeline chartUpdateTimeline
+- ItemUI selectedProductForDetail
+- VBox vboxAutoBidSetup
+- VBox vboxAutoBidActive
+- Label lblActiveAutoBidMax
+- Label lblBidStatus
+- TextField txtAutoBidIncrement
+- java.util.Map<String,Double> activeAutoBids
+- {static} double MIN_INCREMENT
+- Label catAll
+- Label catElectronics
+- Label catArt
+- Label catVehicle
+- Label catGeneral
+- Socket socket
+- PrintWriter out
+- BufferedReader in
+- String currentUsername
+- List<ItemUI> allItems
+- ObservableList<ItemUI> filteredItems
+- String currentCategoryFilter
+- int itemsPerPage
+- int currentlyLoadedCount
+- boolean isLoadingMore
++ void setUserInfo(String,String)
++ void initialize()
++ void handleSideBrowse(Event)
++ void handleBackToBrowse(ActionEvent)
+- void setActiveSidebar(Label)
++ void handleSideHistory(MouseEvent)
++ void handleSideWonItems(MouseEvent)
+- void loadHistoryData()
+- void loadWonData()
+- void showPage(Region)
+- void resetCategoryStyles()
+- void setActiveCategory(Label,String,String)
++ void handleCategoryAll(MouseEvent)
++ void handleCategoryElectronics(MouseEvent)
++ void handleCategoryArt(MouseEvent)
++ void handleCategoryVehicle(MouseEvent)
++ void handleCategoryGeneral(MouseEvent)
+- void startBackgroundListener()
++ void handleSearch(ActionEvent)
+- void applySearchFilter()
+- void loadMoreProducts()
+- void updateGridResponsive(double)
++ void handleBackToTop()
+- void renderProductCards()
+- VBox createProductCard(ItemUI)
+- void updateCardContent(VBox,ItemUI)
+- Label createPlaceholderLabel(String)
+- String calculateTimeRemaining(ItemUI)
+- void doPlaceBid(ItemUI,String)
+- void showProductDetail(ItemUI)
+- void updateBidStatusUI()
+- void startChartAutoUpdate()
+- void handleAdd50k()
+- void handleAdd100k()
+- void handleAdd500k()
+- void addQuickBid(double)
+- void startCountdown()
++ void handlePlaceBid(ActionEvent)
++ void handleSetAutoBid(ActionEvent)
++ void handleCancelAutoBid(ActionEvent)
+- void updateAutoBidUI()
+- void handleShowNotifications()
+- void handleShowMiniCart()
+- void handleHideMiniCart()
+- void populateMiniCart()
+- void handleQuickPay()
++ void handleLogout(ActionEvent)
+- void showAlert(Alert.AlertType,String,String)
+}
+
+
+class controllers.DashboardController$ItemUI {
+- String name
+- String description
+- double rawPrice
+- String priceStr
+- String status
+- double startingPrice
+- String endTime
+- String type
+- String sellerName
+- String auctionId
+- String winnerUsername
+- int bidsCount
+- String imageUrls
++ <<Create>> ItemUI(String,String,double,String,double,String,String,String,int,String)
++ String getName()
++ String getDescription()
++ String getPriceStr()
++ String getStatus()
++ double getRawPrice()
++ double getStartingPrice()
++ String getEndTime()
++ void setEndTime(String)
++ String getType()
++ String getSellerName()
++ String getAuctionId()
++ void setAuctionId(String)
++ int getBidsCount()
++ void setBidsCount(int)
++ void setWinnerUsername(String)
++ String getWinnerUsername()
++ String getImageUrls()
++ void setCurrentPrice(double)
+}
+
+
+class controllers.AdminDashboardController {
+- TableView<User> userTable
+- TableColumn<User,String> usernameCol
+- TableColumn<User,String> emailCol
+- TableColumn<User,String> roleCol
+- TableColumn<User,String> statusCol
+- TableColumn<User,Void> actionCol
+- TextField searchField
+- ComboBox<String> roleFilter
+- ComboBox<String> statusFilter
+- Pagination pagination
+- TableView<models.Auction> auctionTable
+- TableColumn<models.Auction,String> colAuctionId
+- TableColumn<models.Auction,String> colItemName
+- TableColumn<models.Auction,String> colAuctionSeller
+- TableColumn<models.Auction,String> colAuctionPrice
+- TableColumn<models.Auction,String> colAuctionEndTime
+- TableColumn<models.Auction,Void> colAuctionAction
+- Button btnManageUsers
+- Button btnAuctions
+- Button btnTransactions
+- Button btnReports
+- VBox viewManageUsers
+- VBox viewAuctions
+- VBox viewTransactions
+- VBox viewReports
+- Gson gson
+- ObservableList<User> masterData
+- FilteredList<User> filteredData
+- ObservableList<models.Auction> auctionMasterData
+- {static} int ROWS_PER_PAGE
++ void initialize()
+- void setupTableColumns()
+- void setupAuctionTable()
+- void loadUserData()
+- void loadAuctionData()
+- void handleLockToggle(User)
+- void handleCancelAuction(models.Auction)
+- void setupFilters()
+- void applyFilters()
+- void updatePagination()
+- Node createPage(int)
+- void handleSearch()
+- void handleAddUser()
+- void handleSidebarNavigation(ActionEvent)
+- void handleLogout()
+- void showAlert(String,String)
+}
+
+
+class controllers.SignUpController {
+- TextField txtUsername
+- TextField txtEmail
+- PasswordField txtPassword
+- ComboBox<String> cbRole
+- Label lblMessage
++ void handleRegister(ActionEvent)
++ void handleBackToLogin(ActionEvent)
 }
 
 
 
+
+models.Entity <|-- models.User
+network.command.Command <|.. network.command.CancelAutoBidCommand
+dao.UserRepository <|.. dao.UserDAO
 network.Runnable <|.. network.ClientHandler
 network.AuctionObserver <|.. network.ClientHandler
-models.Entity <|-- models.User
-models.User <|-- models.Bidder
-javafx.application.Application <|-- network.MainUI
-javafx.application.Application <|-- network.AuctionChartGUI
+models.Item <|-- models.GeneralItem
+controllers.SellerDashboardController +.. controllers.SellerDashboardController$ProductUI
+controllers.SellerDashboardController +.. controllers.SellerDashboardController$OrderUI
+models.User <|-- models.Seller
+network.command.Command <|.. network.command.GetSellerDashboardCommand
+domain.repository.AdminRepository <|.. dao.AdminJDBCRepository
+models.User <|-- models.Admin
 models.Item <|-- models.Electronics
 models.Entity <|-- models.Item
 models.Item <|-- models.Vehicle
-models.Entity <|-- models.BidTransaction
-models.User <|-- models.Seller
+network.command.Command <|.. network.command.AdminCommand
+network.command.Command <|.. network.command.LoginCommand
+models.User <|-- models.Bidder
+javafx.application.Application <|-- network.MainUI
+network.command.Command <|.. network.command.AddItemCommand
+network.command.Command <|.. network.command.DeleteItemCommand
+network.command.Command <|.. network.command.AutoBidCommand
 models.Item <|-- models.Art
-models.User <|-- models.Admin
+models.Entity <|-- models.BidTransaction
 models.Entity <|-- models.Auction
+network.command.Command <|.. network.command.BidCommand
+controllers.DashboardController +.. controllers.DashboardController$ItemUI
 @enduml
