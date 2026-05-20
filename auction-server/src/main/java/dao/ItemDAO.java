@@ -8,7 +8,7 @@ import models.Item;
 import models.Vehicle;
 import models.Seller;
 import services.ItemFactory;
-import utils.DBConnection;
+import database.DBConnection;
 // 3. Import các thư viện JDBC xử lý SQL
 import java.sql.Connection;
 import java.sql.PreparedStatement;

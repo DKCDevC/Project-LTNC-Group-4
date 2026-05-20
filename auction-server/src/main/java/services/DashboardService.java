@@ -112,13 +112,44 @@ public class DashboardService {
                     pObj.addProperty("endTime", "");
                 }
 
-                // Xác định trạng thái hoạt động dựa trên thời gian kết thúc thầu
-                if (now.isAfter(item.getEndTime())) {
-                    pObj.addProperty("status", "Đã kết thúc");
+                // Xác định trạng thái hoạt động dựa trên trạng thái phiên đấu giá trong RAM/DB
+                String statusStr = "Đang đấu giá";
+                activeAuction = AuctionManager.getInstance().getAuction(item.getId());
+                if (activeAuction != null) {
+                    models.AuctionStatus status = activeAuction.getStatus();
+                    if (status == models.AuctionStatus.ENDED_NO_WINNER) {
+                        statusStr = "Đã kết thúc";
+                    } else if (status == models.AuctionStatus.ENDED_WITH_WINNER) {
+                        statusStr = "Chờ thanh toán";
+                    } else if (status == models.AuctionStatus.FINISHED) {
+                        statusStr = "Hoàn thành";
+                    } else if (status == models.AuctionStatus.OPEN) {
+                        statusStr = "Chờ mở";
+                    } else if (status == models.AuctionStatus.RUNNING) {
+                        statusStr = "Đang đấu giá";
+                        activeAuctionsCount++;
+                    }
                 } else {
-                    pObj.addProperty("status", "Đang đấu giá");
-                    activeAuctionsCount++;
+                    // Check order DB fallback
+                    OrderDAO orderDaoTmp = new OrderDAO();
+                    String orderStatus = orderDaoTmp.getOrderStatusByItemId(item.getId());
+                    String winner = orderDaoTmp.getWinnerByItemId(item.getId());
+                    if (winner != null) {
+                        if ("FINISHED".equals(orderStatus)) {
+                            statusStr = "Hoàn thành";
+                        } else {
+                            statusStr = "Chờ thanh toán";
+                        }
+                    } else {
+                        if (now.isAfter(item.getEndTime())) {
+                            statusStr = "Đã kết thúc";
+                        } else {
+                            statusStr = "Đang đấu giá";
+                            activeAuctionsCount++;
+                        }
+                    }
                 }
+                pObj.addProperty("status", statusStr);
                 productsArray.add(pObj);
             }
         }

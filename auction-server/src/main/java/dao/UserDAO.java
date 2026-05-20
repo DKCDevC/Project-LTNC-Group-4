@@ -6,7 +6,7 @@ import models.Admin;
 import models.Bidder;
 import models.Seller;
 import models.User;
-import utils.DBConnection;
+import database.DBConnection;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;

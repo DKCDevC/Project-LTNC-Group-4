@@ -98,7 +98,7 @@ public class AuctionManager {
      * Gửi bản tin thông báo thời gian thực đến tầng Server để chuyển phát đến các Client (Observer Pattern).
      * @param message Nội dung bản tin định dạng JSON
      */
-    private void notifyObservers(String message) {
+    public void notifyObservers(String message) {
         if (notificationService != null) {
             notificationService.notifyAll(message);
         }
@@ -335,7 +335,11 @@ public class AuctionManager {
                             if (auction.getStatus() == AuctionStatus.RUNNING && now.isAfter(auction.getItem().getEndTime())) {
 
                                 // Chuyển trạng thái phiên sang KẾT THÚC
-                                auction.setStatus(AuctionStatus.FINISHED);
+                                if (auction.getWinner() != null) {
+                                    auction.setStatus(AuctionStatus.ENDED_WITH_WINNER);
+                                } else {
+                                    auction.setStatus(AuctionStatus.ENDED_NO_WINNER);
+                                }
 
                                 String winnerInfo = (auction.getWinner() != null)
                                         ? "Người thắng: " + auction.getWinner().getUsername()
@@ -344,6 +348,7 @@ public class AuctionManager {
                                 // Phát bản tin kết thúc đấu giá
                                 String msg = "{\"command\":\"AUCTION_FINISHED\", \"message\":\"[HẾT GIỜ] " + auction.getItem().getName() + " đã kết thúc. " + winnerInfo + "\"}";
                                 notifyObservers(msg);
+                                 notifyObservers("{\"command\":\"UPDATE_ITEMS\"}");
                                 System.out.println(">>> Đóng phiên: " + auction.getAuctionId());
                                 
                                 // Ghi hóa đơn mua bán thành công xuống Database để người bán thống kê doanh thu (Persistent Order Data)
@@ -397,5 +402,27 @@ public class AuctionManager {
             }
         }
         return null;
+    }
+
+    /**
+     * Thực hiện thanh toán tất cả sản phẩm đã thắng thầu cho người dùng.
+     */
+    public boolean payWinnings(String username) {
+        boolean paidAny = false;
+        for (Auction auction : activeAuctions.values()) {
+            synchronized (auction) {
+                if (auction.getStatus() == AuctionStatus.ENDED_WITH_WINNER &&
+                        auction.getWinner() != null &&
+                        username.equals(auction.getWinner().getUsername())) {
+                    
+                    auction.setStatus(AuctionStatus.FINISHED);
+                    orderDAO.markOrderAsCompletedByItemId(auction.getItem().getId());
+                    paidAny = true;
+                }
+            }
+        }
+        
+        boolean dbUpdated = orderDAO.markAllOrdersAsFinishedByBidderName(username);
+        return paidAny || dbUpdated;
     }
 }

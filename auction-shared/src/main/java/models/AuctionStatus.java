@@ -24,5 +24,11 @@ public enum AuctionStatus {
     PAID,
     
     // Phiên đấu giá bị cưỡng chế hủy thầu do vi phạm quy chế bởi Admin hoặc Người bán thu hồi tin
-    CANCELED
+    CANCELED,
+
+    // Phiên đấu giá đã kết thúc nhưng không có người thắng thầu hợp lệ
+    ENDED_NO_WINNER,
+
+    // Phiên đấu giá đã kết thúc và có người thắng thầu, đang chờ thanh toán
+    ENDED_WITH_WINNER
 }

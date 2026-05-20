@@ -146,21 +146,24 @@ public class DashboardController {
     
     // --- Các đối tượng giao diện màn hình Checkout (chuẩn eBay) ---
     @FXML private ScrollPane pageCheckout;
+    @FXML private VBox pagePaymentSuccess;
     @FXML private VBox vboxCheckoutItems;
     @FXML private Label lblCheckoutSubtotal;
-    @FXML private Label lblCheckoutTax;
     @FXML private Label lblCheckoutTotal;
     @FXML private Label lblShipName;
     @FXML private Label lblShipPhone;
     @FXML private Label lblShipAddress;
     @FXML private RadioButton radCreditCard;
     @FXML private RadioButton radCOD;
+    @FXML private VBox vboxCardInfo;
     
     // Lưu trữ danh sách Auto Bid đang hoạt động của người dùng (auctionId -> Mức giá tối đa)
     private java.util.Map<String, Double> activeAutoBids = new java.util.HashMap<>();
     
     // Quy định nghiệp vụ: Bước giá thầu tự động tối thiểu là 10,000đ
     private static final double MIN_INCREMENT = 10000.0;
+    
+    private javafx.animation.PauseTransition successPauseTransition;
 
     // --- Nhãn bộ lọc danh mục sản phẩm ở thanh Sidebar ---
     @FXML private Label catAll;
@@ -333,8 +336,7 @@ public class DashboardController {
     private void loadWonData() {
         List<ItemUI> won = new ArrayList<>();
         for (ItemUI item : allItems) {
-            if (("Chờ thanh toán".equals(item.getStatus()) || "Hoàn thành".equals(item.getStatus())) 
-                    && currentUsername.equals(item.getWinnerUsername())) {
+            if ("Chờ thanh toán".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
                 won.add(item);
             }
         }
@@ -358,9 +360,10 @@ public class DashboardController {
         if (pageHistory != null) { pageHistory.setVisible(false); pageHistory.setManaged(false); }
         if (pageWonItems != null) { pageWonItems.setVisible(false); pageWonItems.setManaged(false); }
         if (pageCheckout != null) { pageCheckout.setVisible(false); pageCheckout.setManaged(false); }
+        if (pagePaymentSuccess != null) { pagePaymentSuccess.setVisible(false); pagePaymentSuccess.setManaged(false); }
 
         // Enclosed Checkout: Ẩn thanh Sidebar và thanh Tìm kiếm khi đang ở trang thanh toán để tránh gây xao nhãng
-        if (page == pageCheckout) {
+        if (page == pageCheckout || page == pagePaymentSuccess) {
             if (topHeaderContainer != null) { topHeaderContainer.setVisible(false); topHeaderContainer.setManaged(false); }
             if (sidebar != null) { sidebar.setVisible(false); sidebar.setManaged(false); }
         } else {
@@ -483,6 +486,12 @@ public class DashboardController {
                             Platform.runLater(() -> {
                                 allItems = newItems;
                                 applySearchFilter();
+                                if (pageWonItems != null && pageWonItems.isVisible()) {
+                                    loadWonData();
+                                }
+                                if (pageHistory != null && pageHistory.isVisible()) {
+                                    loadHistoryData();
+                                }
                             });
                         }
                         // Nhận sự kiện thời gian thực khi có người đặt thầu mới (Nâng giá thành công)
@@ -1179,10 +1188,13 @@ public class DashboardController {
                 name.setPrefWidth(150);
                 name.setStyle("-fx-font-size: 12;");
                 
+                Region space = new Region();
+                HBox.setHgrow(space, Priority.ALWAYS);
+                
                 Label price = new Label(item.getPriceStr());
                 price.setStyle("-fx-font-weight: bold; -fx-text-fill: #e62117; -fx-font-size: 12;");
                 
-                row.getChildren().addAll(name, price);
+                row.getChildren().addAll(name, space, price);
                 vboxMiniCartItems.getChildren().add(row);
                 
                 if (count >= 5) {
@@ -1297,16 +1309,13 @@ public class DashboardController {
         if (count == 0) {
             vboxCheckoutItems.getChildren().add(new Label("Không có sản phẩm nào cần thanh toán."));
             if (lblCheckoutSubtotal != null) lblCheckoutSubtotal.setText("0 ₫");
-            if (lblCheckoutTax != null) lblCheckoutTax.setText("0 ₫");
             if (lblCheckoutTotal != null) lblCheckoutTotal.setText("0 ₫");
             return;
         }
 
-        double tax = subtotal * 0.08;
-        double total = subtotal + tax;
+        double total = subtotal;
 
         if (lblCheckoutSubtotal != null) lblCheckoutSubtotal.setText(String.format("%,.0f ₫", subtotal));
-        if (lblCheckoutTax != null) lblCheckoutTax.setText(String.format("%,.0f ₫", tax));
         if (lblCheckoutTotal != null) lblCheckoutTotal.setText(String.format("%,.0f ₫", total));
         
         // Thiết lập thông tin giao nhận mẫu
@@ -1316,8 +1325,21 @@ public class DashboardController {
 
         // Chọn mặc định hình thức thẻ
         if (radCreditCard != null) radCreditCard.setSelected(true);
+        if (vboxCardInfo != null) {
+            vboxCardInfo.setVisible(true);
+            vboxCardInfo.setManaged(true);
+        }
 
         showPage(pageCheckout);
+    }
+
+    @FXML
+    private void handlePaymentMethodChange() {
+        boolean isCredit = radCreditCard != null && radCreditCard.isSelected();
+        if (vboxCardInfo != null) {
+            vboxCardInfo.setVisible(isCredit);
+            vboxCardInfo.setManaged(isCredit);
+        }
     }
 
     @FXML
@@ -1325,9 +1347,22 @@ public class DashboardController {
         showPage(pageWonItems);
     }
 
+    /**
+     * Xử lý luồng sự kiện khi người dùng bấm nút "Xác nhận và Thanh toán" trên giao diện Checkout.
+     * Quy trình xử lý bao gồm:
+     * 1. Lấy phương thức thanh toán đang được chọn (COD hoặc Thẻ tín dụng).
+     * 2. Đóng gói dữ liệu gửi lệnh PAY_WINNINGS về Server qua Socket.
+     * 3. Áp dụng kỹ thuật Optimistic UI Update (Cập nhật giao diện tức thì):
+     *    - Đổi ngay trạng thái các sản phẩm "Chờ thanh toán" sang "Hoàn thành" ở bộ nhớ tạm.
+     *    - Làm mới bảng danh sách "Sản phẩm đã thắng" để loại bỏ các món đã thanh toán.
+     *    - Xóa sạch giỏ hàng (vboxCheckoutItems) và ẩn hộp thoại Mini Cart.
+     * 4. Chuyển hướng người dùng sang màn hình "Thanh toán thành công" (pagePaymentSuccess).
+     * 5. Khởi tạo một Timer (PauseTransition) đếm ngược 5 giây, tự động đưa người dùng về trang chủ (pageBrowse).
+     */
     @FXML
     private void handleConfirmAndPay() {
         if (out != null) {
+            // Bước 1 & 2: Gửi lệnh thanh toán lên Server
             JsonObject req = new JsonObject();
             req.addProperty("command", "PAY_WINNINGS");
             req.addProperty("username", currentUsername);
@@ -1337,14 +1372,52 @@ public class DashboardController {
                 methodStr = "Credit Card (Thẻ tín dụng)";
             }
             req.addProperty("paymentMethod", methodStr);
-            out.println(req.toString());
+            out.println(req.toString()); // Gửi thông điệp qua Socket
             
-            showAlert(Alert.AlertType.INFORMATION, "Thanh toán thành công", 
-                "Đơn giao dịch của bạn đã được gửi đi thành công!\nPhương thức thanh toán đã chọn: " + methodStr + ".\neBid sẽ sớm giao hàng đến bạn.");
+            // Bước 3: Cập nhật giao diện ngay lập tức (Optimistic UI Update)
+            // Lợi ích: Người dùng cảm thấy ứng dụng phản hồi ngay lập tức, không bị khựng lại chờ Server.
+            for (ItemUI item : allItems) {
+                // Chỉ tìm những món hàng của chính user này và đang bị chờ thanh toán
+                if ("Chờ thanh toán".equals(item.getStatus()) && currentUsername.equals(item.getWinnerUsername())) {
+                    item.setStatus("Hoàn thành"); // Gán trạng thái mới
+                }
+            }
             
-            // Quay về danh sách chính để cập nhật hiển thị sản phẩm
-            showPage(pageBrowse);
+            // Xóa các món vừa thanh toán khỏi danh sách hiển thị "Sản phẩm đã thắng"
+            if (pageWonItems != null && pageWonItems.isVisible()) {
+                loadWonData(); // loadWonData() đã được cấu hình để bỏ qua các món "Hoàn thành"
+            }
+            
+            // Xóa sạch các thẻ sản phẩm trong giao diện Checkout
+            if (vboxCheckoutItems != null) {
+                vboxCheckoutItems.getChildren().clear();
+            }
+            
+            // Ẩn Pop-up giỏ hàng mini góc phải trên cùng
+            if (pageMiniCart != null) {
+                pageMiniCart.setVisible(false);
+                pageMiniCart.setManaged(false);
+            }
+            
+            // Bước 4: Chuyển sang màn hình thông báo "Thanh toán thành công"
+            showPage(pagePaymentSuccess);
+            
+            // Bước 5: Cấu hình bộ đếm ngược 5 giây tự động về trang chủ
+            if (successPauseTransition != null) {
+                successPauseTransition.stop(); // Hủy bỏ timer cũ nếu người dùng thao tác quá nhanh
+            }
+            successPauseTransition = new javafx.animation.PauseTransition(javafx.util.Duration.seconds(5));
+            successPauseTransition.setOnFinished(e -> showPage(pageBrowse)); // Lệnh thực thi sau khi hết 5 giây
+            successPauseTransition.play(); // Bắt đầu đếm ngược
         }
+    }
+    
+    @FXML
+    private void handleReturnToHome() {
+        if (successPauseTransition != null) {
+            successPauseTransition.stop();
+        }
+        showPage(pageBrowse);
     }
 
     @FXML

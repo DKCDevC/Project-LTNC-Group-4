@@ -50,6 +50,8 @@ public class DeleteItemCommand implements Command {
         // 6. Phản hồi kết quả xóa về phía Client để làm mới giao diện TableView trên Dashboard:
         if (success) {
             out.println("{\"status\":\"SUCCESS\", \"message\":\"Da xoa san pham\"}");
+            // Phát sóng cập nhật danh sách sản phẩm tới tất cả các Client trực tuyến (Real-time Broadcast)
+            ClientHandler.notifyAllObservers("{\"command\":\"UPDATE_ITEMS\"}");
         } else {
             out.println("{\"status\":\"FAILED\", \"message\":\"Khong the xoa: Sai quyen so huu hoac dau gia dang dien ra\"}");
         }

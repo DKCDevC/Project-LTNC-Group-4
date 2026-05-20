@@ -17,13 +17,19 @@
     -fx-size: 45;
     -fx-border-color: #e5e5e5;
     -fx-border-width: 0 0 1 0;
+    -fx-alignment: center;
 }
 
 .table-view .column-header .label {
     -fx-text-fill: #606770;
     -fx-font-weight: bold;
     -fx-font-size: 13px;
-    -fx-alignment: center-left;
+    -fx-alignment: center;
+}
+
+.table-cell {
+    -fx-alignment: center;
+    -fx-text-fill: #444444;
 }
 
 .table-row-cell {
@@ -39,6 +45,18 @@
 
 .table-row-cell:hover {
     -fx-background-color: #f0f7ff;
+}
+
+.table-row-cell:selected {
+    -fx-background-color: #f1f3f4 !important;
+}
+
+.table-row-cell:selected .table-cell {
+    -fx-text-fill: #191919 !important;
+}
+
+.table-row-cell:selected .label {
+    -fx-text-fill: #191919 !important;
 }
 
 /* Hide empty rows */
@@ -76,15 +94,18 @@
 
 /* Sidebar label hover effect */
 .sidebar-label {
-    -fx-padding: 8 12;
+    -fx-padding: 12 20;
     -fx-background-radius: 8;
     -fx-transition: all 0.3s ease;
+    -fx-font-size: 14px;
+    -fx-text-fill: #444444;
+    -fx-max-width: infinity;
+    -fx-alignment: center-left;
+    -fx-cursor: hand;
 }
 
 .sidebar-label:hover {
-    -fx-text-fill: #0654ba;
-    -fx-background-color: #f0f7ff;
-    -fx-background-radius: 8;
+    -fx-background-color: #f0f0f0;
 }
 
 /* Modern Logout Button */

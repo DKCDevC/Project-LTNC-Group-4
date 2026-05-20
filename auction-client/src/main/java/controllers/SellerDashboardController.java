@@ -367,12 +367,12 @@ public class SellerDashboardController {
     }
 
     // Các hàm lắng nghe sự kiện nhấp chuột điều hướng các Tab và Sidebar
-    @FXML public void handleTabOverview(MouseEvent event) { showPage(pageOverview); updateTabStyle(tabOverview); updateSidebarStyle(null); }
-    @FXML public void handleTabOrders(MouseEvent event) { showPage(pageOrders); updateTabStyle(tabOrders); updateSidebarStyle(null); }
-    @FXML public void handleTabListings(MouseEvent event) { showPage(pageListings); updateTabStyle(tabListings); updateSidebarStyle(catAll); }
+    @FXML public void handleTabOverview(MouseEvent event) { showPage(pageOverview); updateTabStyle(tabOverview); updateSidebarStyle(null); loadRealDataFromServer(); }
+    @FXML public void handleTabOrders(MouseEvent event) { showPage(pageOrders); updateTabStyle(tabOrders); updateSidebarStyle(null); loadRealDataFromServer(); }
+    @FXML public void handleTabListings(MouseEvent event) { showPage(pageListings); updateTabStyle(tabListings); updateSidebarStyle(catAll); loadRealDataFromServer(); }
 
-    @FXML public void handleSideActive(MouseEvent event) { showPage(pageActiveProducts); updateSidebarStyle(sideActive); updateTabStyle(tabListings); }
-    @FXML public void handleSideSold(MouseEvent event) { showPage(pageSoldProducts); updateSidebarStyle(sideSold); updateTabStyle(tabListings); }
+    @FXML public void handleSideActive(MouseEvent event) { showPage(pageActiveProducts); updateSidebarStyle(sideActive); updateTabStyle(tabListings); loadRealDataFromServer(); }
+    @FXML public void handleSideSold(MouseEvent event) { showPage(pageSoldProducts); updateSidebarStyle(sideSold); updateTabStyle(tabListings); loadRealDataFromServer(); }
     @FXML public void handleSideRevenue(MouseEvent event) { 
         showPage(pageRevenue); 
         updateSidebarStyle(sideRevenue); 

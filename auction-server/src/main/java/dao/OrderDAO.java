@@ -2,7 +2,7 @@
 package dao;
 
 // 2. Import các tiện ích kết nối mạng cơ sở dữ liệu và cấu trúc dữ liệu Java
-import utils.DBConnection;
+import database.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -164,5 +164,68 @@ public class OrderDAO {
             System.out.println("Lỗi lấy danh sách đơn hàng: " + e.getMessage());
         }
         return orders;
+    }
+
+    public boolean markOrderAsCompletedByItemId(String itemId) {
+        String query = "UPDATE orders SET status = 'FINISHED' WHERE item_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, itemId);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Lỗi cập nhật trạng thái đơn hàng: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Cập nhật tất cả đơn hàng chờ thanh toán của người mua sang FINISHED.
+     */
+    public boolean markAllOrdersAsFinishedByBidderName(String bidderName) {
+        String query = "UPDATE orders SET status = 'FINISHED' WHERE bidder_name = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, bidderName);
+            return stmt.executeUpdate() > 0;
+        } catch (SQLException e) {
+            System.out.println("Lỗi thanh toán toàn bộ đơn hàng: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Lấy trạng thái của đơn hàng từ Database.
+     */
+    public String getOrderStatusByItemId(String itemId) {
+        String query = "SELECT status FROM orders WHERE item_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, itemId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("status");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return "PENDING";
+    }
+
+    /**
+     * Lấy tên người chiến thắng đấu giá của sản phẩm dựa trên cơ sở dữ liệu hóa đơn.
+     */
+    public String getWinnerByItemId(String itemId) {
+        String query = "SELECT bidder_name FROM orders WHERE item_id = ?";
+        try (Connection conn = DBConnection.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setString(1, itemId);
+            ResultSet rs = stmt.executeQuery();
+            if (rs.next()) {
+                return rs.getString("bidder_name");
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 }

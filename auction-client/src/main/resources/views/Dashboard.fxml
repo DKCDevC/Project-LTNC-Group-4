@@ -313,27 +313,48 @@
                                                     <Separator />
                                                     
                                                     <!-- Option 1: Credit / Debit Card -->
-                                                    <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-border-color: #ddd; -fx-border-radius: 8; -fx-background-radius: 8;">
+                                                    <VBox style="-fx-border-color: #ddd; -fx-border-radius: 8; -fx-background-radius: 8;">
                                                         <children>
-                                                            <RadioButton fx:id="radCreditCard" selected="true" style="-fx-cursor: hand;">
-                                                                <toggleGroup>
-                                                                    <ToggleGroup fx:id="paymentGroup" />
-                                                                </toggleGroup>
-                                                            </RadioButton>
-                                                            <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                                            <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-padding: 10;">
                                                                 <children>
-                                                                    <Label text="Thẻ tín dụng hoặc Thẻ ghi nợ (Credit/Debit Card)" style="-fx-font-weight: bold; -fx-font-size: 14;" />
-                                                                    <Label text="Visa, Mastercard, JCB, American Express" textFill="GRAY" style="-fx-font-size: 12;" />
+                                                                    <RadioButton fx:id="radCreditCard" selected="true" style="-fx-cursor: hand;" onAction="#handlePaymentMethodChange">
+                                                                        <toggleGroup>
+                                                                            <ToggleGroup fx:id="paymentGroup" />
+                                                                        </toggleGroup>
+                                                                    </RadioButton>
+                                                                    <VBox spacing="3" HBox.hgrow="ALWAYS">
+                                                                        <children>
+                                                                            <Label text="Thẻ tín dụng hoặc Thẻ ghi nợ (Credit/Debit Card)" style="-fx-font-weight: bold; -fx-font-size: 14;" />
+                                                                            <Label text="Visa, Mastercard, JCB, American Express" textFill="GRAY" style="-fx-font-size: 12;" />
+                                                                        </children>
+                                                                    </VBox>
+                                                                    <Label text="💳" style="-fx-font-size: 22;" />
+                                                                </children>
+                                                            </HBox>
+                                                            <VBox fx:id="vboxCardInfo" spacing="12" style="-fx-padding: 5 10 15 35;">
+                                                                <children>
+                                                                    <TextField promptText="Số thẻ" style="-fx-pref-height: 40; -fx-background-radius: 6; -fx-border-color: #bbbbbb; -fx-border-radius: 6; -fx-background-color: #fcfcfc;" />
+                                                                    <HBox spacing="10">
+                                                                        <children>
+                                                                            <TextField promptText="Ngày hết hạn" style="-fx-pref-height: 40; -fx-background-radius: 6; -fx-border-color: #bbbbbb; -fx-border-radius: 6; -fx-background-color: #fcfcfc;" HBox.hgrow="ALWAYS" />
+                                                                            <TextField promptText="Mã bảo mật" style="-fx-pref-height: 40; -fx-background-radius: 6; -fx-border-color: #bbbbbb; -fx-border-radius: 6; -fx-background-color: #fcfcfc;" HBox.hgrow="ALWAYS" />
+                                                                        </children>
+                                                                    </HBox>
+                                                                    <HBox spacing="10">
+                                                                        <children>
+                                                                            <TextField promptText="Tên" style="-fx-pref-height: 40; -fx-background-radius: 6; -fx-border-color: #bbbbbb; -fx-border-radius: 6; -fx-background-color: #fcfcfc;" HBox.hgrow="ALWAYS" />
+                                                                            <TextField promptText="Họ" style="-fx-pref-height: 40; -fx-background-radius: 6; -fx-border-color: #bbbbbb; -fx-border-radius: 6; -fx-background-color: #fcfcfc;" HBox.hgrow="ALWAYS" />
+                                                                        </children>
+                                                                    </HBox>
                                                                 </children>
                                                             </VBox>
-                                                            <Label text="💳" style="-fx-font-size: 22;" />
                                                         </children>
-                                                    </HBox>
+                                                    </VBox>
                                                     
                                                     <!-- Option 2: COD (Cash on Delivery) -->
                                                     <HBox spacing="15.0" alignment="CENTER_LEFT" style="-fx-padding: 10; -fx-border-color: #ddd; -fx-border-radius: 8; -fx-background-radius: 8;">
                                                         <children>
-                                                            <RadioButton fx:id="radCOD" toggleGroup="$paymentGroup" style="-fx-cursor: hand;" />
+                                                            <RadioButton fx:id="radCOD" toggleGroup="$paymentGroup" style="-fx-cursor: hand;" onAction="#handlePaymentMethodChange" />
                                                             <VBox spacing="3" HBox.hgrow="ALWAYS">
                                                                 <children>
                                                                     <Label text="Thanh toán khi nhận hàng (COD)" style="-fx-font-weight: bold; -fx-font-size: 14;" />
@@ -416,13 +437,6 @@
                                                 </children>
                                             </HBox>
                                             
-                                            <HBox alignment="CENTER_LEFT">
-                                                <children>
-                                                    <Label text="Thuế VAT (8%)" textFill="GRAY" style="-fx-font-size: 14;" />
-                                                    <Region HBox.hgrow="ALWAYS" />
-                                                    <Label fx:id="lblCheckoutTax" text="0 ₫" style="-fx-font-size: 14; -fx-font-weight: bold;" />
-                                                </children>
-                                            </HBox>
                                             <Separator />
                                             
                                             <!-- Order Total -->
@@ -451,6 +465,16 @@
                 </content>
             </ScrollPane>
 
+            <!-- PAGE 8: Thanh toán thành công (Payment Success) -->
+            <VBox fx:id="pagePaymentSuccess" visible="false" managed="false" alignment="CENTER" spacing="20.0" style="-fx-background-color: white;">
+                <children>
+                    <Label text="✅" style="-fx-font-size: 80; -fx-text-fill: #2e7d32;" />
+                    <Label text="Thanh toán thành công!" style="-fx-font-weight: bold; -fx-font-size: 28; -fx-text-fill: #191919;" />
+                    <Label text="Cảm ơn bạn đã mua sắm tại eBid. Đơn hàng của bạn đang được xử lý." textFill="GRAY" style="-fx-font-size: 16;" />
+                    <Label text="Hệ thống sẽ tự động chuyển về màn hình chính sau vài giây..." textFill="#3665f3" style="-fx-font-size: 14;" />
+                    <Button text="Về màn hình chính ngay" onAction="#handleReturnToHome" style="-fx-background-color: white; -fx-border-color: #3665f3; -fx-text-fill: #3665f3; -fx-font-weight: bold; -fx-padding: 10 20; -fx-background-radius: 20; -fx-border-radius: 20; -fx-cursor: hand; -fx-margin-top: 20;" />
+                </children>
+            </VBox>
         </StackPane>
     </center>
 

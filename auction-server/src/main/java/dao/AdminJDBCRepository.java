@@ -4,7 +4,7 @@ package dao;
 // 2. Import tầng trừu tượng Domain Repository và các thực thể của Server
 import domain.repository.AdminRepository;
 import models.*;
-import utils.DBConnection;
+import database.DBConnection;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;

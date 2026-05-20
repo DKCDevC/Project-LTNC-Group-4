@@ -28,6 +28,8 @@ import network.command.GetSellerDashboardCommand;
 import network.command.AdminCommand;
 import network.command.AddItemCommand;
 import network.command.DeleteItemCommand;
+import network.command.PayWinningsCommand;
+import dao.OrderDAO;
 import network.command.AutoBidCommand;
 import network.command.CancelAutoBidCommand;
 
@@ -102,6 +104,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
         router.registerCommand("ADD_ITEM", new AddItemCommand());
         router.registerCommand("AUTO_BID", new AutoBidCommand());
         router.registerCommand("CANCEL_AUTO_BID", new CancelAutoBidCommand());
+        router.registerCommand("PAY_WINNINGS", new PayWinningsCommand());
     }
 
     /**
@@ -190,6 +193,7 @@ public class ClientHandler implements Runnable, AuctionObserver {
             else if ("GET_ITEMS".equals(command)) {
                 // Lấy items đã lưu trong SQLite DB
                 List<Item> dbItems = ItemManager.getInstance().getAllItems();
+                OrderDAO orderDAO = new OrderDAO();
                 
                 // Lấy items của các phiên đang hoạt động trực tiếp trong bộ nhớ đệm Server (Memory)
                 java.util.Map<String, models.Auction> activeAuctions = services.AuctionManager.getInstance().getAllActiveAuctionsMap();
@@ -209,6 +213,12 @@ public class ClientHandler implements Runnable, AuctionObserver {
                         itemJson.addProperty("currentHighestPrice", auction.getItem().getCurrentHighestPrice());
                         itemJson.addProperty("bidsCount", auction.getBidHistory().size());
                         itemJson.addProperty("auctionStatus", auction.getStatus().name());
+                        
+                        if (auction.getWinner() != null) {
+                            itemJson.addProperty("winnerUsername", auction.getWinner().getUsername());
+                        } else {
+                            itemJson.addProperty("winnerUsername", "");
+                        }
                         
                         if (item.getSeller() != null) {
                             itemJson.addProperty("sellerName", item.getSeller().getUsername());
@@ -232,10 +242,29 @@ public class ClientHandler implements Runnable, AuctionObserver {
                             itemJson.addProperty("currentHighestPrice", auction.getItem().getCurrentHighestPrice());
                             itemJson.addProperty("bidsCount", auction.getBidHistory().size());
                             itemJson.addProperty("auctionStatus", auction.getStatus().name());
+                            if (auction.getWinner() != null) {
+                                itemJson.addProperty("winnerUsername", auction.getWinner().getUsername());
+                            } else {
+                                itemJson.addProperty("winnerUsername", "");
+                            }
                         } else {
                             itemJson.addProperty("currentHighestPrice", item.getCurrentHighestPrice());
                             itemJson.addProperty("bidsCount", 0);
-                            itemJson.addProperty("auctionStatus", "FINISHED");
+                            
+                            // Check database orders to determine actual status and winner
+                            String orderStatus = orderDAO.getOrderStatusByItemId(item.getId());
+                            String winner = orderDAO.getWinnerByItemId(item.getId());
+                            if (winner != null) {
+                                itemJson.addProperty("winnerUsername", winner);
+                                if ("FINISHED".equals(orderStatus)) {
+                                    itemJson.addProperty("auctionStatus", "FINISHED");
+                                } else {
+                                    itemJson.addProperty("auctionStatus", "ENDED_WITH_WINNER");
+                                }
+                            } else {
+                                itemJson.addProperty("winnerUsername", "");
+                                itemJson.addProperty("auctionStatus", "ENDED_NO_WINNER");
+                            }
                         }
                         
                         itemsArray.add(itemJson);

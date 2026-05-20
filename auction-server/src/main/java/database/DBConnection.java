@@ -1,5 +1,5 @@
-// 1. Khai báo package: Thuộc phân hệ tiện ích utils của Server.
-package utils;
+// 1. Khai báo package: Thuộc phân hệ tiện ích database của Server.
+package database;
 
 // 2. Import các thư viện Java Database Connectivity (JDBC):
 import java.sql.Connection;        // Đối tượng đại diện cho một phiên kết nối vật lý với Database.
@@ -81,7 +81,8 @@ public class DBConnection {
                 "seller_name TEXT, " +
                 "bidder_name TEXT, " +
                 "final_price REAL, " +
-                "order_date DATE DEFAULT (DATE('now'))" + // Tự động lấy ngày hiện tại của SQLite
+                "order_date DATE DEFAULT (DATE('now'))," +
+                "status TEXT DEFAULT 'PENDING'" +
                 ");";
 
         // 9. Cú pháp Try-With-Resources:
@@ -98,8 +99,14 @@ public class DBConnection {
             // Thử chạy lệnh ALTER TABLE để thêm cột image_urls nếu bảng items được tạo từ các phiên bản cũ chưa có cột này.
             try {
                 stmt.execute("ALTER TABLE items ADD COLUMN image_urls TEXT;");
-            } catch (SQLException ignore) {
-                // Bỏ qua lỗi (ignore) nếu cột đã tồn tại sẵn, tránh crash chương trình không cần thiết.
+            } catch (SQLException ignored) {
+                // Bỏ qua lỗi nếu cột đã tồn tại sẵn, tránh crash chương trình không cần thiết.
+            }
+
+            try {
+                stmt.execute("ALTER TABLE orders ADD COLUMN status TEXT DEFAULT 'PENDING';");
+            } catch (SQLException ignored) {
+                // Bỏ qua lỗi nếu cột đã tồn tại sẵn
             }
 
             // 12. Kiểm tra dữ liệu mồi (Data Seeding):

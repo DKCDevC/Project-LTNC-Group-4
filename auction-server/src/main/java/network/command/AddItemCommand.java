@@ -104,6 +104,9 @@ public class AddItemCommand implements Command {
             out.println("SUCCESS");
             System.out.println(">>> [SERVER] Đã thêm sản phẩm mới thành công: " + name + " (ID: " + id + ") bởi " + sellerName);
 
+            // 12. Phát sóng cập nhật danh sách sản phẩm tới tất cả các Client trực tuyến (Real-time Broadcast)
+            ClientHandler.notifyAllObservers("{\"command\":\"UPDATE_ITEMS\"}");
+
         } catch (Exception e) {
             System.err.println("!!! LỖI khi thêm sản phẩm: " + e.getMessage());
             e.printStackTrace();
