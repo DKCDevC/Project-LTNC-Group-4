@@ -10,7 +10,7 @@ Dự án này là kết tinh của việc ứng dụng các nguyên lý lập tr
 1. [Giới thiệu Dự án & Thành viên](#1-giới-thiệu-dự-án--thành-viên)
 2. [Đặc tả Kỹ thuật (Tech Stack)](#2-đặc-tả-kỹ-thuật-tech-stack)
 3. [Kiến trúc Đa Phân hệ (Multi-module Architecture)](#3-kiến-trúc-đa-phân-hệ-multi-module-architecture)
-4. [Sơ đồ Lớp & Thiết kế OOP (Class Diagram)](#4-sơ-đồ-lớp--thiết-kế-oop-class-diagram)
+4. [Sơ đồ Lớp & Thiết kế OOP (Class Diagram)](#4-sơ-đồ-lớp--thiết-kéo-oop-class-diagram)
 5. [Ứng dụng các Mẫu thiết kế (Design Patterns)](#5-ứng-dụng-các-mẫu-thiết-kế-design-patterns)
 6. [Mô hình Cơ sở dữ liệu SQLite (Database Schema) & Cơ chế Seeding](#6-mô-hình-cơ-sở-dữ-liệu-sqlite-database-schema--cơ-cế-seeding)
 7. [Giao thức truyền thông Custom TCP Socket & JSON](#7-giao-thức-truyền-thông-custom-tcp-socket--json)
@@ -20,7 +20,10 @@ Dự án này là kết tinh của việc ứng dụng các nguyên lý lập tr
 11. [Hướng dẫn Khởi chạy Hệ thống](#11-hướng-dẫn-khởi-chạy-hệ-thống)
 12. [Cẩm nang Kiểm thử Hệ thống (Test Cases & Scenarios)](#12-cẩm-nang-kiểm-thử-hệ-thống-test-cases--scenarios)
 13. [Cấu trúc thư mục nguồn chi tiết (Directory Tree)](#13-cấu-trúc-thư-mục-nguồn-chi-tiết-directory-tree)
-14. [Tài liệu Báo cáo & Video Demo](#14-tài-liệu-báo-cáo--video-demo)
+14. [Đặc tả Giao thức JSON Socket (Internal API Specifications)](#14-đặc-tả-giao-thức-json-socket-internal-api-specifications)
+15. [Xử lý Lỗi & Khắc phục sự cố (Troubleshooting & FAQs)](#15-xử-lý-lỗi--khắc-phục-sự-cố-troubleshooting--faqs)
+16. [Hướng dẫn Đóng góp Mã nguồn (Contributing Guidelines)](#16-hướng-dẫn-đóng-góp-mã-nguồn-contributing-guidelines)
+17. [Tài liệu Báo cáo & Video Demo (BẮT BUỘC)](#17-tài-liệu-báo-cáo--video-demo-bắt-buộc)
 
 ---
 
@@ -727,24 +730,11 @@ Project-LTNC-Group-4/
 
 ---
 
-## 14. Tài liệu Báo cáo & Video Demo (BẮT BUỘC)
-
-> [!IMPORTANT]
-> **Đây là các tài liệu BẮT BUỘC đi kèm với mã nguồn để phục vụ công tác chấm thi và đánh giá đồ án.** Thầy/Cô vui lòng xem qua Video Demo để có cái nhìn trực quan nhất về luồng hoạt động của hệ thống, cũng như Bản báo cáo PDF để nắm rõ cơ sở lý thuyết và quá trình phát triển của Nhóm 4.
-
-Thầy/Cô và các bạn có thể truy cập các tài nguyên báo cáo chi tiết và tài liệu hướng dẫn trực quan của dự án theo các đường dẫn bên dưới:
-
-*   📑 **Bản Báo Cáo Dự Án PDF chính thức (Required):**
-    [Tải xuống hoặc xem trực tuyến tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
-*   🎬 **Video Demo Hoạt động Hệ thống trực quan (Required):**
-    [Xem Video Demo tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
-
----
-## 15. Đặc tả Giao thức JSON Socket (Internal API Specifications)
+## 14. Đặc tả Giao thức JSON Socket (Internal API Specifications)
 
 Ngoài các kịch bản chính đã đề cập ở mục 7, hệ thống còn sở hữu một bộ thư viện giao thức JSON rất đa dạng để xử lý các nghiệp vụ thời gian thực phức tạp khác:
 
-### 📡 15.1. Lấy dữ liệu Bảng điều khiển Người Bán (GET_SELLER_DASHBOARD)
+### 📡 14.1. Lấy dữ liệu Bảng điều khiển Người Bán (GET_SELLER_DASHBOARD)
 *   **Mục đích:** Tải toàn bộ thống kê doanh thu, sản phẩm đang bán, sản phẩm đã bán và hóa đơn của một người bán cụ thể. Lệnh này được gọi tự động (Real-time Fetching) mỗi khi người bán chuyển tab.
 *   **Client gửi:**
     ```json
@@ -777,7 +767,7 @@ Ngoài các kịch bản chính đã đề cập ở mục 7, hệ thống còn 
     }
     ```
 
-### 📡 15.2. Thanh toán hóa đơn (PAY_WINNINGS)
+### 📡 14.2. Thanh toán hóa đơn (PAY_WINNINGS)
 *   **Mục đích:** Người mua xác nhận thanh toán tất cả các món hàng đã thắng thầu đang trong trạng thái "Chờ thanh toán".
 *   **Client gửi:**
     ```json
@@ -789,7 +779,7 @@ Ngoài các kịch bản chính đã đề cập ở mục 7, hệ thống còn 
     ```
 *   **Server xử lý & Phản hồi:** Server tiến hành cập nhật bảng `orders` thành trạng thái `FINISHED`. Nếu thành công, Server gửi phản hồi cho Client gọi lệnh, đồng thời **Broadcast toàn mạng** `{"command":"UPDATE_ITEMS"}` để giao diện của Seller được đồng bộ lập tức.
 
-### 📡 15.3. Yêu cầu Cập nhật Sản phẩm từ Người Bán (UPDATE_ITEM)
+### 📡 14.3. Yêu cầu Cập nhật Sản phẩm từ Người Bán (UPDATE_ITEM)
 *   **Mục đích:** Cho phép Người bán cập nhật lại thông tin (như Giá khởi điểm) cho một sản phẩm ngay trong lúc nó đang được đăng tải (nếu chưa có ai đặt giá thầu).
 *   **Client gửi:**
     ```json
@@ -805,7 +795,7 @@ Ngoài các kịch bản chính đã đề cập ở mục 7, hệ thống còn 
 
 ---
 
-## 16. Xử lý Lỗi & Khắc phục sự cố (Troubleshooting & FAQs)
+## 15. Xử lý Lỗi & Khắc phục sự cố (Troubleshooting & FAQs)
 
 Trong quá trình triển khai và bảo vệ đồ án, nếu gặp sự cố, bạn có thể tham khảo các phương án xử lý nhanh sau đây:
 
@@ -825,13 +815,27 @@ Trong quá trình triển khai và bảo vệ đồ án, nếu gặp sự cố, 
 
 ---
 
-## 17. Hướng dẫn Đóng góp Mã nguồn (Contributing Guidelines)
+## 16. Hướng dẫn Đóng góp Mã nguồn (Contributing Guidelines)
 
 Dự án eBid được thiết kế theo kiến trúc module rời rạc cực kỳ linh hoạt để tiếp tục mở rộng trong tương lai. Nếu các bạn sinh viên khóa sau hoặc thành viên muốn mở rộng quy mô hệ thống, có thể cân nhắc triển khai thêm các tính năng:
 1. **Phân trang dữ liệu (Pagination) cho Client:** Áp dụng kết hợp từ khóa `LIMIT` và `OFFSET` trong câu lệnh truy vấn SQLite tại Server, kết hợp sự kiện cuộn chuột (Scroll Event) trên ScrollPane của JavaFX để tránh tải cùng lúc 10,000 sản phẩm lên RAM.
 2. **Mã hóa bảo mật mật khẩu:** Thay vì lưu Plain-text trong bảng `users`, có thể tích hợp thư viện bảo mật **Bcrypt** hoặc thuật toán SHA-256 để băm (Hash) mật khẩu theo đúng chuẩn công nghiệp OWASP.
 3. **Mô hình MVC hoàn chỉnh cho JavaFX:** Hiện tại Controller đang đảm nhận cả logic giao diện lẫn khởi tạo Socket. Có thể refactor mã nguồn bằng cách chuyển giao các xử lý Socket sang một lớp `NetworkService` biệt lập (Dependency Injection).
 4. **Hệ thống thanh toán qua API của bên thứ 3:** Tích hợp VNPay, MoMo hoặc Stripe API vào quá trình Checkout để thay thế cho nút xác nhận thủ công.
+
+---
+
+## 17. Tài liệu Báo cáo & Video Demo (BẮT BUỘC)
+
+> [!IMPORTANT]
+> **Đây là các tài liệu BẮT BUỘC đi kèm với mã nguồn để phục vụ công tác chấm thi và đánh giá đồ án.** Thầy/Cô vui lòng xem qua Video Demo để có cái nhìn trực quan nhất về luồng hoạt động của hệ thống, cũng như Bản báo cáo PDF để nắm rõ cơ sở lý thuyết và quá trình phát triển của Nhóm 4.
+
+Thầy/Cô và các bạn có thể truy cập các tài nguyên báo cáo chi tiết và tài liệu hướng dẫn trực quan của dự án theo các đường dẫn bên dưới:
+
+*   📑 **Bản Báo Cáo Dự Án PDF chính thức (Required):**
+    [Tải xuống hoặc xem trực tuyến tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
+*   🎬 **Video Demo Hoạt động Hệ thống trực quan (Required):**
+    [Xem Video Demo tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
 
 ---
 
