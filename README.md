@@ -835,7 +835,7 @@ Thầy/Cô và các bạn có thể truy cập các tài nguyên báo cáo chi t
 *   📑 **Bản Báo Cáo Dự Án PDF chính thức (Required):**
     [Tải xuống hoặc xem trực tuyến tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
 *   🎬 **Video Demo Hoạt động Hệ thống trực quan (Required):**
-    [Xem Video Demo tại đây](https://drive.google.com/file/d/105jQROPfv_Ck2M7fVZclfoA-Q7Y3C6Qv/view?usp=sharing)
+    [Xem Video Demo tại đây](https://drive.google.com/file/d/1oiaoadoq7TkkHXnOHiLLiwLmpjQh_LAk/view?fbclid=IwY2xjawSJDQNleHRuA2FlbQIxMABicmlkETFmYWRPYjFxbk9NZjNTVGRRc3J0YwZhcHBfaWQQMjIyMDM5MTc4ODIwMDg5MgABHuSpln24D3SMDmEhO1ZxE5Iw0qgyUMh4zrnFYx6enBARZIj8Ej9ORDHcDk1X_aem_pEwMXd2q5wXMA_WaJ8neEA)
 
 ---
 
